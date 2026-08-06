@@ -123,12 +123,17 @@ curl "http://localhost:3000/api/cron/check-signals?secret=DEIN_CRON_SECRET"
 - Sonst → **Halten**
 
 **Makro-Regime:**
-- Basiert auf M2-Geldmengenwachstum (YoY) minus 2× dem Leitzins-Trend (3 Monate)
-- Positiver Score → **Risk-on** (gut für Krypto)
-- Negativer Score → **Risk-off** (schlecht für Krypto)
+Fünf Faktoren fließen in einen Score ein, jeder einzeln auf ungefähr -1 bis +1 normalisiert (statt Rohwerte unterschiedlicher Einheiten direkt zu addieren):
+- **M2-Geldmengenwachstum** (YoY): mehr Liquidität im System → risk-on
+- **Leitzins-Trend** (3 Monate): Zinssenkungen → risk-on, Erhöhungen → risk-off
+- **Dollar-Index-Trend** (3 Monate): schwächerer Dollar → typischerweise risk-on für Krypto
+- **10-jährige US-Staatsanleihe-Rendite** (3-Monats-Trend): fallende Renditen → risk-on
+- **VIX** (aktueller Stand): erhöhte Angst (≥25) → risk-off, Sorglosigkeit (≤15) → leicht risk-on
+
+Gesamt-Score ≥ 1,5 → **Risk-on**, ≤ -1,5 → **Risk-off**, sonst **Neutral**.
 
 **Kombiniertes Signal:**
-- Technisches Signal + Makro-Regime werden zusammengeführt
+- Technisches Signal + Makro-Regime + Fear & Greed werden zusammengeführt
 - Widersprüche werden als "Vorsicht"-Hinweis angezeigt
 
 ---
@@ -138,6 +143,9 @@ curl "http://localhost:3000/api/cron/check-signals?secret=DEIN_CRON_SECRET"
 - **Krypto-Kurse:** [Binance API](https://binance-docs.github.io/apidocs/spot/en/) (kostenlos, kein Key nötig, volle Tages-Historie seit Listing)
 - **M2-Geldmenge:** [FRED M2SL](https://fred.stlouisfed.org/series/M2SL)
 - **US-Leitzins:** [FRED FEDFUNDS](https://fred.stlouisfed.org/series/FEDFUNDS)
+- **Dollar-Index:** [FRED DTWEXBGS](https://fred.stlouisfed.org/series/DTWEXBGS)
+- **10J-Staatsanleihe-Rendite:** [FRED DGS10](https://fred.stlouisfed.org/series/DGS10)
+- **VIX:** [FRED VIXCLS](https://fred.stlouisfed.org/series/VIXCLS)
 
 ---
 

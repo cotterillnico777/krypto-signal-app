@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   try {
     const [series, macro, fg] = await Promise.all([
       fetchHistoricalSeries(coinId, days),
-      fetchMacroData(Math.ceil(days / 30) + 20),
+      fetchMacroData(Math.ceil(days / 30) + 20, days + 120),
       fetchFearGreedData(Math.min(days + 60, 3000)).catch(() => ({ history: [] })),
     ]);
 
