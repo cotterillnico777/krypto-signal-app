@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   computeMACD,
   macdSignal,
@@ -124,6 +125,7 @@ export default function Home() {
           </div>
         </div>
         <div className="header-actions">
+          <Link href="/backtest" className="icon-btn">📊 Backtest</Link>
           <PushSubscribeButton />
           <button className="icon-btn" onClick={()=>loadData(tf)} title="Aktualisieren">↻ Aktualisieren</button>
         </div>
