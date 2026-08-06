@@ -10,6 +10,13 @@ export default async function handler(req, res) {
   const stopLossPct = req.query.stopLoss ? Math.min(Math.max(parseFloat(req.query.stopLoss), 1), 90) : null;
   const allowShort = req.query.short === "1";
   const leverage = Math.min(Math.max(parseInt(req.query.leverage) || 1, 1), MAX_LEVERAGE);
+  // Optionale Strategie-Parameter (z.B. um eine vom Optimizer gefundene Kombination
+  // manuell nachzustellen). Ohne Angabe identisch zum bisherigen Standardverhalten.
+  const smaFast = req.query.smaFast ? parseInt(req.query.smaFast) : undefined;
+  const smaSlow = req.query.smaSlow ? parseInt(req.query.smaSlow) : undefined;
+  const rsiBuyThreshold = req.query.rsiBuy ? parseFloat(req.query.rsiBuy) : undefined;
+  const rsiSellThreshold = req.query.rsiSell ? parseFloat(req.query.rsiSell) : undefined;
+  const adxThreshold = req.query.adx ? parseFloat(req.query.adx) : null;
   const coin = COINS.find((c) => c.id === coinId);
   if (!coin) return res.status(400).json({ error: "Unbekannte Coin." });
 
@@ -41,9 +48,14 @@ export default async function handler(req, res) {
       allowShort,
       leverage,
       fundingRates: funding,
+      smaFast,
+      smaSlow,
+      rsiBuyThreshold,
+      rsiSellThreshold,
+      adxThreshold,
     });
 
-    res.status(200).json({ coin, days, stopLossPct, allowShort, leverage, ...result });
+    res.status(200).json({ coin, days, stopLossPct, allowShort, leverage, smaFast, smaSlow, rsiBuyThreshold, rsiSellThreshold, adxThreshold, ...result });
   } catch (err) {
     res.status(500).json({ error: err.message || "Backtest fehlgeschlagen." });
   }
