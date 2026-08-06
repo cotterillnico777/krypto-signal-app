@@ -58,9 +58,10 @@ Nach der Installation startet die App im eigenen Fenster (ohne Browser-Leiste) u
 
 Unter „📊 Backtest" (Link im Dashboard-Header, Route `/backtest`) simuliert die App die exakt gleiche Signal-Strategie (SMA + RSI + MACD + Volumen + Makro + Fear & Greed) Tag für Tag auf historischen Kursdaten – ohne Lookahead, es fließen an jedem simulierten Tag nur Daten bis einschließlich diesem Tag ein.
 
-- Coin und Zeitraum (90/180/365 Tage) wählen, dann "Backtest starten" klicken.
-- Angezeigt werden: Strategie-Rendite vs. Buy & Hold, Max Drawdown, Anzahl Trades, Trefferquote, eine Equity-Kurve und die einzelnen Trades.
-- Start-Kapital ist ein hypothetisches $10.000, ohne Gebühren/Slippage. 365 Tage ist das Maximum, weil CoinGecko im kostenlosen Tarif nur ~1 Jahr tägliche Historie erlaubt.
+- Coin, Zeitraum (90 Tage bis 4 Jahre) und optional einen Stop-Loss (10/15/20%) wählen, dann "Backtest starten" klicken.
+- Angezeigt werden: Strategie-Rendite vs. Buy & Hold, Max Drawdown, Anzahl Trades, Trefferquote, eine Equity-Kurve und die einzelnen Trades (mit "(Stop)"-Markierung bei Stop-Loss-Ausstiegen).
+- Start-Kapital ist ein hypothetisches $10.000, ohne Gebühren/Slippage. Bis zu 4 Jahre zurück deckt frühere Markt-Regime ab (z.B. den Bärenmarkt 2022), damit die Strategie nicht nur an einem einzelnen, zufälligen Marktumfeld gemessen wird.
+- Der Stop-Loss prüft pro simuliertem Tag das Tagestief gegen den Einstiegspreis und schließt die Position zum Stop-Kurs – realistischer als ein reiner Schlusskurs-Check, aber immer noch ohne Slippage.
 - Reine historische Simulation, keine Garantie für zukünftige Ergebnisse und keine Anlageberatung.
 
 ---
@@ -104,7 +105,7 @@ curl "http://localhost:3000/api/cron/check-signals?secret=DEIN_CRON_SECRET"
 2. Dein Projekt bei GitHub hochladen (oder Vercel CLI nutzen):
    - Einfachste Variante: https://vercel.com/new → "Import from GitHub"
 3. Beim Einrichten unter "Environment Variables" alle Werte aus `.env.local` eintragen:
-   - `FRED_API_KEY`, `ANTHROPIC_API_KEY`, `COINGECKO_API_KEY`
+   - `FRED_API_KEY`, `ANTHROPIC_API_KEY`
    - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`
    - `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
    - `CRON_SECRET`
@@ -134,7 +135,7 @@ curl "http://localhost:3000/api/cron/check-signals?secret=DEIN_CRON_SECRET"
 
 ## Datenquellen
 
-- **Krypto-Kurse:** [CoinGecko API](https://www.coingecko.com/api) (kostenlos, kein Key nötig)
+- **Krypto-Kurse:** [Binance API](https://binance-docs.github.io/apidocs/spot/en/) (kostenlos, kein Key nötig, volle Tages-Historie seit Listing)
 - **M2-Geldmenge:** [FRED M2SL](https://fred.stlouisfed.org/series/M2SL)
 - **US-Leitzins:** [FRED FEDFUNDS](https://fred.stlouisfed.org/series/FEDFUNDS)
 

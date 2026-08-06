@@ -4,8 +4,16 @@ import { COINS } from "../lib/marketData";
 
 const PERIODS = [
   { key: 90, label: "90 Tage" },
-  { key: 180, label: "180 Tage" },
-  { key: 365, label: "365 Tage" },
+  { key: 365, label: "1 Jahr" },
+  { key: 730, label: "2 Jahre" },
+  { key: 1460, label: "4 Jahre" },
+];
+
+const STOP_LOSSES = [
+  { key: null, label: "Kein Stop" },
+  { key: 10, label: "-10%" },
+  { key: 15, label: "-15%" },
+  { key: 20, label: "-20%" },
 ];
 
 function fmtUSD(n) {
@@ -51,6 +59,7 @@ function EquityChart({ equityCurve }) {
 export default function Backtest() {
   const [coinId, setCoinId] = useState("bitcoin");
   const [days, setDays] = useState(365);
+  const [stopLoss, setStopLoss] = useState(null);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -60,7 +69,8 @@ export default function Backtest() {
     setError(null);
     setResult(null);
     try {
-      const res = await fetch(`/api/backtest?coin=${coinId}&days=${days}`);
+      const stopParam = stopLoss ? `&stopLoss=${stopLoss}` : "";
+      const res = await fetch(`/api/backtest?coin=${coinId}&days=${days}${stopParam}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setResult(data);
@@ -98,6 +108,17 @@ export default function Backtest() {
           {PERIODS.map((p) => (
             <button key={p.key} className={days === p.key ? "active" : ""} onClick={() => setDays(p.key)} style={{ padding: "5px 10px", fontSize: 12 }}>
               {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="toolbar">
+        <span className="note-label" style={{ fontSize: 12.5 }}>Stop-Loss</span>
+        <div className="tabs">
+          {STOP_LOSSES.map((s) => (
+            <button key={s.label} className={stopLoss === s.key ? "active" : ""} onClick={() => setStopLoss(s.key)} style={{ padding: "5px 10px", fontSize: 12 }}>
+              {s.label}
             </button>
           ))}
         </div>
@@ -143,8 +164,8 @@ export default function Backtest() {
               <p className="card-value">{result.winRate === null ? "n/a" : `${result.winRate.toFixed(0)}%`}</p>
             </div>
             <div className="card">
-              <p className="card-label">Coin / Zeitraum</p>
-              <p className="card-value">{result.coin.symbol} · {result.days}T</p>
+              <p className="card-label">Coin / Zeitraum / Stop</p>
+              <p className="card-value">{result.coin.symbol} · {result.days}T · {result.stopLossPct ? `-${result.stopLossPct}%` : "aus"}</p>
             </div>
           </div>
 
@@ -174,7 +195,7 @@ export default function Backtest() {
                       <tr key={i}>
                         <td>{t.entryDate}</td>
                         <td>${fmtUSD(t.entryPrice)}</td>
-                        <td>{t.exitDate}{t.openAtEnd ? " (offen)" : ""}</td>
+                        <td>{t.exitDate}{t.openAtEnd ? " (offen)" : ""}{t.stoppedOut ? " (Stop)" : ""}</td>
                         <td>${fmtUSD(t.exitPrice)}</td>
                         <td>
                           <span className={`badge ${t.returnPct >= 0 ? "badge-green" : "badge-red"}`}>{fmtPct(t.returnPct)}</span>
