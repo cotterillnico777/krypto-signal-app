@@ -1,118 +1,16 @@
 import { useEffect, useState } from "react";
-
-function ema(arr, period) {
-  const k = 2 / (period + 1);
-  const result = [];
-  let prev = arr.slice(0, period).reduce((a, b) => a + b, 0) / period;
-  result.push(...new Array(period - 1).fill(null), prev);
-  for (let i = period; i < arr.length; i++) {
-    prev = arr[i] * k + prev * (1 - k);
-    result.push(prev);
-  }
-  return result;
-}
-
-function computeMACD(prices) {
-  if (prices.length < 26) return { macd: null, signal: null, prevMacd: null, prevSignal: null };
-  const ema12 = ema(prices, 12);
-  const ema26 = ema(prices, 26);
-  const macdLine = prices.map((_, i) => ema12[i] != null && ema26[i] != null ? ema12[i] - ema26[i] : null);
-  const validMacd = macdLine.filter(v => v != null);
-  const signalLine = ema(validMacd, 9);
-  const last = macdLine[macdLine.length - 1];
-  const lastSignal = signalLine[signalLine.length - 1];
-  return { macd: last, signal: lastSignal, prevMacd: macdLine[macdLine.length - 2], prevSignal: signalLine[signalLine.length - 2] };
-}
-
-function macdSignal(macd) {
-  if (!macd.macd || !macd.signal) return { label: "n/a", dir: 0 };
-  const crossed = macd.prevMacd <= macd.prevSignal && macd.macd > macd.signal;
-  const crossedDown = macd.prevMacd >= macd.prevSignal && macd.macd < macd.signal;
-  if (crossed) return { label: "Kaufen (Crossover)", dir: 1 };
-  if (crossedDown) return { label: "Verkaufen (Crossover)", dir: -1 };
-  return macd.macd > macd.signal ? { label: "Bullish", dir: 0.5 } : { label: "Bearish", dir: -0.5 };
-}
-
-function volumeSignal(volumes) {
-  if (!volumes || volumes.length < 10) return { label: "n/a", dir: 0 };
-  const avgVol = volumes.slice(-10, -1).reduce((a, b) => a + b, 0) / 9;
-  const lastVol = volumes[volumes.length - 1];
-  const ratio = lastVol / avgVol;
-  if (ratio > 1.5) return { label: `+${((ratio-1)*100).toFixed(0)}% vs Ø`, dir: 1 };
-  if (ratio < 0.6) return { label: `${((ratio-1)*100).toFixed(0)}% vs Ø`, dir: -0.5 };
-  return { label: `${((ratio-1)*100).toFixed(0)}% vs Ø`, dir: 0 };
-}
-
-function sma(arr, period) {
-  return arr.map((_, i) => i < period - 1 ? null : arr.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0) / period);
-}
-
-function computeRSI(prices, period = 14) {
-  if (prices.length < period + 1) return null;
-  let gains = 0, losses = 0;
-  for (let i = 1; i <= period; i++) {
-    const diff = prices[i] - prices[i - 1];
-    if (diff >= 0) gains += diff; else losses -= diff;
-  }
-  let avgGain = gains / period, avgLoss = losses / period;
-  for (let i = period + 1; i < prices.length; i++) {
-    const diff = prices[i] - prices[i - 1];
-    avgGain = (avgGain * (period - 1) + (diff > 0 ? diff : 0)) / period;
-    avgLoss = (avgLoss * (period - 1) + (diff < 0 ? -diff : 0)) / period;
-  }
-  if (avgLoss === 0) return 100;
-  return 100 - 100 / (1 + avgGain / avgLoss);
-}
-
-function rsiLabel(rsi) {
-  if (rsi === null) return { text: "n/a", cls: "badge-gray" };
-  if (rsi >= 70) return { text: `${rsi.toFixed(0)} – Überkauft`, cls: "badge-red" };
-  if (rsi <= 30) return { text: `${rsi.toFixed(0)} – Überverkauft`, cls: "badge-green" };
-  return { text: `${rsi.toFixed(0)} – Neutral`, cls: "badge-gray" };
-}
-
-function smaSignal(prices) {
-  const p10 = Math.min(10, Math.floor(prices.length / 3));
-  const p30 = Math.min(30, Math.floor(prices.length * 2 / 3));
-  const s10 = sma(prices, p10), s30 = sma(prices, p30);
-  const last = prices.length - 1, prev = last - 1;
-  if (!s10[last] || !s30[last]) return { label: "Neutral", dir: 0 };
-  const now = s10[last] - s30[last], before = s10[prev] - s30[prev];
-  if (before <= 0 && now > 0) return { label: "Kaufen", dir: 1 };
-  if (before >= 0 && now < 0) return { label: "Verkaufen", dir: -1 };
-  return { label: now > 0 ? "Halten (bullish)" : "Halten (bearish)", dir: now > 0 ? 0.5 : -0.5 };
-}
-
-function yoyGrowth(series) {
-  if (series.length < 13) return null;
-  const last = series[series.length - 1].value, yearAgo = series[series.length - 13].value;
-  return ((last - yearAgo) / yearAgo) * 100;
-}
-
-function computeMacroRegime(m2, fedfunds) {
-  const m2Growth = yoyGrowth(m2);
-  const rateNow = fedfunds[fedfunds.length - 1]?.value;
-  const rate3mo = fedfunds[fedfunds.length - 4]?.value;
-  if (m2Growth == null || rateNow == null || rate3mo == null) return { label: "Unbekannt", cls: "badge-gray", m2Growth, rateNow };
-  const score = m2Growth - (rateNow - rate3mo) * 2;
-  if (score > 1) return { label: "Risk-on", cls: "badge-green", m2Growth, rateNow };
-  if (score < -1) return { label: "Risk-off", cls: "badge-red", m2Growth, rateNow };
-  return { label: "Neutral", cls: "badge-gray", m2Growth, rateNow };
-}
-
-function combineSignal(smaSig, rsi, macro, fg, macdSig, volSig) {
-  let score = smaSig.dir * 1.5 + macdSig.dir * 1.5;
-  if (rsi !== null) { if (rsi <= 30) score += 0.8; if (rsi >= 70) score -= 0.8; }
-  if (fg !== null) { if (fg <= 25) score += 0.5; if (fg >= 75) score -= 0.5; }
-  if (macro.label === "Risk-on") score += 0.3;
-  if (macro.label === "Risk-off") score -= 0.3;
-  score += volSig.dir * 0.4;
-  if (score >= 1.5) return { label: "Kaufen", cls: "badge-green" };
-  if (score <= -1.5) return { label: "Verkaufen", cls: "badge-red" };
-  if (score > 0) return { label: "Halten (bullish)", cls: "badge-amber" };
-  if (score < 0) return { label: "Halten (bearish)", cls: "badge-amber" };
-  return { label: "Neutral", cls: "badge-gray" };
-}
+import {
+  computeMACD,
+  macdSignal,
+  volumeSignal,
+  computeRSI,
+  rsiLabel,
+  smaSignal,
+  computeMacroRegime,
+  combineSignal,
+} from "../lib/signals";
+import PushSubscribeButton from "../components/PushSubscribeButton";
+import InstallPrompt from "../components/InstallPrompt";
 
 function fmtUSD(n) { return n.toLocaleString("de-DE", { maximumFractionDigits: n < 10 ? 3 : 0 }); }
 
@@ -129,11 +27,11 @@ function FearGreedGauge({ value, label }) {
         const x2=cx+r*Math.cos(toRad(to-90)),y2=cy+r*Math.sin(toRad(to-90));
         return <path key={c} d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2} Z`} fill={c} opacity="0.85"/>;
       })}
-      <circle cx={cx} cy={cy} r={r*0.55} fill="white"/>
-      <line x1={cx} y1={cy} x2={needleX} y2={needleY} stroke="#1a1a18" strokeWidth="2.5" strokeLinecap="round"/>
-      <circle cx={cx} cy={cy} r={4} fill="#1a1a18"/>
-      <text x={cx} y={cy-8} textAnchor="middle" fontSize="14" fontWeight="700" fill="#1a1a18">{value}</text>
-      <text x={cx} y={cy+6} textAnchor="middle" fontSize="6" fill="#6b6a64">{label}</text>
+      <circle cx={cx} cy={cy} r={r*0.55} style={{fill:"var(--bg-elevated)"}}/>
+      <line x1={cx} y1={cy} x2={needleX} y2={needleY} style={{stroke:"var(--text)"}} strokeWidth="2.5" strokeLinecap="round"/>
+      <circle cx={cx} cy={cy} r={4} style={{fill:"var(--text)"}}/>
+      <text x={cx} y={cy-8} textAnchor="middle" fontSize="14" fontWeight="700" style={{fill:"var(--text)"}}>{value}</text>
+      <text x={cx} y={cy+6} textAnchor="middle" fontSize="6" style={{fill:"var(--text-muted)"}}>{label}</text>
     </svg>
   );
 }
@@ -217,11 +115,24 @@ export default function Home() {
 
   return (
     <div className="container">
-      <h1>Krypto Signal Dashboard</h1>
-      <p className="subtitle">Binance · FRED · Fear &amp; Greed · SMA + RSI + MACD + Volumen + KI-Analyse</p>
+      <header className="app-header">
+        <div className="brand">
+          <div className="brand-mark">₿</div>
+          <div>
+            <h1>Krypto Signal Dashboard</h1>
+            <p className="subtitle">Binance · FRED · Fear &amp; Greed · SMA + RSI + MACD + Volumen + KI</p>
+          </div>
+        </div>
+        <div className="header-actions">
+          <PushSubscribeButton />
+          <button className="icon-btn" onClick={()=>loadData(tf)} title="Aktualisieren">↻ Aktualisieren</button>
+        </div>
+      </header>
+
+      <InstallPrompt />
 
       {error&&<div className="error-box">Fehler: {error}<div style={{marginTop:8}}><button onClick={()=>loadData(tf)}>Erneut versuchen</button></div></div>}
-      {loading&&!error&&<p>Lade aktuelle Daten…</p>}
+      {loading&&!error&&<div className="loading-state"><span className="spinner" />Lade aktuelle Daten…</div>}
 
       {!loading&&!error&&macro&&(<>
         <div className="grid grid-3" style={{marginBottom:"1rem"}}>
@@ -233,20 +144,19 @@ export default function Home() {
           </div>
         </div>
 
-        <div className={`card ${macro.cls}`} style={{marginBottom:"1.5rem",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <span style={{fontWeight:600}}>Makro-Regime: {macro.label}</span>
-          <span style={{fontSize:12,color:"#6b6a64"}}>M2-Trend minus 2× Zins-Trend</span>
+        <div className={`card macro-banner ${macro.cls}`}>
+          <span className="label">Makro-Regime: {macro.label}</span>
+          <span className="hint">M2-Trend minus 2× Zins-Trend</span>
         </div>
 
-        <div style={{display:"flex",gap:"8px",marginBottom:"1.5rem",flexWrap:"wrap",alignItems:"center"}}>
-          <div className="tabs" style={{margin:0}}>
+        <div className="toolbar">
+          <div className="tabs">
             {crypto.map((c)=><button key={c.id} className={active===c.id?"active":""} onClick={()=>setActive(c.id)}>{c.symbol}</button>)}
           </div>
-          <div style={{marginLeft:"auto",display:"flex",gap:"6px",alignItems:"center"}}>
+          <div className="timeframe-group">
             {TIMEFRAMES.map((t)=>(
               <button key={t.key} className={tf===t.key?"active":""} onClick={()=>switchTf(t.key)} style={{padding:"5px 10px",fontSize:12}}>{t.key}</button>
             ))}
-            <button onClick={()=>loadData(tf)} style={{marginLeft:4}}>↻</button>
           </div>
         </div>
 
@@ -259,27 +169,28 @@ export default function Home() {
             const macdSig=macdSignal(macd);
             const volSig=volumeSignal(c.volumes);
             const combined=combineSignal(smaSig,rsi,macro,fg?.value??null,macdSig,volSig);
+            const isUp = c.change24h>=0;
             return(
-              <div className="card" key={c.id} style={{cursor:"pointer"}} onClick={()=>setActive(c.id)}>
-                <p className="card-label">{c.name}</p>
+              <div className={`card coin-card${active===c.id?" selected":""}`} key={c.id} onClick={()=>setActive(c.id)}>
+                <div className="coin-card-top">
+                  <p className="card-label" style={{margin:0}}>{c.name}</p>
+                  <span className={`change-pill ${isUp?"up":"down"}`}>{isUp?"+":""}{c.change24h.toFixed(1)}%</span>
+                </div>
                 <p className="card-value">${fmtUSD(c.price)}</p>
                 <span className={`badge ${combined.cls}`} style={{marginBottom:8,fontSize:13}}>{combined.label}</span>
-                <p className="note">{c.change24h>=0?"+":""}{c.change24h.toFixed(1)}% (24h)</p>
-                <p className="note">RSI: <span className={`badge ${rsiInfo.cls}`} style={{fontSize:11,padding:"1px 6px"}}>{rsiInfo.text}</span></p>
-                <p className="note">MACD: {macdSig.label}</p>
-                <p className="note">SMA: {smaSig.label}</p>
-                <p className="note">Volumen: {volSig.label}</p>
+                <p className="note"><span className="note-label">RSI</span><span className={`badge ${rsiInfo.cls}`} style={{fontSize:11,padding:"1px 6px"}}>{rsiInfo.text}</span></p>
+                <p className="note"><span className="note-label">MACD</span>{macdSig.label}</p>
+                <p className="note"><span className="note-label">SMA</span>{smaSig.label}</p>
+                <p className="note"><span className="note-label">Volumen</span>{volSig.label}</p>
                 <button
-                  style={{marginTop:10,width:"100%",background:"#378ADD",color:"white",border:"none",borderRadius:6,padding:"6px 0",fontSize:12,cursor:"pointer"}}
+                  className="ai-btn"
                   onClick={(e)=>{e.stopPropagation();getAiAnalysis(c,rsi,macdSig,smaSig,volSig,macro,c.price,c.change24h);}}
                   disabled={aiLoading[c.id]}
                 >
                   {aiLoading[c.id]?"KI analysiert…":"🤖 KI-Analyse"}
                 </button>
                 {aiAnalysis[c.id]&&(
-                  <div style={{marginTop:10,padding:"10px",background:"#f7f6f3",borderRadius:8,fontSize:12,lineHeight:1.6,color:"#1a1a18"}}>
-                    {aiAnalysis[c.id]}
-                  </div>
+                  <div className="ai-result">{aiAnalysis[c.id]}</div>
                 )}
               </div>
             );
