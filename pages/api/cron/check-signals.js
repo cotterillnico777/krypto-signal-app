@@ -38,7 +38,7 @@ export default async function handler(req, res) {
       fetchMacroData(),
       fetchFearGreedData().catch(() => null),
     ]);
-    const macro = computeMacroRegime(macroRaw.m2, macroRaw.fedfunds);
+    const macro = computeMacroRegime(macroRaw.m2, macroRaw.fedfunds, macroRaw.dxy, macroRaw.yield10y, macroRaw.vix);
     const signals = computeAllSignals(coins, macro, fg?.value ?? null);
 
     const subsMap = (await redis.hgetall("push:subscriptions")) || {};

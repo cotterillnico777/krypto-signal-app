@@ -61,8 +61,14 @@ Unter „📊 Backtest" (Link im Dashboard-Header, Route `/backtest`) simuliert 
 - Coin, Zeitraum (90 Tage bis 4 Jahre) und optional einen Stop-Loss (10/15/20%) wählen, dann "Backtest starten" klicken.
 - Angezeigt werden: Strategie-Rendite vs. Buy & Hold, Max Drawdown, Anzahl Trades, Trefferquote, eine Equity-Kurve und die einzelnen Trades (mit "(Stop)"-Markierung bei Stop-Loss-Ausstiegen).
 - Start-Kapital ist ein hypothetisches $10.000, ohne Gebühren/Slippage. Bis zu 4 Jahre zurück deckt frühere Markt-Regime ab (z.B. den Bärenmarkt 2022), damit die Strategie nicht nur an einem einzelnen, zufälligen Marktumfeld gemessen wird.
-- Der Stop-Loss prüft pro simuliertem Tag das Tagestief gegen den Einstiegspreis und schließt die Position zum Stop-Kurs – realistischer als ein reiner Schlusskurs-Check, aber immer noch ohne Slippage.
-- Reine historische Simulation, keine Garantie für zukünftige Ergebnisse und keine Anlageberatung.
+- Der Stop-Loss prüft pro simuliertem Tag das Tagestief/-hoch gegen den Einstiegspreis und schließt die Position zum Stop-Kurs – realistischer als ein reiner Schlusskurs-Check, aber immer noch ohne Slippage.
+
+**Long + Short, Hebel:**
+- **Nur Long** (Standard): bei "Verkaufen"-Signal wird die Position glattgestellt (zurück in Cash), kein Short.
+- **Long + Short**: bei "Verkaufen"-Signal wird stattdessen eine Short-Position eröffnet (gespiegelte Long-Logik). Ein Short kann theoretisch unbegrenzt verlieren, wenn der Kurs stark steigt – die Simulation bildet das ab (siehe Liquidation unten).
+- **Hebel** (1x/2x/3x/5x/10x): verstärkt Kursbewegungen proportional. Bei Hebel >1x wird pro Position eine Liquidationsschwelle berechnet (Kursbewegung von 100%/Hebel gegen die Position → Margin komplett aufgebraucht). Stop-Loss und Liquidation werden unabhängig geprüft, der zuerst erreichte Preis gewinnt. Ein leergeräumtes Konto handelt nicht weiter.
+- **Funding-Kosten**: Sobald Short oder Hebel >1x aktiv ist, bezieht die Simulation echte historische Funding-Rates der Binance-USDT-Perpetuals ein (alle 8h abgerechnet, long zahlt bei positiver Rate an short und umgekehrt) – kein grober Schätzwert, sondern reale Marktdaten für den jeweiligen Zeitraum.
+- Reine historische Simulation, keine Garantie für zukünftige Ergebnisse, kein Ersatz für eigenes Risikomanagement und keine Anlageberatung. Echter Hebelhandel ist riskanter als hier vereinfacht abgebildet (z.B. keine Slippage bei Liquidation, keine Wartungsmargin-Stufen).
 
 ---
 
@@ -123,12 +129,17 @@ curl "http://localhost:3000/api/cron/check-signals?secret=DEIN_CRON_SECRET"
 - Sonst → **Halten**
 
 **Makro-Regime:**
-- Basiert auf M2-Geldmengenwachstum (YoY) minus 2× dem Leitzins-Trend (3 Monate)
-- Positiver Score → **Risk-on** (gut für Krypto)
-- Negativer Score → **Risk-off** (schlecht für Krypto)
+Fünf Faktoren fließen in einen Score ein, jeder einzeln auf ungefähr -1 bis +1 normalisiert (statt Rohwerte unterschiedlicher Einheiten direkt zu addieren):
+- **M2-Geldmengenwachstum** (YoY): mehr Liquidität im System → risk-on
+- **Leitzins-Trend** (3 Monate): Zinssenkungen → risk-on, Erhöhungen → risk-off
+- **Dollar-Index-Trend** (3 Monate): schwächerer Dollar → typischerweise risk-on für Krypto
+- **10-jährige US-Staatsanleihe-Rendite** (3-Monats-Trend): fallende Renditen → risk-on
+- **VIX** (aktueller Stand): erhöhte Angst (≥25) → risk-off, Sorglosigkeit (≤15) → leicht risk-on
+
+Gesamt-Score ≥ 1,5 → **Risk-on**, ≤ -1,5 → **Risk-off**, sonst **Neutral**.
 
 **Kombiniertes Signal:**
-- Technisches Signal + Makro-Regime werden zusammengeführt
+- Technisches Signal + Makro-Regime + Fear & Greed werden zusammengeführt
 - Widersprüche werden als "Vorsicht"-Hinweis angezeigt
 
 ---
@@ -138,6 +149,9 @@ curl "http://localhost:3000/api/cron/check-signals?secret=DEIN_CRON_SECRET"
 - **Krypto-Kurse:** [Binance API](https://binance-docs.github.io/apidocs/spot/en/) (kostenlos, kein Key nötig, volle Tages-Historie seit Listing)
 - **M2-Geldmenge:** [FRED M2SL](https://fred.stlouisfed.org/series/M2SL)
 - **US-Leitzins:** [FRED FEDFUNDS](https://fred.stlouisfed.org/series/FEDFUNDS)
+- **Dollar-Index:** [FRED DTWEXBGS](https://fred.stlouisfed.org/series/DTWEXBGS)
+- **10J-Staatsanleihe-Rendite:** [FRED DGS10](https://fred.stlouisfed.org/series/DGS10)
+- **VIX:** [FRED VIXCLS](https://fred.stlouisfed.org/series/VIXCLS)
 
 ---
 
