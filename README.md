@@ -54,6 +54,17 @@ Nach der Installation startet die App im eigenen Fenster (ohne Browser-Leiste) u
 
 ---
 
+## Backtest
+
+Unter „📊 Backtest" (Link im Dashboard-Header, Route `/backtest`) simuliert die App die exakt gleiche Signal-Strategie (SMA + RSI + MACD + Volumen + Makro + Fear & Greed) Tag für Tag auf historischen Kursdaten – ohne Lookahead, es fließen an jedem simulierten Tag nur Daten bis einschließlich diesem Tag ein.
+
+- Coin und Zeitraum (90/180/365 Tage) wählen, dann "Backtest starten" klicken.
+- Angezeigt werden: Strategie-Rendite vs. Buy & Hold, Max Drawdown, Anzahl Trades, Trefferquote, eine Equity-Kurve und die einzelnen Trades.
+- Start-Kapital ist ein hypothetisches $10.000, ohne Gebühren/Slippage. 365 Tage ist das Maximum, weil CoinGecko im kostenlosen Tarif nur ~1 Jahr tägliche Historie erlaubt.
+- Reine historische Simulation, keine Garantie für zukünftige Ergebnisse und keine Anlageberatung.
+
+---
+
 ## Push-Benachrichtigungen einrichten
 
 Die App schickt eine Push-Benachrichtigung, sobald ein Coin **neu** auf "Kaufen" wechselt. Dafür braucht es zwei Dinge: VAPID-Keys (bereits erledigt) und einen Cloud-Speicher für die Abo-Daten.
