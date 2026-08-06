@@ -69,6 +69,23 @@ Unter „📊 Backtest" (Link im Dashboard-Header, Route `/backtest`) simuliert 
 - **Hebel** (1x/2x/3x/5x/10x): verstärkt Kursbewegungen proportional. Bei Hebel >1x wird pro Position eine Liquidationsschwelle berechnet (Kursbewegung von 100%/Hebel gegen die Position → Margin komplett aufgebraucht). Stop-Loss und Liquidation werden unabhängig geprüft, der zuerst erreichte Preis gewinnt. Ein leergeräumtes Konto handelt nicht weiter.
 - **Funding-Kosten**: Sobald Short oder Hebel >1x aktiv ist, bezieht die Simulation echte historische Funding-Rates der Binance-USDT-Perpetuals ein (alle 8h abgerechnet, long zahlt bei positiver Rate an short und umgekehrt) – kein grober Schätzwert, sondern reale Marktdaten für den jeweiligen Zeitraum.
 - Reine historische Simulation, keine Garantie für zukünftige Ergebnisse, kein Ersatz für eigenes Risikomanagement und keine Anlageberatung. Echter Hebelhandel ist riskanter als hier vereinfacht abgebildet (z.B. keine Slippage bei Liquidation, keine Wartungsmargin-Stufen).
+- Zusätzlich zu Rendite/Drawdown zeigt der Backtest jetzt auch **Sharpe** und **Sortino Ratio** (Rendite pro Risikoeinheit, annualisiert, ohne risikofreien Zins) – wichtig, um Kombinationen nicht nur nach roher Rendite zu bewerten, sondern danach, wie viel Risiko dafür nötig war.
+
+---
+
+## Parameter-Optimierung
+
+Unter "🔬 Optimierung" (Route `/optimize`) wird automatisch ein Raster aus 80 Kombinationen (5 SMA-Perioden-Paare × 4 RSI-Schwellen-Paare × 4 ADX-Trendfilter-Stufen, inkl. "aus") getestet, um zu prüfen, ob andere Parameter als die Dashboard-Standardwerte robust besser abschneiden.
+
+**Warum nicht einfach die Kombination mit der höchsten Rendite nehmen?** Weil man dann fast garantiert eine Kombination findet, die zufällig gut zur getesteten Historie passt (Overfitting) – nicht eine mit echter Kante. Deshalb:
+
+1. Die ersten 70% des gewählten Zeitraums sind das **Trainings-Fenster**: alle 80 Kombinationen laufen hier, sortiert nach Sharpe Ratio (nicht roher Rendite, sonst gewinnt oft die riskanteste Kombination).
+2. Nur die Top 5 werden zusätzlich auf den letzten 30% (**Test-Fenster**, hat der Scan nie gesehen) noch einmal durchgerechnet.
+3. Kombinationen, die im Training stark aussehen, aber im Test einbrechen, werden als "schwach im Test" markiert – klassisches Overfitting-Warnsignal. Nur was in **beiden** Fenstern solide abschneidet, ist ein ernsthafter Kandidat.
+
+**ADX-Trendfilter:** Der Average Directional Index misst Trendstärke unabhängig von der Richtung. Ist der ADX unter der gewählten Schwelle (Markt ohne klaren Trend, "Seitwärts"), werden Kaufen/Verkaufen-Crossover-Signale zu "Halten" abgeschwächt – soll verhindern, dass die Strategie in ausgeprägten Seitwärtsphasen unnötig oft ein- und aussteigt (Whipsaws).
+
+Die Optimierung testet aktuell nur SMA/RSI/ADX – Stop-Loss, Short und Hebel bleiben auf den Standardwerten (aus/1x), um das Raster nicht explodieren zu lassen. Eine vielversprechende Kombination lässt sich danach manuell im normalen Backtest mit diesen zusätzlichen Optionen nachtesten.
 
 ---
 

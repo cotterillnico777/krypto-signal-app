@@ -104,6 +104,7 @@ export default function Backtest() {
           </div>
         </div>
         <div className="header-actions">
+          <Link href="/optimize" className="icon-btn">🔬 Optimierung</Link>
           <Link href="/" className="icon-btn">← Dashboard</Link>
         </div>
       </header>
@@ -202,9 +203,15 @@ export default function Backtest() {
               <p className="card-value">{result.winRate === null ? "n/a" : `${result.winRate.toFixed(0)}%`}</p>
             </div>
             <div className="card">
-              <p className="card-label">Coin / Zeitraum / Stop / Hebel</p>
-              <p className="card-value" style={{ fontSize: 16 }}>{result.coin.symbol} · {result.days}T · {result.stopLossPct ? `-${result.stopLossPct}%` : "kein Stop"} · {result.leverage}x{result.allowShort ? " · Short erlaubt" : ""}</p>
+              <p className="card-label">Sharpe / Sortino</p>
+              <p className="card-value" style={{ fontSize: 18 }}>{result.sharpe === null ? "n/a" : result.sharpe.toFixed(2)} / {result.sortino === null ? "n/a" : result.sortino.toFixed(2)}</p>
+              <p className="note">Rendite pro Risikoeinheit (annualisiert)</p>
             </div>
+          </div>
+
+          <div className="card" style={{ marginBottom: "1.5rem" }}>
+            <p className="card-label">Coin / Zeitraum / Stop / Hebel</p>
+            <p className="card-value" style={{ fontSize: 16 }}>{result.coin.symbol} · {result.days}T · {result.stopLossPct ? `-${result.stopLossPct}%` : "kein Stop"} · {result.leverage}x{result.allowShort ? " · Short erlaubt" : ""}</p>
           </div>
 
           <div className="card" style={{ marginBottom: "1.5rem" }}>

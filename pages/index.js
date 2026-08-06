@@ -126,6 +126,7 @@ export default function Home() {
         </div>
         <div className="header-actions">
           <Link href="/backtest" className="icon-btn">📊 Backtest</Link>
+          <Link href="/optimize" className="icon-btn">🔬 Optimierung</Link>
           <PushSubscribeButton />
           <button className="icon-btn" onClick={()=>loadData(tf)} title="Aktualisieren">↻ Aktualisieren</button>
         </div>
