@@ -16,6 +16,14 @@ const STOP_LOSSES = [
   { key: 20, label: "-20%" },
 ];
 
+const LEVERAGES = [
+  { key: 1, label: "1x (kein Hebel)" },
+  { key: 2, label: "2x" },
+  { key: 3, label: "3x" },
+  { key: 5, label: "5x" },
+  { key: 10, label: "10x" },
+];
+
 function fmtUSD(n) {
   return n.toLocaleString("de-DE", { maximumFractionDigits: n < 10 ? 3 : 0 });
 }
@@ -60,6 +68,8 @@ export default function Backtest() {
   const [coinId, setCoinId] = useState("bitcoin");
   const [days, setDays] = useState(365);
   const [stopLoss, setStopLoss] = useState(null);
+  const [allowShort, setAllowShort] = useState(false);
+  const [leverage, setLeverage] = useState(1);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -70,7 +80,9 @@ export default function Backtest() {
     setResult(null);
     try {
       const stopParam = stopLoss ? `&stopLoss=${stopLoss}` : "";
-      const res = await fetch(`/api/backtest?coin=${coinId}&days=${days}${stopParam}`);
+      const shortParam = allowShort ? "&short=1" : "";
+      const leverageParam = leverage !== 1 ? `&leverage=${leverage}` : "";
+      const res = await fetch(`/api/backtest?coin=${coinId}&days=${days}${stopParam}${shortParam}${leverageParam}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setResult(data);
@@ -124,6 +136,31 @@ export default function Backtest() {
         </div>
       </div>
 
+      <div className="toolbar">
+        <span className="note-label" style={{ fontSize: 12.5 }}>Richtung</span>
+        <div className="tabs">
+          <button className={!allowShort ? "active" : ""} onClick={() => setAllowShort(false)} style={{ padding: "5px 10px", fontSize: 12 }}>Nur Long</button>
+          <button className={allowShort ? "active" : ""} onClick={() => setAllowShort(true)} style={{ padding: "5px 10px", fontSize: 12 }}>Long + Short</button>
+        </div>
+      </div>
+
+      <div className="toolbar">
+        <span className="note-label" style={{ fontSize: 12.5 }}>Hebel</span>
+        <div className="tabs">
+          {LEVERAGES.map((l) => (
+            <button key={l.key} className={leverage === l.key ? "active" : ""} onClick={() => setLeverage(l.key)} style={{ padding: "5px 10px", fontSize: 12 }}>
+              {l.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {leverage > 1 && (
+        <div className="toast-banner" style={{ marginBottom: "1rem" }}>
+          <span className="msg">⚠️ Bei Hebel {leverage}x wird die Position liquidiert (Totalverlust der Margin), wenn sich der Kurs um {(100 / leverage).toFixed(1)}% gegen dich bewegt. Funding-Kosten (echte historische Binance-Perpetual-Rates) fließen mit ein.</span>
+        </div>
+      )}
+
       <button className="icon-btn primary" onClick={runBacktest} disabled={loading} style={{ marginBottom: "1.5rem" }}>
         {loading ? "Simuliere…" : "▶ Backtest starten"}
       </button>
@@ -158,14 +195,15 @@ export default function Backtest() {
             <div className="card">
               <p className="card-label">Anzahl Trades</p>
               <p className="card-value">{result.tradeCount}</p>
+              {result.liquidationCount > 0 && <p className="note">davon {result.liquidationCount} liquidiert</p>}
             </div>
             <div className="card">
               <p className="card-label">Trefferquote</p>
               <p className="card-value">{result.winRate === null ? "n/a" : `${result.winRate.toFixed(0)}%`}</p>
             </div>
             <div className="card">
-              <p className="card-label">Coin / Zeitraum / Stop</p>
-              <p className="card-value">{result.coin.symbol} · {result.days}T · {result.stopLossPct ? `-${result.stopLossPct}%` : "aus"}</p>
+              <p className="card-label">Coin / Zeitraum / Stop / Hebel</p>
+              <p className="card-value" style={{ fontSize: 16 }}>{result.coin.symbol} · {result.days}T · {result.stopLossPct ? `-${result.stopLossPct}%` : "kein Stop"} · {result.leverage}x{result.allowShort ? " · Short erlaubt" : ""}</p>
             </div>
           </div>
 
@@ -183,19 +221,21 @@ export default function Backtest() {
                 <table className="table">
                   <thead>
                     <tr>
-                      <th>Kauf</th>
-                      <th>Kauf-Preis</th>
-                      <th>Verkauf</th>
-                      <th>Verkauf-Preis</th>
+                      <th>Richtung</th>
+                      <th>Einstieg</th>
+                      <th>Einstiegs-Preis</th>
+                      <th>Ausstieg</th>
+                      <th>Ausstiegs-Preis</th>
                       <th>Rendite</th>
                     </tr>
                   </thead>
                   <tbody>
                     {result.trades.map((t, i) => (
                       <tr key={i}>
+                        <td><span className={`badge ${t.direction === "short" ? "badge-red" : "badge-green"}`}>{t.direction === "short" ? "Short" : "Long"}</span></td>
                         <td>{t.entryDate}</td>
                         <td>${fmtUSD(t.entryPrice)}</td>
-                        <td>{t.exitDate}{t.openAtEnd ? " (offen)" : ""}{t.stoppedOut ? " (Stop)" : ""}</td>
+                        <td>{t.exitDate}{t.openAtEnd ? " (offen)" : ""}{t.stoppedOut ? " (Stop)" : ""}{t.liquidated ? " (liquidiert)" : ""}</td>
                         <td>${fmtUSD(t.exitPrice)}</td>
                         <td>
                           <span className={`badge ${t.returnPct >= 0 ? "badge-green" : "badge-red"}`}>{fmtPct(t.returnPct)}</span>
@@ -211,7 +251,8 @@ export default function Backtest() {
       )}
 
       <div className="disclaimer">
-        Historische Simulation der Dashboard-Signale (SMA + RSI + MACD + Volumen + Makro + Fear &amp; Greed), Start-Kapital $10.000, keine Gebühren/Slippage berücksichtigt.
+        Historische Simulation der Dashboard-Signale (SMA + RSI + MACD + Volumen + Makro + Fear &amp; Greed), Start-Kapital $10.000, keine Handelsgebühren/Slippage berücksichtigt.
+        Bei Hebel &gt;1x oder Short-Positionen werden echte historische Funding-Rates von Binance-Perpetuals einbezogen und eine Liquidierungsschwelle simuliert – trotzdem eine vereinfachte Annahme, echter Hebelhandel ist riskanter als hier abgebildet.
         Vergangene Wertentwicklung ist keine Garantie für zukünftige Ergebnisse. Keine Anlageberatung.
       </div>
     </div>
