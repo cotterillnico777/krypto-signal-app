@@ -1,6 +1,6 @@
 # Krypto Signal Dashboard
 
-Live-Krypto-Signale (BTC, ETH, SOL) kombiniert mit echten Makrodaten (M2-Geldmenge, US-Leitzins).
+Live-Krypto-Signale (BTC, ETH, SOL, XRP, TAO) kombiniert mit echten Makrodaten (M2-Geldmenge, US-Leitzins), Fear & Greed Index und KI-Analyse. Als installierbare PWA mit Push-Benachrichtigungen bei Kaufsignalen.
 
 ---
 
@@ -40,6 +40,51 @@ npm run dev
 ```
 Dann im Browser öffnen: http://localhost:3000
 
+Push-Benachrichtigungen funktionieren lokal erst, sobald du Schritt "Push-Benachrichtigungen einrichten" unten erledigt hast (Upstash-Account).
+
+---
+
+## PWA – als App installieren
+
+Die App ist eine installierbare Progressive Web App:
+- **Android / Desktop Chrome:** Beim Besuch erscheint automatisch ein Banner "Als App installieren", oder über das Menü → "App installieren".
+- **iOS Safari:** Teilen-Symbol antippen → "Zum Home-Bildschirm".
+
+Nach der Installation startet die App im eigenen Fenster (ohne Browser-Leiste) und hat ein eigenes App-Icon.
+
+---
+
+## Push-Benachrichtigungen einrichten
+
+Die App schickt eine Push-Benachrichtigung, sobald ein Coin **neu** auf "Kaufen" wechselt. Dafür braucht es zwei Dinge: VAPID-Keys (bereits erledigt) und einen Cloud-Speicher für die Abo-Daten.
+
+### 1. Kostenlosen Upstash-Redis-Account anlegen
+1. Gehe zu https://upstash.com und registriere dich kostenlos
+2. "Create Database" → Name frei wählbar, Region z.B. `eu-west-1`
+3. Im Dashboard der Datenbank unter "REST API" findest du:
+   - `UPSTASH_REDIS_REST_URL`
+   - `UPSTASH_REDIS_REST_TOKEN`
+4. Beide Werte in deine `.env.local` eintragen (lokal) bzw. bei Vercel als Environment Variables hinzufügen (Live-Betrieb)
+
+### 2. VAPID-Keys
+Wurden bereits für dich generiert und stehen in `.env.local` (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`). Falls du eigene brauchst:
+```
+npx web-push generate-vapid-keys
+```
+
+### 3. In der App aktivieren
+Auf "🔔 Push aktivieren" oben rechts klicken und die Browser-Berechtigung erteilen. Funktioniert nur über HTTPS oder `localhost` – nicht über eine `http://`-IP-Adresse.
+
+### 4. Automatische Prüfung (Cron-Job)
+`vercel.json` enthält bereits einen Cron-Job, der `/api/cron/check-signals` täglich um 07:00 UTC aufruft (im kostenlosen Vercel-Hobby-Plan ist 1×/Tag das Maximum). Uhrzeit anpassbar über das `schedule`-Feld (Cron-Syntax).
+
+Damit der Cron-Endpunkt nicht von außen missbraucht werden kann, ist er über `CRON_SECRET` geschützt. Vercel setzt bei aktiviertem Cron automatisch den passenden `Authorization`-Header. Trage `CRON_SECRET` (siehe `.env.local`) zusätzlich als Environment Variable bei Vercel ein.
+
+Manuell testen (lokal):
+```
+curl "http://localhost:3000/api/cron/check-signals?secret=DEIN_CRON_SECRET"
+```
+
 ---
 
 ## Online deployen (kostenlos, mit Vercel)
@@ -47,10 +92,12 @@ Dann im Browser öffnen: http://localhost:3000
 1. Kostenlosen Account anlegen: https://vercel.com
 2. Dein Projekt bei GitHub hochladen (oder Vercel CLI nutzen):
    - Einfachste Variante: https://vercel.com/new → "Import from GitHub"
-3. Beim Einrichten unter "Environment Variables" hinzufügen:
-   - Name: `FRED_API_KEY`
-   - Value: dein FRED-Key
-4. Deploy klicken → fertig. Du bekommst eine öffentliche URL wie `https://krypto-signal-xyz.vercel.app`
+3. Beim Einrichten unter "Environment Variables" alle Werte aus `.env.local` eintragen:
+   - `FRED_API_KEY`, `ANTHROPIC_API_KEY`, `COINGECKO_API_KEY`
+   - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`
+   - `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
+   - `CRON_SECRET`
+4. Deploy klicken → fertig. Du bekommst eine öffentliche URL wie `https://krypto-signal-xyz.vercel.app`. Der Cron-Job wird automatisch aus `vercel.json` übernommen (sichtbar unter Project → Settings → Cron Jobs).
 
 ---
 
