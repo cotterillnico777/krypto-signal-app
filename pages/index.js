@@ -165,9 +165,11 @@ export default function Home() {
   const [tf,setTf]=useState("1D");
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState(null);
+  const [aiAnalysis,setAiAnalysis]=useState({});
+  const [aiLoading,setAiLoading]=useState({});
 
   async function loadData(timeframe) {
-    setLoading(true); setError(null);
+    setLoading(true); setError(null); setAiAnalysis({});
     try {
       const [cRes,mRes,fRes]=await Promise.all([
         fetch(`/api/crypto?tf=${timeframe||tf}`),
@@ -181,6 +183,31 @@ export default function Home() {
     } catch(e) { setError(e.message); } finally { setLoading(false); }
   }
 
+  async function getAiAnalysis(coin, rsi, macd, smaSig, volSig, macro, price, change24h) {
+    setAiLoading(prev => ({ ...prev, [coin.id]: true }));
+    try {
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          coin: coin.name,
+          price, change24h, rsi: rsi?.toFixed(0),
+          macd: macd.label, sma: smaSig.label,
+          volume: volSig.label,
+          macro: macro.label,
+          feargreed: fg ? `${fg.value} (${fg.label})` : "n/a",
+          tf,
+        }),
+      });
+      const data = await res.json();
+      setAiAnalysis(prev => ({ ...prev, [coin.id]: data.analysis || data.error }));
+    } catch(e) {
+      setAiAnalysis(prev => ({ ...prev, [coin.id]: "Fehler beim Laden der KI-Analyse." }));
+    } finally {
+      setAiLoading(prev => ({ ...prev, [coin.id]: false }));
+    }
+  }
+
   useEffect(()=>{loadData("1D");},[]);
   function switchTf(newTf) { setTf(newTf); loadData(newTf); }
 
@@ -191,7 +218,7 @@ export default function Home() {
   return (
     <div className="container">
       <h1>Krypto Signal Dashboard</h1>
-      <p className="subtitle">Binance · FRED · Fear &amp; Greed · SMA + RSI + MACD + Volumen + Makro</p>
+      <p className="subtitle">Binance · FRED · Fear &amp; Greed · SMA + RSI + MACD + Volumen + KI-Analyse</p>
 
       {error&&<div className="error-box">Fehler: {error}<div style={{marginTop:8}}><button onClick={()=>loadData(tf)}>Erneut versuchen</button></div></div>}
       {loading&&!error&&<p>Lade aktuelle Daten…</p>}
@@ -242,6 +269,18 @@ export default function Home() {
                 <p className="note">MACD: {macdSig.label}</p>
                 <p className="note">SMA: {smaSig.label}</p>
                 <p className="note">Volumen: {volSig.label}</p>
+                <button
+                  style={{marginTop:10,width:"100%",background:"#378ADD",color:"white",border:"none",borderRadius:6,padding:"6px 0",fontSize:12,cursor:"pointer"}}
+                  onClick={(e)=>{e.stopPropagation();getAiAnalysis(c,rsi,macdSig,smaSig,volSig,macro,c.price,c.change24h);}}
+                  disabled={aiLoading[c.id]}
+                >
+                  {aiLoading[c.id]?"KI analysiert…":"🤖 KI-Analyse"}
+                </button>
+                {aiAnalysis[c.id]&&(
+                  <div style={{marginTop:10,padding:"10px",background:"#f7f6f3",borderRadius:8,fontSize:12,lineHeight:1.6,color:"#1a1a18"}}>
+                    {aiAnalysis[c.id]}
+                  </div>
+                )}
               </div>
             );
           })}
