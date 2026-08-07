@@ -7,6 +7,7 @@ const PERIODS = [
   { key: 365, label: "1 Jahr" },
   { key: 730, label: "2 Jahre" },
   { key: 1460, label: "4 Jahre" },
+  { key: 2920, label: "8 Jahre" },
 ];
 
 const STOP_LOSSES = [

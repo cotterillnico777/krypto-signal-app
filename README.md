@@ -87,6 +87,12 @@ Unter "🔬 Optimierung" (Route `/optimize`) wird automatisch ein Raster aus 80 
 
 Die Optimierung testet aktuell nur SMA/RSI/ADX – Stop-Loss, Short und Hebel bleiben auf den Standardwerten (aus/1x), um das Raster nicht explodieren zu lassen. Eine vielversprechende Kombination lässt sich danach manuell im normalen Backtest mit diesen zusätzlichen Optionen nachtesten.
 
+**Größere Datenbasis für verlässlichere Rückschlüsse:**
+- **Zeiträume bis zu 8 Jahre** (Backtest und Optimierung) – Binance führt BTCUSDT/ETHUSDT seit 2017, das deckt mehrere komplette Marktzyklen ab (2018er Bärenmarkt, 2020 COVID-Crash, 2021er Bullenmarkt, 2022er Bärenmarkt) statt nur einen einzelnen Zyklus.
+- **Multi-Coin-Modus** ("Alle 5 Coins" statt "1 Coin"): testet jede der 80 Kombinationen über BTC, ETH, SOL, XRP und TAO gleichzeitig und rankt nach durchschnittlichem Sharpe. Eine "Konsistenz"-Spalte zeigt, bei wie vielen der 5 Coins die Kombination positiv war – eine Kombination, die nur bei einem einzelnen Coin (oft nur ein dominanter Trade) gut aussieht, aber bei den anderen vier durchfällt, ist statistisch nicht überzeugend.
+
+Beide Erweiterungen haben in Tests wiederholt bestätigt, was das ursprüngliche Problem war: Mit wenig Daten (kurzer Zeitraum, ein Coin) sah die beste Trainings-Kombination oft beeindruckend aus (teils über +2000% Rendite über 8 Jahre), brach aber im Out-of-Sample-Test bzw. bei anderen Coins deutlich ein – der Sample-Size-Effekt lässt sich nicht wegoptimieren, aber die Out-of-Sample- und Multi-Coin-Checks machen ihn sichtbar, statt ihn zu verstecken.
+
 ---
 
 ## Push-Benachrichtigungen einrichten
