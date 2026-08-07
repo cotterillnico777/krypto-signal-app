@@ -1,7 +1,7 @@
 import { COINS, fetchHistoricalSeries, fetchMacroData, fetchFearGreedData, fetchFundingRateHistory } from "../../lib/marketData";
 import { runBacktest } from "../../lib/backtest";
 
-const MAX_DAYS = 1825; // 5 Jahre – Binance hat die Historie, mehr macht die Anfrage nur langsamer
+const MAX_DAYS = 3000; // ~8,2 Jahre – BTCUSDT/ETHUSDT sind seit 2017 auf Binance gelistet
 const MAX_LEVERAGE = 10;
 
 export default async function handler(req, res) {
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     const [series, macro, fg, funding] = await Promise.all([
       fetchHistoricalSeries(coinId, days),
       fetchMacroData(Math.ceil(days / 30) + 20, days + 120),
-      fetchFearGreedData(Math.min(days + 60, 3000)).catch(() => ({ history: [] })),
+      fetchFearGreedData(Math.min(days + 60, 3500)).catch(() => ({ history: [] })),
       usesPerpetual ? fetchFundingRateHistory(coinId, days).catch(() => []) : Promise.resolve(null),
     ]);
 

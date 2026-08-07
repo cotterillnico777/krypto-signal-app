@@ -1,26 +1,75 @@
 import { COINS, fetchHistoricalSeries, fetchMacroData, fetchFearGreedData, fetchFundingRateHistory } from "../../lib/marketData";
-import { runOptimization } from "../../lib/optimizer";
+import { runOptimization, runMultiCoinOptimization } from "../../lib/optimizer";
 
 export const config = { maxDuration: 60 };
 
-const MAX_DAYS = 1825;
+const MAX_DAYS = 3000; // ~8,2 Jahre – BTCUSDT/ETHUSDT sind seit 2017 auf Binance gelistet
 
 export default async function handler(req, res) {
-  const coinId = req.query.coin || "bitcoin";
   const days = Math.min(Math.max(parseInt(req.query.days) || 730, 180), MAX_DAYS);
   const stopLossPct = req.query.stopLoss ? Math.min(Math.max(parseFloat(req.query.stopLoss), 1), 90) : null;
   const allowShort = req.query.short === "1";
   const leverage = Math.min(Math.max(parseInt(req.query.leverage) || 1, 1), 10);
-  const coin = COINS.find((c) => c.id === coinId);
-  if (!coin) return res.status(400).json({ error: "Unbekannte Coin." });
+  const multiCoin = req.query.mode === "multi";
 
   const usesPerpetual = allowShort || leverage > 1;
 
   try {
-    const [series, macro, fg, funding] = await Promise.all([
-      fetchHistoricalSeries(coinId, days),
+    const macroAndFg = Promise.all([
       fetchMacroData(Math.ceil(days / 30) + 20, days + 120),
-      fetchFearGreedData(Math.min(days + 60, 3000)).catch(() => ({ history: [] })),
+      fetchFearGreedData(Math.min(days + 60, 3500)).catch(() => ({ history: [] })),
+    ]);
+
+    if (multiCoin) {
+      const [[macro, fg], seriesPerCoin] = await Promise.all([
+        macroAndFg,
+        Promise.all(
+          COINS.map(async (coin) => {
+            const [series, funding] = await Promise.all([
+              fetchHistoricalSeries(coin.id, days),
+              usesPerpetual ? fetchFundingRateHistory(coin.id, days).catch(() => []) : Promise.resolve(null),
+            ]);
+            return { coin, series, funding };
+          })
+        ),
+      ]);
+
+      const coinDatasets = seriesPerCoin
+        .filter(({ series }) => series.prices.length >= 180)
+        .map(({ coin, series, funding }) => ({
+          coinId: coin.id,
+          symbol: coin.symbol,
+          prices: series.prices.map((p) => p.v),
+          highs: series.highs.map((h) => h.v),
+          lows: series.lows.map((l) => l.v),
+          volumes: series.volumes.map((v) => v.v),
+          dates: series.prices.map((p) => p.t),
+          fundingRates: funding,
+        }));
+
+      if (coinDatasets.length < 2) {
+        return res.status(400).json({ error: "Nicht genug historische Daten für eine Multi-Coin-Optimierung." });
+      }
+
+      const result = runMultiCoinOptimization({
+        coinDatasets,
+        macro,
+        fearGreedHistory: fg.history,
+        stopLossPct,
+        allowShort,
+        leverage,
+      });
+
+      return res.status(200).json({ mode: "multi", days, stopLossPct, allowShort, leverage, ...result });
+    }
+
+    const coinId = req.query.coin || "bitcoin";
+    const coin = COINS.find((c) => c.id === coinId);
+    if (!coin) return res.status(400).json({ error: "Unbekannte Coin." });
+
+    const [[macro, fg], series, funding] = await Promise.all([
+      macroAndFg,
+      fetchHistoricalSeries(coinId, days),
       usesPerpetual ? fetchFundingRateHistory(coinId, days).catch(() => []) : Promise.resolve(null),
     ]);
 
@@ -42,7 +91,7 @@ export default async function handler(req, res) {
       leverage,
     });
 
-    res.status(200).json({ coin, days, stopLossPct, allowShort, leverage, ...result });
+    res.status(200).json({ mode: "single", coin, days, stopLossPct, allowShort, leverage, ...result });
   } catch (err) {
     res.status(500).json({ error: err.message || "Optimierung fehlgeschlagen." });
   }
