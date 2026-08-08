@@ -97,6 +97,23 @@ Beide Erweiterungen haben in Tests wiederholt bestätigt, was das ursprüngliche
 
 ---
 
+## Walk-Forward-Validierung
+
+Unter "📈 Walk-Forward" (Route `/walkforward`) wird der gewählte Zeitraum statt in einen einzigen 70/30-Split in **5 aufeinanderfolgende Segmente** geteilt, daraus ergeben sich **4 Folds**:
+
+1. Fold 1 trainiert auf Segment 1, testet auf Segment 2.
+2. Fold 2 trainiert auf Segment 1+2 (wachsendes Fenster), testet auf Segment 3.
+3. Fold 3 trainiert auf Segment 1-3, testet auf Segment 4.
+4. Fold 4 trainiert auf Segment 1-4, testet auf Segment 5.
+
+Jeder Fold sucht unabhängig die (nach Sharpe) beste der 80 SMA/RSI/ADX-Kombinationen im jeweiligen Trainingsfenster und wendet genau diese sofort auf das nächste, nie gesehene Test-Segment an – das simuliert, wie ein Trader, der die Strategie periodisch neu optimiert, in der Praxis abgeschnitten hätte.
+
+**Warum das strenger ist als der einfache Train/Test-Split des Optimizers:** Ein einzelner Split hängt davon ab, ob genau diese eine Testphase zufällig zur trainierten Kombination passt. Walk-Forward mittelt über mehrere, zeitlich verschobene Testphasen – eine Kombination, die nur in einer bestimmten Marktphase (z.B. einem Bullenlauf) funktioniert, fällt in den anderen Folds durch, statt das Gesamtbild zu verzerren. Zusätzlich zeigt die Fold-Tabelle, wie stark die "beste" Parameter-Kombination von Fold zu Fold wechselt – ein starker Wechsel ist selbst ein Warnsignal (kein stabiler Vorteil, sondern regimeabhängiges Rauschen).
+
+Ergebnis wird als **Ø Out-of-Sample-Rendite/Sharpe** über alle 4 Folds sowie "X/4 profitable Folds" zusammengefasst. Wie beim Optimizer bleiben Stop-Loss/Short/Hebel auf Standardwerten, um die Rechenzeit (4× 80 Kombinationen) im Rahmen zu halten; getestet mit BTC/ETH über 2-8 Jahre inkl. Short+Hebel, läuft lokal in 2-5s, deutlich innerhalb des 60s-Limits von Vercel.
+
+---
+
 ## Push-Benachrichtigungen einrichten
 
 Die App schickt eine Push-Benachrichtigung, sobald ein Coin **neu** auf "Kaufen" wechselt. Dafür braucht es zwei Dinge: VAPID-Keys (bereits erledigt) und einen Cloud-Speicher für die Abo-Daten.
