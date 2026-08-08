@@ -12,6 +12,9 @@ export default async function handler(req, res) {
   const allowShort = req.query.short === "1";
   const leverage = Math.min(Math.max(parseInt(req.query.leverage) || 1, 1), 10);
   const costPct = req.query.cost != null ? Math.min(Math.max(parseFloat(req.query.cost), 0), 2) : 0.15;
+  const useBollinger = req.query.boll === "1";
+  const useStochRsi = req.query.stoch === "1";
+  const useObv = req.query.obv === "1";
   const multiCoin = req.query.mode === "multi";
 
   const usesPerpetual = allowShort || leverage > 1;
@@ -61,10 +64,13 @@ export default async function handler(req, res) {
         allowShort,
         leverage,
         costPct,
+        useBollinger,
+        useStochRsi,
+        useObv,
         folds: FOLDS,
       });
 
-      return res.status(200).json({ mode: "multi", requestedDays: days, stopLossPct, allowShort, leverage, costPct, ...result });
+      return res.status(200).json({ mode: "multi", requestedDays: days, stopLossPct, allowShort, leverage, costPct, useBollinger, useStochRsi, useObv, ...result });
     }
 
     const coinId = req.query.coin || "bitcoin";
@@ -94,10 +100,13 @@ export default async function handler(req, res) {
       allowShort,
       leverage,
       costPct,
+      useBollinger,
+      useStochRsi,
+      useObv,
       folds: FOLDS,
     });
 
-    res.status(200).json({ mode: "single", coin, days, stopLossPct, allowShort, leverage, costPct, ...result });
+    res.status(200).json({ mode: "single", coin, days, stopLossPct, allowShort, leverage, costPct, useBollinger, useStochRsi, useObv, ...result });
   } catch (err) {
     res.status(500).json({ error: err.message || "Walk-Forward-Validierung fehlgeschlagen." });
   }
