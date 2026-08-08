@@ -9,6 +9,12 @@ const PERIODS = [
   { key: 2920, label: "8 Jahre" },
 ];
 
+const COSTS = [
+  { key: 0, label: "0% (unrealistisch)" },
+  { key: 0.15, label: "0,15% (Standard)" },
+  { key: 0.3, label: "0,3% (konservativ)" },
+];
+
 function fmtPct(n) {
   if (n == null) return "n/a";
   return `${n >= 0 ? "+" : ""}${n.toFixed(1)}%`;
@@ -30,6 +36,7 @@ export default function Optimize() {
   const [mode, setMode] = useState("single");
   const [coinId, setCoinId] = useState("bitcoin");
   const [days, setDays] = useState(730);
+  const [costPct, setCostPct] = useState(0.15);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -40,7 +47,7 @@ export default function Optimize() {
     setResult(null);
     try {
       const modeParam = mode === "multi" ? "&mode=multi" : `&coin=${coinId}`;
-      const res = await fetch(`/api/optimize?days=${days}${modeParam}`);
+      const res = await fetch(`/api/optimize?days=${days}${modeParam}&cost=${costPct}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setResult(data);
@@ -89,6 +96,17 @@ export default function Optimize() {
           {PERIODS.map((p) => (
             <button key={p.key} className={days === p.key ? "active" : ""} onClick={() => setDays(p.key)} style={{ padding: "5px 10px", fontSize: 12 }}>
               {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="toolbar">
+        <span className="note-label" style={{ fontSize: 12.5 }}>Handelskosten</span>
+        <div className="tabs">
+          {COSTS.map((c) => (
+            <button key={c.key} className={costPct === c.key ? "active" : ""} onClick={() => setCostPct(c.key)} style={{ padding: "5px 10px", fontSize: 12 }}>
+              {c.label}
             </button>
           ))}
         </div>
@@ -222,7 +240,7 @@ export default function Optimize() {
       )}
 
       <div className="disclaimer">
-        Rastersuche über SMA-Perioden, RSI-Schwellen und ADX-Trendfilter mit Trainings-/Test-Split zur Overfitting-Kontrolle.
+        Rastersuche über SMA-Perioden, RSI-Schwellen und ADX-Trendfilter mit Trainings-/Test-Split zur Overfitting-Kontrolle. Handelskosten (Fee + Slippage) fließen standardmäßig mit 0,15% je Seite ein, auch beim Buy&amp;Hold-Vergleich.
         Auch robuste Ergebnisse sind keine Garantie für zukünftige Performance – Marktbedingungen ändern sich. Keine Anlageberatung.
       </div>
     </div>

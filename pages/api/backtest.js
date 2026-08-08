@@ -17,6 +17,7 @@ export default async function handler(req, res) {
   const rsiBuyThreshold = req.query.rsiBuy ? parseFloat(req.query.rsiBuy) : undefined;
   const rsiSellThreshold = req.query.rsiSell ? parseFloat(req.query.rsiSell) : undefined;
   const adxThreshold = req.query.adx ? parseFloat(req.query.adx) : null;
+  const costPct = req.query.cost != null ? Math.min(Math.max(parseFloat(req.query.cost), 0), 2) : 0.15;
   const coin = COINS.find((c) => c.id === coinId);
   if (!coin) return res.status(400).json({ error: "Unbekannte Coin." });
 
@@ -53,9 +54,10 @@ export default async function handler(req, res) {
       rsiBuyThreshold,
       rsiSellThreshold,
       adxThreshold,
+      costPct,
     });
 
-    res.status(200).json({ coin, days, stopLossPct, allowShort, leverage, smaFast, smaSlow, rsiBuyThreshold, rsiSellThreshold, adxThreshold, ...result });
+    res.status(200).json({ coin, days, stopLossPct, allowShort, leverage, smaFast, smaSlow, rsiBuyThreshold, rsiSellThreshold, adxThreshold, costPct, ...result });
   } catch (err) {
     res.status(500).json({ error: err.message || "Backtest fehlgeschlagen." });
   }
