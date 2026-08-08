@@ -112,6 +112,8 @@ Jeder Fold sucht unabhängig die (nach Sharpe) beste der 80 SMA/RSI/ADX-Kombinat
 
 Ergebnis wird als **Ø Out-of-Sample-Rendite/Sharpe** über alle 4 Folds sowie "X/4 profitable Folds" zusammengefasst. Wie beim Optimizer bleiben Stop-Loss/Short/Hebel auf Standardwerten, um die Rechenzeit (4× 80 Kombinationen) im Rahmen zu halten; getestet mit BTC/ETH über 2-8 Jahre inkl. Short+Hebel, läuft lokal in 2-5s, deutlich innerhalb des 60s-Limits von Vercel.
 
+**Multi-Coin-Modus** ("Alle 5 Coins" statt "1 Coin"): kombiniert Walk-Forward mit dem Multi-Coin-Ansatz des Optimizers – pro Fold wird die Kombination nicht nur auf einem Coin gesucht, sondern über alle 5 Coins gleichzeitig gerankt (nach Ø-Sharpe), und dann auf dem nächsten Test-Segment über alle 5 Coins geprüft. Kombiniert damit die beiden strengsten Overfitting-Checks der App: robuste Parameterwahl (nicht nur ein Coin) und robuste Zeitachse (nicht nur ein Split). Zeigt zusätzlich pro Fold die "Konsistenz" (wie viele der 5 Coins im Test positiv waren) und eine Pro-Coin-Aufschlüsselung. Wie beim Portfolio-Backtest richtet sich der gemeinsame Zeitraum nach dem kürzesten gelisteten Coin (TAO). Trotz 4× mehr Rechenaufwand als der Multi-Coin-Optimizer (4 Folds statt 1 Split) läuft der Worst Case (8 Jahre, alle 5 Coins, Short+Hebel) lokal in unter 10s – die O(n)-Performance-Fixes im Backtest-Engine tragen auch hier.
+
 ---
 
 ## Portfolio-Backtest
