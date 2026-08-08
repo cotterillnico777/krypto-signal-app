@@ -85,7 +85,7 @@ export default function Home() {
     } catch(e) { setError(e.message); } finally { setLoading(false); }
   }
 
-  async function getAiAnalysis(coin, rsi, macd, smaSig, volSig, macro, price, change24h) {
+  async function getAiAnalysis(coin, rsi, macd, smaSig, volSig, macro, price, change24h, whaleSig) {
     setAiLoading(prev => ({ ...prev, [coin.id]: true }));
     try {
       const res = await fetch("/api/analyze", {
@@ -98,6 +98,7 @@ export default function Home() {
           volume: volSig.label,
           macro: macro.label,
           feargreed: fg ? `${fg.value} (${fg.label})` : "n/a",
+          whale: whaleSig ? whaleSig.label : "n/a",
           tf,
         }),
       });
@@ -200,7 +201,7 @@ export default function Home() {
                 {whaleSig&&<p className="note"><span className="note-label">🐋 Whale</span>{whaleSig.label}</p>}
                 <button
                   className="ai-btn"
-                  onClick={(e)=>{e.stopPropagation();getAiAnalysis(c,rsi,macdSig,smaSig,volSig,macro,c.price,c.change24h);}}
+                  onClick={(e)=>{e.stopPropagation();getAiAnalysis(c,rsi,macdSig,smaSig,volSig,macro,c.price,c.change24h,whaleSig);}}
                   disabled={aiLoading[c.id]}
                 >
                   {aiLoading[c.id]?"KI analysiert…":"🤖 KI-Analyse"}
