@@ -5,7 +5,7 @@
 
 import webpush from "web-push";
 import { getRedis } from "../../../lib/redis";
-import { fetchCryptoData, fetchMacroData, fetchFearGreedData } from "../../../lib/marketData";
+import { fetchCryptoData, fetchMacroData, fetchFearGreedData, fetchWhaleData } from "../../../lib/marketData";
 import { computeMacroRegime, computeAllSignals } from "../../../lib/signals";
 
 function isAuthorized(req) {
@@ -33,13 +33,14 @@ export default async function handler(req, res) {
   );
 
   try {
-    const [coins, macroRaw, fg] = await Promise.all([
+    const [coins, macroRaw, fg, whale] = await Promise.all([
       fetchCryptoData("1D"),
       fetchMacroData(),
       fetchFearGreedData().catch(() => null),
+      fetchWhaleData().catch(() => ({})),
     ]);
     const macro = computeMacroRegime(macroRaw.m2, macroRaw.fedfunds, macroRaw.dxy, macroRaw.yield10y, macroRaw.vix);
-    const signals = computeAllSignals(coins, macro, fg?.value ?? null);
+    const signals = computeAllSignals(coins, macro, fg?.value ?? null, whale);
 
     const subsMap = (await redis.hgetall("push:subscriptions")) || {};
     const subscriptions = Object.values(subsMap).map((v) => (typeof v === "string" ? JSON.parse(v) : v));

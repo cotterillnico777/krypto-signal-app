@@ -9,6 +9,7 @@ import {
   smaSignal,
   computeMacroRegime,
   combineSignal,
+  whaleSignal,
 } from "../lib/signals";
 import PushSubscribeButton from "../components/PushSubscribeButton";
 import InstallPrompt from "../components/InstallPrompt";
@@ -60,6 +61,7 @@ export default function Home() {
   const [crypto,setCrypto]=useState(null);
   const [macroRaw,setMacroRaw]=useState(null);
   const [fg,setFg]=useState(null);
+  const [whale,setWhale]=useState(null);
   const [active,setActive]=useState("bitcoin");
   const [tf,setTf]=useState("1D");
   const [loading,setLoading]=useState(true);
@@ -70,15 +72,16 @@ export default function Home() {
   async function loadData(timeframe) {
     setLoading(true); setError(null); setAiAnalysis({});
     try {
-      const [cRes,mRes,fRes]=await Promise.all([
+      const [cRes,mRes,fRes,wRes]=await Promise.all([
         fetch(`/api/crypto?tf=${timeframe||tf}`),
         fetch("/api/macro"),
         fetch("/api/feargreed"),
+        fetch("/api/whale"),
       ]);
-      const [cJson,mJson,fJson]=await Promise.all([cRes.json(),mRes.json(),fRes.json()]);
+      const [cJson,mJson,fJson,wJson]=await Promise.all([cRes.json(),mRes.json(),fRes.json(),wRes.json()]);
       if(cJson.error) throw new Error(cJson.error);
       if(mJson.error) throw new Error(mJson.error);
-      setCrypto(cJson); setMacroRaw(mJson); setFg(fJson.error?null:fJson);
+      setCrypto(cJson); setMacroRaw(mJson); setFg(fJson.error?null:fJson); setWhale(wJson.error?null:wJson);
     } catch(e) { setError(e.message); } finally { setLoading(false); }
   }
 
@@ -121,7 +124,7 @@ export default function Home() {
           <div className="brand-mark">₿</div>
           <div>
             <h1>Krypto Signal Dashboard</h1>
-            <p className="subtitle">Binance · FRED · Fear &amp; Greed · SMA + RSI + MACD + Volumen + KI</p>
+            <p className="subtitle">Binance · FRED · Fear &amp; Greed · SMA + RSI + MACD + Volumen + Whale + KI</p>
           </div>
         </div>
         <div className="header-actions">
@@ -179,7 +182,8 @@ export default function Home() {
             const macd=computeMACD(c.prices);
             const macdSig=macdSignal(macd);
             const volSig=volumeSignal(c.volumes);
-            const combined=combineSignal(smaSig,rsi,macro,fg?.value??null,macdSig,volSig);
+            const whaleSig=whale?.[c.id]?whaleSignal(whale[c.id]):null;
+            const combined=combineSignal(smaSig,rsi,macro,fg?.value??null,macdSig,volSig,{whaleSig});
             const isUp = c.change24h>=0;
             return(
               <div className={`card coin-card${active===c.id?" selected":""}`} key={c.id} onClick={()=>setActive(c.id)}>
@@ -193,6 +197,7 @@ export default function Home() {
                 <p className="note"><span className="note-label">MACD</span>{macdSig.label}</p>
                 <p className="note"><span className="note-label">SMA</span>{smaSig.label}</p>
                 <p className="note"><span className="note-label">Volumen</span>{volSig.label}</p>
+                {whaleSig&&<p className="note"><span className="note-label">🐋 Whale</span>{whaleSig.label}</p>}
                 <button
                   className="ai-btn"
                   onClick={(e)=>{e.stopPropagation();getAiAnalysis(c,rsi,macdSig,smaSig,volSig,macro,c.price,c.change24h);}}

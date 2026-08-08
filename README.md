@@ -192,8 +192,13 @@ Fünf Faktoren fließen in einen Score ein, jeder einzeln auf ungefähr -1 bis +
 
 Gesamt-Score ≥ 1,5 → **Risk-on**, ≤ -1,5 → **Risk-off**, sonst **Neutral**.
 
+**Whale-Signal (Top-Trader-Positionierung):**
+- Nutzt Binances Long/Short-Positionsratio der "Top-Trader" (Accounts mit den größten Positionen nach Volumen auf den USDT-Perpetuals) – kostenlos, kein API-Key nötig, die näheste frei zugängliche Kennzahl zu echtem "Whale-Sentiment" ohne kostenpflichtige On-Chain-Dienste (Whale Alert, Nansen, Arkham).
+- Top-Trader liegen auf Binance strukturell fast immer netto-long (z.B. TAO meist >2.0, BTC eher ~1.5) – ein fester Schwellenwert würde das für jeden Coin unterschiedlich interpretieren. Deshalb vergleicht das Signal die heutige Ratio gegen den 7-Tage-Durchschnitt derselben Coin: eine deutliche Abweichung vom coin-eigenen Normalniveau (≥8% in beide Richtungen) zählt als bullish/bearish, sonst neutral.
+- **Nur live verfügbar** (Dashboard + Push-Cron): Binance hält diese Daten nur ~30 Tage zurück, deshalb ist das Signal in Backtest/Optimierung/Walk-Forward/Portfolio nicht eingebunden – dort würde es für 99%+ der Historie fehlen.
+
 **Kombiniertes Signal:**
-- Technisches Signal + Makro-Regime + Fear & Greed werden zusammengeführt
+- Technisches Signal + Makro-Regime + Fear & Greed + Whale-Positionierung werden zusammengeführt
 - Widersprüche werden als "Vorsicht"-Hinweis angezeigt
 
 ---
@@ -201,6 +206,7 @@ Gesamt-Score ≥ 1,5 → **Risk-on**, ≤ -1,5 → **Risk-off**, sonst **Neutral
 ## Datenquellen
 
 - **Krypto-Kurse:** [Binance API](https://binance-docs.github.io/apidocs/spot/en/) (kostenlos, kein Key nötig, volle Tages-Historie seit Listing)
+- **Whale/Top-Trader-Positionierung:** [Binance Futures Data](https://binance-docs.github.io/apidocs/futures/en/#top-trader-long-short-ratio-position) (kostenlos, kein Key nötig, ~30 Tage Historie – nur Dashboard/Cron)
 - **M2-Geldmenge:** [FRED M2SL](https://fred.stlouisfed.org/series/M2SL)
 - **US-Leitzins:** [FRED FEDFUNDS](https://fred.stlouisfed.org/series/FEDFUNDS)
 - **Dollar-Index:** [FRED DTWEXBGS](https://fred.stlouisfed.org/series/DTWEXBGS)
