@@ -195,7 +195,7 @@ export default function Home() {
             const bollSig=bollingerSignal(computeBollinger(c.prices).percentB);
             const stochRsiSig=stochRsiSignal(computeStochRSI(c.prices).k);
             const obvSig=computeOBVSignal(c.prices,c.volumes);
-            const combined=combineSignal(smaSig,rsi,macro,fg?.value??null,macdSig,volSig,{whaleSig,bollSig,stochRsiSig,obvSig});
+            const combined=combineSignal(smaSig,rsi,macro,fg?.value??null,macdSig,volSig,{whaleSig});
             const isUp = c.change24h>=0;
             return(
               <div className={`card coin-card${active===c.id?" selected":""}`} key={c.id} onClick={()=>setActive(c.id)}>
@@ -210,9 +210,9 @@ export default function Home() {
                 <p className="note"><span className="note-label">SMA</span>{smaSig.label}</p>
                 <p className="note"><span className="note-label">Volumen</span>{volSig.label}</p>
                 {whaleSig&&<p className="note"><span className="note-label">🐋 Whale</span>{whaleSig.label}</p>}
-                <p className="note"><span className="note-label">Bollinger</span>{bollSig.label}</p>
-                <p className="note"><span className="note-label">StochRSI</span>{stochRsiSig.label}</p>
-                <p className="note"><span className="note-label">OBV</span>{obvSig.label}</p>
+                <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">Bollinger</span>{bollSig.label}</p>
+                <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">StochRSI</span>{stochRsiSig.label}</p>
+                <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">OBV</span>{obvSig.label}</p>
                 <button
                   className="ai-btn"
                   onClick={(e)=>{e.stopPropagation();getAiAnalysis(c,rsi,macdSig,smaSig,volSig,macro,c.price,c.change24h,whaleSig,bollSig,stochRsiSig,obvSig);}}

@@ -194,17 +194,10 @@ Fünf Faktoren fließen in einen Score ein, jeder einzeln auf ungefähr -1 bis +
 
 Gesamt-Score ≥ 1,5 → **Risk-on**, ≤ -1,5 → **Risk-off**, sonst **Neutral**.
 
-**Bollinger Bänder:**
-- Mittelband = SMA(20), oberes/unteres Band = Mittelband ± 2 Standardabweichungen
-- %B misst die Position des Kurses im Band (0 = am unteren Band, 1 = am oberen Band, außerhalb <0 bzw. >1 möglich): %B ≤ 0 → überverkauft (bullish), %B ≥ 1 → überkauft (bearish)
-
-**Stochastic RSI:**
-- Normiert die RSI-Reihe selbst auf ihr eigenes 14-Tage-Hoch/Tief (0-100) – deutlich empfindlicher/schneller als reines RSI, da es die Dynamik des RSI-Verlaufs misst statt nur dessen aktuellen Wert
-- ≤20 → überverkauft (bullish), ≥80 → überkauft (bearish)
-
-**On-Balance-Volume (OBV):**
-- Kumuliertes Volumen: wird bei steigendem Tagesschluss addiert, bei fallendem subtrahiert – zeigt, ob Volumen eine Kursbewegung stützt oder ihr widerspricht (Divergenz)
-- Signal per Crossover gegen die eigene SMA(20): OBV kreuzt über seine SMA → Akkumulation (bullish), darunter → Distribution (bearish)
+**Bollinger Bänder, Stochastic RSI, On-Balance-Volume (nur Info, siehe unten):**
+- **Bollinger:** Mittelband = SMA(20), oberes/unteres Band = Mittelband ± 2 Standardabweichungen. %B misst die Position des Kurses im Band (0 = am unteren Band, 1 = am oberen Band): %B ≤ 0 → überverkauft, %B ≥ 1 → überkauft.
+- **Stochastic RSI:** normiert die RSI-Reihe selbst auf ihr eigenes 14-Tage-Hoch/Tief (0-100) – empfindlicher/schneller als reines RSI. ≤20 → überverkauft, ≥80 → überkauft.
+- **On-Balance-Volume (OBV):** kumuliertes Volumen (addiert bei steigendem, subtrahiert bei fallendem Tagesschluss). Signal per Crossover gegen die eigene SMA(20): darüber → Akkumulation, darunter → Distribution.
 
 **Whale-Signal (Top-Trader-Positionierung):**
 - Nutzt Binances Long/Short-Positionsratio der "Top-Trader" (Accounts mit den größten Positionen nach Volumen auf den USDT-Perpetuals) – kostenlos, kein API-Key nötig, die näheste frei zugängliche Kennzahl zu echtem "Whale-Sentiment" ohne kostenpflichtige On-Chain-Dienste (Whale Alert, Nansen, Arkham).
@@ -212,9 +205,9 @@ Gesamt-Score ≥ 1,5 → **Risk-on**, ≤ -1,5 → **Risk-off**, sonst **Neutral
 - **Nur live verfügbar** (Dashboard + Push-Cron): Binance hält diese Daten nur ~30 Tage zurück, deshalb ist das Signal in Backtest/Optimierung/Walk-Forward/Portfolio nicht eingebunden – dort würde es für 99%+ der Historie fehlen.
 
 **Kombiniertes Signal:**
-- Technisches Signal + Makro-Regime + Fear & Greed + Bollinger + Stochastic RSI + OBV + Whale-Positionierung werden zusammengeführt
-- Bollinger/Stochastic RSI/OBV sind – anders als das Whale-Signal – voll historisch verfügbar und fließen dadurch auch in Backtest, Optimierung, Walk-Forward und Portfolio-Backtest mit ein
+- Technisches Signal + Makro-Regime + Fear & Greed + Whale-Positionierung werden zusammengeführt
 - Widersprüche werden als "Vorsicht"-Hinweis angezeigt
+- **Bollinger/Stochastic RSI/OBV fließen standardmäßig NICHT ins Kaufen/Verkaufen-Signal ein**, obwohl sie – anders als Whale – voll historisch verfügbar wären: ein Walk-Forward-Vergleich (08.08.2026, jeder Indikator einzeln über 3 Zeitfenster getestet, siehe Commit-Historie) zeigte, dass keiner davon die Out-of-Sample-Rendite/Sharpe verbessert, meist im Gegenteil (Bollinger am schädlichsten). Sie werden weiterhin berechnet und im Dashboard als Info-Zeilen (abgedunkelt) angezeigt, sind aber deaktivierbar/aktivierbar über `useBollinger`/`useStochRsi`/`useObv` in `runBacktest` bzw. `boll=1`/`stoch=1`/`obv=1` in der Walk-Forward-API – für alle, die selbst mit anderen Gewichten/Schwellenwerten experimentieren wollen.
 
 ---
 
