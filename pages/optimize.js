@@ -70,6 +70,7 @@ export default function Optimize() {
         </div>
         <div className="header-actions">
           <Link href="/backtest" className="icon-btn">📊 Backtest</Link>
+          <Link href="/walkforward" className="icon-btn">📈 Walk-Forward</Link>
           <Link href="/" className="icon-btn">← Dashboard</Link>
         </div>
       </header>

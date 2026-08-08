@@ -114,6 +114,7 @@ export default function Backtest() {
         </div>
         <div className="header-actions">
           <Link href="/optimize" className="icon-btn">🔬 Optimierung</Link>
+          <Link href="/walkforward" className="icon-btn">📈 Walk-Forward</Link>
           <Link href="/" className="icon-btn">← Dashboard</Link>
         </div>
       </header>
