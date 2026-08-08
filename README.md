@@ -114,6 +114,18 @@ Ergebnis wird als **Ø Out-of-Sample-Rendite/Sharpe** über alle 4 Folds sowie "
 
 ---
 
+## Portfolio-Backtest
+
+Unter "💼 Portfolio" (Route `/portfolio`) wird das Start-Kapital ($10.000) **gleichmäßig auf alle 5 Coins verteilt** ($2.000 je Coin) – im Unterschied zum Multi-Coin-Optimizer, der nur die gemittelten Einzelergebnisse zeigt, wird hier die **tatsächliche Summen-Equity-Kurve** über alle 5 Coins Tag für Tag berechnet. Jeder Coin handelt dabei unabhängig nach der gleichen Dashboard-Signal-Strategie, ohne Rebalancing zwischen den Coins über die Zeit.
+
+Das macht einen echten **Diversifikationseffekt** sichtbar: Portfolio-Max-Drawdown und -Sharpe werden direkt gegen den Durchschnitt der Einzelcoins verglichen. Da alle 5 Coins über dieselbe Signal-Logik handeln und Krypto-Assets tendenziell stark miteinander korrelieren (anders als z.B. Aktien/Anleihen/Rohstoffe), ist der Effekt meist kleiner als bei klassischen Multi-Asset-Portfolios, aber messbar – in Tests reduzierte die Streuung über 5 Coins den Max-Drawdown regelmäßig gegenüber dem Durchschnitt der Einzelcoins.
+
+**Gemeinsamer Betrachtungszeitraum:** Da TAO (Bittensor) erst 2023 auf Binance gelistet wurde, richtet sich der tatsächlich nutzbare Zeitraum nach dem am kürzesten gelisteten Coin – bei "8 Jahre" gewählt, aber TAO nur ~850 Tage Historie hat, verkürzt sich der Portfolio-Backtest automatisch auf diese 850 Tage (mit Hinweis in der UI), statt falsch ausgerichtete Datenreihen zu vermischen.
+
+Coin-Auswahl ist fest auf alle 5 Coins gesetzt (kein Einzel-Coin-Toggle), Stop-Loss/Richtung/Hebel/Handelskosten sind wie beim normalen Backtest wählbar.
+
+---
+
 ## Push-Benachrichtigungen einrichten
 
 Die App schickt eine Push-Benachrichtigung, sobald ein Coin **neu** auf "Kaufen" wechselt. Dafür braucht es zwei Dinge: VAPID-Keys (bereits erledigt) und einen Cloud-Speicher für die Abo-Daten.

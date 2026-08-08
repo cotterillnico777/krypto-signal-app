@@ -128,6 +128,7 @@ export default function Home() {
           <Link href="/backtest" className="icon-btn">📊 Backtest</Link>
           <Link href="/optimize" className="icon-btn">🔬 Optimierung</Link>
           <Link href="/walkforward" className="icon-btn">📈 Walk-Forward</Link>
+          <Link href="/portfolio" className="icon-btn">💼 Portfolio</Link>
           <PushSubscribeButton />
           <button className="icon-btn" onClick={()=>loadData(tf)} title="Aktualisieren">↻ Aktualisieren</button>
         </div>
