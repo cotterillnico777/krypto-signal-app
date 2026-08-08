@@ -10,6 +10,11 @@ import {
   computeMacroRegime,
   combineSignal,
   whaleSignal,
+  computeBollinger,
+  bollingerSignal,
+  computeStochRSI,
+  stochRsiSignal,
+  computeOBVSignal,
 } from "../lib/signals";
 import PushSubscribeButton from "../components/PushSubscribeButton";
 import InstallPrompt from "../components/InstallPrompt";
@@ -85,7 +90,7 @@ export default function Home() {
     } catch(e) { setError(e.message); } finally { setLoading(false); }
   }
 
-  async function getAiAnalysis(coin, rsi, macd, smaSig, volSig, macro, price, change24h, whaleSig) {
+  async function getAiAnalysis(coin, rsi, macd, smaSig, volSig, macro, price, change24h, whaleSig, bollSig, stochRsiSig, obvSig) {
     setAiLoading(prev => ({ ...prev, [coin.id]: true }));
     try {
       const res = await fetch("/api/analyze", {
@@ -99,6 +104,9 @@ export default function Home() {
           macro: macro.label,
           feargreed: fg ? `${fg.value} (${fg.label})` : "n/a",
           whale: whaleSig ? whaleSig.label : "n/a",
+          bollinger: bollSig.label,
+          stochRsi: stochRsiSig.label,
+          obv: obvSig.label,
           tf,
         }),
       });
@@ -125,7 +133,7 @@ export default function Home() {
           <div className="brand-mark">₿</div>
           <div>
             <h1>Krypto Signal Dashboard</h1>
-            <p className="subtitle">Binance · FRED · Fear &amp; Greed · SMA + RSI + MACD + Volumen + Whale + KI</p>
+            <p className="subtitle">Binance · FRED · Fear &amp; Greed · SMA + RSI + MACD + Volumen + Bollinger + StochRSI + OBV + Whale + KI</p>
           </div>
         </div>
         <div className="header-actions">
@@ -184,7 +192,10 @@ export default function Home() {
             const macdSig=macdSignal(macd);
             const volSig=volumeSignal(c.volumes);
             const whaleSig=whale?.[c.id]?whaleSignal(whale[c.id]):null;
-            const combined=combineSignal(smaSig,rsi,macro,fg?.value??null,macdSig,volSig,{whaleSig});
+            const bollSig=bollingerSignal(computeBollinger(c.prices).percentB);
+            const stochRsiSig=stochRsiSignal(computeStochRSI(c.prices).k);
+            const obvSig=computeOBVSignal(c.prices,c.volumes);
+            const combined=combineSignal(smaSig,rsi,macro,fg?.value??null,macdSig,volSig,{whaleSig,bollSig,stochRsiSig,obvSig});
             const isUp = c.change24h>=0;
             return(
               <div className={`card coin-card${active===c.id?" selected":""}`} key={c.id} onClick={()=>setActive(c.id)}>
@@ -199,9 +210,12 @@ export default function Home() {
                 <p className="note"><span className="note-label">SMA</span>{smaSig.label}</p>
                 <p className="note"><span className="note-label">Volumen</span>{volSig.label}</p>
                 {whaleSig&&<p className="note"><span className="note-label">🐋 Whale</span>{whaleSig.label}</p>}
+                <p className="note"><span className="note-label">Bollinger</span>{bollSig.label}</p>
+                <p className="note"><span className="note-label">StochRSI</span>{stochRsiSig.label}</p>
+                <p className="note"><span className="note-label">OBV</span>{obvSig.label}</p>
                 <button
                   className="ai-btn"
-                  onClick={(e)=>{e.stopPropagation();getAiAnalysis(c,rsi,macdSig,smaSig,volSig,macro,c.price,c.change24h,whaleSig);}}
+                  onClick={(e)=>{e.stopPropagation();getAiAnalysis(c,rsi,macdSig,smaSig,volSig,macro,c.price,c.change24h,whaleSig,bollSig,stochRsiSig,obvSig);}}
                   disabled={aiLoading[c.id]}
                 >
                   {aiLoading[c.id]?"KI analysiert…":"🤖 KI-Analyse"}

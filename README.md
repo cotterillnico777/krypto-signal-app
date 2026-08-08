@@ -194,13 +194,26 @@ Fünf Faktoren fließen in einen Score ein, jeder einzeln auf ungefähr -1 bis +
 
 Gesamt-Score ≥ 1,5 → **Risk-on**, ≤ -1,5 → **Risk-off**, sonst **Neutral**.
 
+**Bollinger Bänder:**
+- Mittelband = SMA(20), oberes/unteres Band = Mittelband ± 2 Standardabweichungen
+- %B misst die Position des Kurses im Band (0 = am unteren Band, 1 = am oberen Band, außerhalb <0 bzw. >1 möglich): %B ≤ 0 → überverkauft (bullish), %B ≥ 1 → überkauft (bearish)
+
+**Stochastic RSI:**
+- Normiert die RSI-Reihe selbst auf ihr eigenes 14-Tage-Hoch/Tief (0-100) – deutlich empfindlicher/schneller als reines RSI, da es die Dynamik des RSI-Verlaufs misst statt nur dessen aktuellen Wert
+- ≤20 → überverkauft (bullish), ≥80 → überkauft (bearish)
+
+**On-Balance-Volume (OBV):**
+- Kumuliertes Volumen: wird bei steigendem Tagesschluss addiert, bei fallendem subtrahiert – zeigt, ob Volumen eine Kursbewegung stützt oder ihr widerspricht (Divergenz)
+- Signal per Crossover gegen die eigene SMA(20): OBV kreuzt über seine SMA → Akkumulation (bullish), darunter → Distribution (bearish)
+
 **Whale-Signal (Top-Trader-Positionierung):**
 - Nutzt Binances Long/Short-Positionsratio der "Top-Trader" (Accounts mit den größten Positionen nach Volumen auf den USDT-Perpetuals) – kostenlos, kein API-Key nötig, die näheste frei zugängliche Kennzahl zu echtem "Whale-Sentiment" ohne kostenpflichtige On-Chain-Dienste (Whale Alert, Nansen, Arkham).
 - Top-Trader liegen auf Binance strukturell fast immer netto-long (z.B. TAO meist >2.0, BTC eher ~1.5) – ein fester Schwellenwert würde das für jeden Coin unterschiedlich interpretieren. Deshalb vergleicht das Signal die heutige Ratio gegen den 7-Tage-Durchschnitt derselben Coin: eine deutliche Abweichung vom coin-eigenen Normalniveau (≥8% in beide Richtungen) zählt als bullish/bearish, sonst neutral.
 - **Nur live verfügbar** (Dashboard + Push-Cron): Binance hält diese Daten nur ~30 Tage zurück, deshalb ist das Signal in Backtest/Optimierung/Walk-Forward/Portfolio nicht eingebunden – dort würde es für 99%+ der Historie fehlen.
 
 **Kombiniertes Signal:**
-- Technisches Signal + Makro-Regime + Fear & Greed + Whale-Positionierung werden zusammengeführt
+- Technisches Signal + Makro-Regime + Fear & Greed + Bollinger + Stochastic RSI + OBV + Whale-Positionierung werden zusammengeführt
+- Bollinger/Stochastic RSI/OBV sind – anders als das Whale-Signal – voll historisch verfügbar und fließen dadurch auch in Backtest, Optimierung, Walk-Forward und Portfolio-Backtest mit ein
 - Widersprüche werden als "Vorsicht"-Hinweis angezeigt
 
 ---
