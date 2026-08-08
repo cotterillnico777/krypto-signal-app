@@ -110,6 +110,8 @@ export default function Portfolio() {
         return s.length ? s.reduce((a, b) => a + b, 0) / s.length : null;
       })()
     : null;
+  const avgTradesPerCoin = result ? result.perCoin.reduce((a, c) => a + c.tradeCount, 0) / result.perCoin.length : null;
+  const lowSampleSize = avgTradesPerCoin != null && avgTradesPerCoin < 3;
 
   return (
     <div className="container">
@@ -221,7 +223,10 @@ export default function Portfolio() {
             <div className="card">
               <p className="card-label">Anzahl Trades (gesamt)</p>
               <p className="card-value">{result.tradeCount}</p>
-              <p className="note">Über alle 5 Coins zusammen</p>
+              <p className="note">
+                Ø {avgTradesPerCoin.toFixed(1)} je Coin
+                {lowSampleSize && <span className="badge badge-amber" style={{ marginLeft: 6, fontSize: 10 }}>geringe Stichprobe</span>}
+              </p>
             </div>
             <div className="card">
               <p className="card-label">Portfolio Sharpe / Sortino</p>
@@ -272,6 +277,9 @@ export default function Portfolio() {
             </div>
             <p className="note" style={{ marginTop: 12 }}>
               Diversifikationseffekt: Der Portfolio-Max-Drawdown ({result.maxDrawdown.toFixed(1)}%) im Vergleich zum Durchschnitt der Einzelcoins ({avgCoinMaxDrawdown.toFixed(1)}%) zeigt, ob unkorrelierte Bewegungen zwischen den Coins die Schwankungen im Vergleich zu einer Einzelcoin-Position abfedern. Da alle 5 Coins derselben Signal-Logik folgen und Krypto-Assets tendenziell stark korrelieren, ist der Effekt oft kleiner als bei klassischen Multi-Asset-Portfolios (Aktien/Anleihen/Rohstoffe) – aber selten null.
+              {lowSampleSize && (
+                <> Mit Ø {avgTradesPerCoin.toFixed(1)} Trades je Coin in diesem Lauf ist das Ergebnis allerdings eher eine Summe weniger dominanter Einzelwetten als ein statistisch belastbarer Beleg für echte Diversifikation – für ein verlässlicheres Bild einen längeren Zeitraum wählen oder mehrere Zeiträume vergleichen.</>
+              )}
             </p>
           </div>
         </>
@@ -279,7 +287,11 @@ export default function Portfolio() {
 
       <div className="disclaimer">
         Portfolio-Backtest: $10.000 gleichmäßig auf BTC/ETH/SOL/XRP/TAO verteilt, jeder Coin handelt unabhängig nach der Dashboard-Signal-Strategie (SMA + RSI + MACD + Volumen + Makro + Fear &amp; Greed), kein Rebalancing zwischen den Coins über die Zeit. Handelskosten (Fee + Slippage) mit 0,15% je Seite standardmäßig aktiv, auch beim Buy&amp;Hold-Vergleich.
-        Der gemeinsame Betrachtungszeitraum richtet sich nach dem am kürzesten gelisteten Coin. Vergangene Wertentwicklung ist keine Garantie für zukünftige Ergebnisse. Keine Anlageberatung.
+        Der gemeinsame Betrachtungszeitraum richtet sich nach dem am kürzesten gelisteten Coin.
+        <br /><br />
+        <strong>Zwei Einschränkungen, die die Aussagekraft begrenzen:</strong> Alle 5 Coins handeln mit denselben Standard-Parametern statt je Coin optimierten Werten (siehe "🔬 Optimierung"), und es ist ein einzelner statischer Lauf ohne Trainings-/Test-Split oder Walk-Forward-Check. Bei kurzen/mittleren Zeiträumen kann jeder Coin nur 1-2 Trades ausführen – dann ist das "Portfolio" im Kern eine Summe weniger dominanter Einzelwetten, keine statistisch robuste Stichprobe.
+        <br /><br />
+        Vergangene Wertentwicklung ist keine Garantie für zukünftige Ergebnisse. Keine Anlageberatung.
       </div>
     </div>
   );
