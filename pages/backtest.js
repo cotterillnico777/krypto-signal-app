@@ -25,6 +25,12 @@ const LEVERAGES = [
   { key: 10, label: "10x" },
 ];
 
+const COSTS = [
+  { key: 0, label: "0% (unrealistisch)" },
+  { key: 0.15, label: "0,15% (Standard)" },
+  { key: 0.3, label: "0,3% (konservativ)" },
+];
+
 function fmtUSD(n) {
   return n.toLocaleString("de-DE", { maximumFractionDigits: n < 10 ? 3 : 0 });
 }
@@ -71,6 +77,7 @@ export default function Backtest() {
   const [stopLoss, setStopLoss] = useState(null);
   const [allowShort, setAllowShort] = useState(false);
   const [leverage, setLeverage] = useState(1);
+  const [costPct, setCostPct] = useState(0.15);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -83,7 +90,8 @@ export default function Backtest() {
       const stopParam = stopLoss ? `&stopLoss=${stopLoss}` : "";
       const shortParam = allowShort ? "&short=1" : "";
       const leverageParam = leverage !== 1 ? `&leverage=${leverage}` : "";
-      const res = await fetch(`/api/backtest?coin=${coinId}&days=${days}${stopParam}${shortParam}${leverageParam}`);
+      const costParam = `&cost=${costPct}`;
+      const res = await fetch(`/api/backtest?coin=${coinId}&days=${days}${stopParam}${shortParam}${leverageParam}${costParam}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setResult(data);
@@ -157,6 +165,17 @@ export default function Backtest() {
         </div>
       </div>
 
+      <div className="toolbar">
+        <span className="note-label" style={{ fontSize: 12.5 }}>Handelskosten</span>
+        <div className="tabs">
+          {COSTS.map((c) => (
+            <button key={c.key} className={costPct === c.key ? "active" : ""} onClick={() => setCostPct(c.key)} style={{ padding: "5px 10px", fontSize: 12 }}>
+              {c.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {leverage > 1 && (
         <div className="toast-banner" style={{ marginBottom: "1rem" }}>
           <span className="msg">⚠️ Bei Hebel {leverage}x wird die Position liquidiert (Totalverlust der Margin), wenn sich der Kurs um {(100 / leverage).toFixed(1)}% gegen dich bewegt. Funding-Kosten (echte historische Binance-Perpetual-Rates) fließen mit ein.</span>
@@ -211,8 +230,8 @@ export default function Backtest() {
           </div>
 
           <div className="card" style={{ marginBottom: "1.5rem" }}>
-            <p className="card-label">Coin / Zeitraum / Stop / Hebel</p>
-            <p className="card-value" style={{ fontSize: 16 }}>{result.coin.symbol} · {result.days}T · {result.stopLossPct ? `-${result.stopLossPct}%` : "kein Stop"} · {result.leverage}x{result.allowShort ? " · Short erlaubt" : ""}</p>
+            <p className="card-label">Coin / Zeitraum / Stop / Hebel / Kosten</p>
+            <p className="card-value" style={{ fontSize: 16 }}>{result.coin.symbol} · {result.days}T · {result.stopLossPct ? `-${result.stopLossPct}%` : "kein Stop"} · {result.leverage}x{result.allowShort ? " · Short erlaubt" : ""} · {result.costPct}% Kosten/Seite</p>
           </div>
 
           <div className="card" style={{ marginBottom: "1.5rem" }}>
@@ -259,7 +278,7 @@ export default function Backtest() {
       )}
 
       <div className="disclaimer">
-        Historische Simulation der Dashboard-Signale (SMA + RSI + MACD + Volumen + Makro + Fear &amp; Greed), Start-Kapital $10.000, keine Handelsgebühren/Slippage berücksichtigt.
+        Historische Simulation der Dashboard-Signale (SMA + RSI + MACD + Volumen + Makro + Fear &amp; Greed), Start-Kapital $10.000. Handelskosten (Fee + Slippage) werden standardmäßig mit 0,15% je Seite einkalkuliert, auch beim Buy&amp;Hold-Vergleich – "0%" zeigt die unrealistische Kosten-freie Variante zum Vergleich.
         Bei Hebel &gt;1x oder Short-Positionen werden echte historische Funding-Rates von Binance-Perpetuals einbezogen und eine Liquidierungsschwelle simuliert – trotzdem eine vereinfachte Annahme, echter Hebelhandel ist riskanter als hier abgebildet.
         Vergangene Wertentwicklung ist keine Garantie für zukünftige Ergebnisse. Keine Anlageberatung.
       </div>

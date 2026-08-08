@@ -10,6 +10,7 @@ export default async function handler(req, res) {
   const stopLossPct = req.query.stopLoss ? Math.min(Math.max(parseFloat(req.query.stopLoss), 1), 90) : null;
   const allowShort = req.query.short === "1";
   const leverage = Math.min(Math.max(parseInt(req.query.leverage) || 1, 1), 10);
+  const costPct = req.query.cost != null ? Math.min(Math.max(parseFloat(req.query.cost), 0), 2) : 0.15;
   const multiCoin = req.query.mode === "multi";
 
   const usesPerpetual = allowShort || leverage > 1;
@@ -58,9 +59,10 @@ export default async function handler(req, res) {
         stopLossPct,
         allowShort,
         leverage,
+        costPct,
       });
 
-      return res.status(200).json({ mode: "multi", days, stopLossPct, allowShort, leverage, ...result });
+      return res.status(200).json({ mode: "multi", days, stopLossPct, allowShort, leverage, costPct, ...result });
     }
 
     const coinId = req.query.coin || "bitcoin";
@@ -89,9 +91,10 @@ export default async function handler(req, res) {
       stopLossPct,
       allowShort,
       leverage,
+      costPct,
     });
 
-    res.status(200).json({ mode: "single", coin, days, stopLossPct, allowShort, leverage, ...result });
+    res.status(200).json({ mode: "single", coin, days, stopLossPct, allowShort, leverage, costPct, ...result });
   } catch (err) {
     res.status(500).json({ error: err.message || "Optimierung fehlgeschlagen." });
   }
