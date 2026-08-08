@@ -64,6 +64,7 @@ export default function WalkForward() {
         <div className="header-actions">
           <Link href="/optimize" className="icon-btn">🔬 Optimierung</Link>
           <Link href="/backtest" className="icon-btn">📊 Backtest</Link>
+          <Link href="/portfolio" className="icon-btn">💼 Portfolio</Link>
           <Link href="/" className="icon-btn">← Dashboard</Link>
         </div>
       </header>
