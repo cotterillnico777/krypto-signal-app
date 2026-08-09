@@ -1,5 +1,10 @@
+import { requireActiveAccessApi } from "../../lib/auth/requireActiveAccessApi";
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
+
+  const ctx = await requireActiveAccessApi(req, res);
+  if (!ctx) return;
 
   const { coin, rsi, macd, sma, volume, macro, feargreed, whale, bollinger, stochRsi, obv, candle, marubozu, price, change24h, tf } = req.body;
 

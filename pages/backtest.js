@@ -1,6 +1,9 @@
 import { useState } from "react";
-import Link from "next/link";
 import { COINS } from "../lib/marketData";
+import AppHeader from "../components/AppHeader";
+import { requireActiveAccess } from "../lib/auth/requireActiveAccess";
+
+export const getServerSideProps = requireActiveAccess;
 
 const PERIODS = [
   { key: 90, label: "90 Tage" },
@@ -71,7 +74,7 @@ function EquityChart({ equityCurve }) {
   );
 }
 
-export default function Backtest() {
+export default function Backtest({ user, access }) {
   const [coinId, setCoinId] = useState("bitcoin");
   const [days, setDays] = useState(365);
   const [stopLoss, setStopLoss] = useState(null);
@@ -104,21 +107,13 @@ export default function Backtest() {
 
   return (
     <div className="container">
-      <header className="app-header">
-        <div className="brand">
-          <div className="brand-mark">₿</div>
-          <div>
-            <h1>Backtest</h1>
-            <p className="subtitle">Wie hätte die Signal-Strategie historisch performt?</p>
-          </div>
-        </div>
-        <div className="header-actions">
-          <Link href="/optimize" className="icon-btn">🔬 Optimierung</Link>
-          <Link href="/walkforward" className="icon-btn">📈 Walk-Forward</Link>
-          <Link href="/portfolio" className="icon-btn">💼 Portfolio</Link>
-          <Link href="/" className="icon-btn">← Dashboard</Link>
-        </div>
-      </header>
+      <AppHeader
+        title="Backtest"
+        subtitle="Wie hätte die Signal-Strategie historisch performt?"
+        active="backtest"
+        user={user}
+        access={access}
+      />
 
       <div className="toolbar">
         <div className="tabs">

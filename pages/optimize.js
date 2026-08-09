@@ -1,6 +1,9 @@
 import { useState } from "react";
-import Link from "next/link";
 import { COINS } from "../lib/marketData";
+import AppHeader from "../components/AppHeader";
+import { requireActiveAccess } from "../lib/auth/requireActiveAccess";
+
+export const getServerSideProps = requireActiveAccess;
 
 const PERIODS = [
   { key: 365, label: "1 Jahr" },
@@ -32,7 +35,7 @@ function perCoinLabel(perCoin) {
   return perCoin.map((c) => `${c.symbol} ${fmtPct(c.totalReturnPct)}`).join(" · ");
 }
 
-export default function Optimize() {
+export default function Optimize({ user, access }) {
   const [mode, setMode] = useState("single");
   const [coinId, setCoinId] = useState("bitcoin");
   const [days, setDays] = useState(730);
@@ -60,21 +63,13 @@ export default function Optimize() {
 
   return (
     <div className="container">
-      <header className="app-header">
-        <div className="brand">
-          <div className="brand-mark">₿</div>
-          <div>
-            <h1>Parameter-Optimierung</h1>
-            <p className="subtitle">SMA/RSI/ADX-Raster mit Out-of-Sample-Check gegen Overfitting</p>
-          </div>
-        </div>
-        <div className="header-actions">
-          <Link href="/backtest" className="icon-btn">📊 Backtest</Link>
-          <Link href="/walkforward" className="icon-btn">📈 Walk-Forward</Link>
-          <Link href="/portfolio" className="icon-btn">💼 Portfolio</Link>
-          <Link href="/" className="icon-btn">← Dashboard</Link>
-        </div>
-      </header>
+      <AppHeader
+        title="Parameter-Optimierung"
+        subtitle="SMA/RSI/ADX-Raster mit Out-of-Sample-Check gegen Overfitting"
+        active="optimize"
+        user={user}
+        access={access}
+      />
 
       <div className="toolbar">
         <span className="note-label" style={{ fontSize: 12.5 }}>Modus</span>

@@ -2,6 +2,8 @@
 
 Live-Krypto-Signale (BTC, ETH, SOL, XRP, TAO) kombiniert mit echten Makrodaten (M2-Geldmenge, US-Leitzins), Fear & Greed Index und KI-Analyse. Als installierbare PWA mit Push-Benachrichtigungen bei Kaufsignalen.
 
+**Account nötig:** Dashboard und alle Analyse-Tools sind nur nach Login erreichbar – 14 Tage kostenlos testen, keine Kreditkarte nötig (siehe Abschnitt "Accounts & Login").
+
 ---
 
 ## Einrichtung (einmalig, ~10 Minuten)
@@ -161,6 +163,41 @@ curl "http://localhost:3000/api/cron/check-signals?secret=DEIN_CRON_SECRET"
 
 ---
 
+## Accounts & Login (Betreiber-Setup)
+
+Seit dem Public-Launch-Umbau ist die komplette App (Dashboard + alle vier Analyse-Tools) nur noch mit Account erreichbar: 14 Tage kostenlose Testphase, keine Kreditkarte nötig. Accounts/Login/Nutzerdaten laufen über **Supabase** (Auth + Postgres in einem Projekt).
+
+### 1. Supabase-Projekt anlegen
+1. Kostenlosen Account anlegen: https://supabase.com
+2. "New Project" → Name frei wählbar, Region z.B. `Central EU (Frankfurt)` (passt zur `fra1`-Vercel-Region)
+3. Unter Project Settings → API Keys → Tab "Legacy anon, service_role API keys":
+   - `NEXT_PUBLIC_SUPABASE_URL` = Project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = `anon`/`public`-Key (darf öffentlich sein)
+   - `SUPABASE_SERVICE_ROLE_KEY` = `service_role`-Key (**geheim**, umgeht Row Level Security, niemals im Client-Bundle oder `NEXT_PUBLIC_`-Prefix)
+4. Alle drei Werte in `.env.local` eintragen (lokal) bzw. bei Vercel als Environment Variables (Live-Betrieb)
+
+### 2. Datenbank-Schema anlegen
+Im Supabase-Dashboard → SQL Editor → neue Query → Inhalt von `supabase/migrations/0001_init.sql` einfügen und ausführen. Legt zwei Tabellen an:
+- `profiles` – ein Profil pro Nutzer, trackt Trial-Start/-Ende und Abo-Status (inkl. Row Level Security)
+- `push_subscriptions` – Web-Push-Abos, jetzt an echte Nutzer gebunden statt global geteilt
+
+### 3. Auth-Provider konfigurieren
+Unter Authentication → Providers:
+- E-Mail/Passwort ist standardmäßig aktiv
+- Magic Link nutzt denselben E-Mail-Versand, kein Zusatzaufwand
+- Google OAuth optional: eigener Google-Cloud-Console-Client nötig
+
+Unter Authentication → URL Configuration:
+- Site URL: `http://localhost:3000` (lokal) bzw. deine Produktions-URL
+- Redirect URLs: `http://localhost:3000/**` und `https://deine-domain.vercel.app/**` hinzufügen
+
+**Hinweis:** Supabases Standard-E-Mail-Versand hat niedrige Rate-Limits – für echten Betrieb einen eigenen SMTP-Provider (z.B. Resend) unter Authentication → Settings → SMTP Settings hinterlegen.
+
+### Wie der Trial funktioniert
+Bei Signup legt ein Datenbank-Trigger automatisch ein Profil mit `trial_ends_at = jetzt + 14 Tage` an. Jede geschützte Seite/API-Route prüft serverseitig (`lib/auth/requireActiveAccess.js` bzw. `requireActiveAccessApi.js`), ob der Zugang aktiv ist (`subscription_status = 'active'` ODER Trial noch nicht abgelaufen) – läuft der Trial ab, landet man auf `/upgrade`. Die eigentliche Zahlungsabwicklung (Stripe) ist noch nicht gebaut; `profiles.subscription_status`/`stripe_customer_id` sind aber schon als Anknüpfungspunkt angelegt.
+
+---
+
 ## Online deployen (kostenlos, mit Vercel)
 
 1. Kostenlosen Account anlegen: https://vercel.com
@@ -171,7 +208,9 @@ curl "http://localhost:3000/api/cron/check-signals?secret=DEIN_CRON_SECRET"
    - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`
    - `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
    - `CRON_SECRET`
+   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 4. Deploy klicken → fertig. Du bekommst eine öffentliche URL wie `https://krypto-signal-xyz.vercel.app`. Der Cron-Job wird automatisch aus `vercel.json` übernommen (sichtbar unter Project → Settings → Cron Jobs).
+5. In Supabase unter Authentication → URL Configuration die Produktions-URL zu den Redirect URLs hinzufügen (siehe oben) – sonst schlägt Login/Signup live fehl.
 
 ---
 
