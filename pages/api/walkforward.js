@@ -21,7 +21,7 @@ export default async function handler(req, res) {
   const useFg = req.query.fg !== "0";
   const useMacro = req.query.macro !== "0";
   const useVolume = req.query.vol !== "0";
-  const macroWeight = req.query.macroWeight != null ? parseFloat(req.query.macroWeight) : 0.3;
+  const macroWeight = req.query.macroWeight != null ? parseFloat(req.query.macroWeight) : 2.0;
   const signalThreshold = req.query.threshold != null ? parseFloat(req.query.threshold) : 1.5;
   const multiCoin = req.query.mode === "multi";
 
