@@ -30,6 +30,7 @@ export default async function handler(req, res) {
   const useStochRsi = req.query.stoch === "1";
   const useObv = req.query.obv === "1";
   const useStrongCandle = req.query.candle === "1";
+  const useMarubozu = req.query.marubozu === "1";
   const macroWeight = req.query.macroWeight != null ? parseFloat(req.query.macroWeight) : 2.0;
   const signalThreshold = req.query.threshold != null ? parseFloat(req.query.threshold) : 1.5;
   const coin = COINS.find((c) => c.id === coinId);
@@ -53,6 +54,7 @@ export default async function handler(req, res) {
 
     const result = runBacktest({
       prices: series.prices.map((p) => p.v),
+      opens: series.opens.map((o) => o.v),
       highs: series.highs.map((h) => h.v),
       lows: series.lows.map((l) => l.v),
       volumes: series.volumes.map((v) => v.v),
@@ -79,11 +81,12 @@ export default async function handler(req, res) {
       useStochRsi,
       useObv,
       useStrongCandle,
+      useMarubozu,
       macroWeight,
       signalThreshold,
     });
 
-    res.status(200).json({ coin, days, stopLossPct, allowShort, leverage, smaFast, smaSlow, rsiBuyThreshold, rsiSellThreshold, adxThreshold, costPct, useSma, useMacd, useRsi, useFg, useMacro, useVolume, useBollinger, useStochRsi, useObv, useStrongCandle, macroWeight, signalThreshold, ...result });
+    res.status(200).json({ coin, days, stopLossPct, allowShort, leverage, smaFast, smaSlow, rsiBuyThreshold, rsiSellThreshold, adxThreshold, costPct, useSma, useMacd, useRsi, useFg, useMacro, useVolume, useBollinger, useStochRsi, useObv, useStrongCandle, useMarubozu, macroWeight, signalThreshold, ...result });
   } catch (err) {
     res.status(500).json({ error: err.message || "Backtest fehlgeschlagen." });
   }
