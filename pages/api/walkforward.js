@@ -16,6 +16,7 @@ export default async function handler(req, res) {
   const useStochRsi = req.query.stoch === "1";
   const useObv = req.query.obv === "1";
   const useStrongCandle = req.query.candle === "1";
+  const useMarubozu = req.query.marubozu === "1";
   const useSma = req.query.sma !== "0";
   const useMacd = req.query.macd !== "0";
   const useRsi = req.query.rsi !== "0";
@@ -54,6 +55,7 @@ export default async function handler(req, res) {
           coinId: coin.id,
           symbol: coin.symbol,
           prices: series.prices.map((p) => p.v),
+          opens: series.opens.map((o) => o.v),
           highs: series.highs.map((h) => h.v),
           lows: series.lows.map((l) => l.v),
           volumes: series.volumes.map((v) => v.v),
@@ -77,6 +79,7 @@ export default async function handler(req, res) {
         useStochRsi,
         useObv,
         useStrongCandle,
+        useMarubozu,
         useSma,
         useMacd,
         useRsi,
@@ -88,7 +91,7 @@ export default async function handler(req, res) {
         folds: FOLDS,
       });
 
-      return res.status(200).json({ mode: "multi", requestedDays: days, stopLossPct, allowShort, leverage, costPct, useBollinger, useStochRsi, useObv, useStrongCandle, useSma, useMacd, useRsi, useFg, useMacro, useVolume, macroWeight, signalThreshold, ...result });
+      return res.status(200).json({ mode: "multi", requestedDays: days, stopLossPct, allowShort, leverage, costPct, useBollinger, useStochRsi, useObv, useStrongCandle, useMarubozu, useSma, useMacd, useRsi, useFg, useMacro, useVolume, macroWeight, signalThreshold, ...result });
     }
 
     const coinId = req.query.coin || "bitcoin";
@@ -107,6 +110,7 @@ export default async function handler(req, res) {
 
     const result = runWalkForward({
       prices: series.prices.map((p) => p.v),
+      opens: series.opens.map((o) => o.v),
       highs: series.highs.map((h) => h.v),
       lows: series.lows.map((l) => l.v),
       volumes: series.volumes.map((v) => v.v),
@@ -122,6 +126,7 @@ export default async function handler(req, res) {
       useStochRsi,
       useObv,
       useStrongCandle,
+      useMarubozu,
       useSma,
       useMacd,
       useRsi,
@@ -133,7 +138,7 @@ export default async function handler(req, res) {
       folds: FOLDS,
     });
 
-    res.status(200).json({ mode: "single", coin, days, stopLossPct, allowShort, leverage, costPct, useBollinger, useStochRsi, useObv, useStrongCandle, useSma, useMacd, useRsi, useFg, useMacro, useVolume, macroWeight, signalThreshold, ...result });
+    res.status(200).json({ mode: "single", coin, days, stopLossPct, allowShort, leverage, costPct, useBollinger, useStochRsi, useObv, useStrongCandle, useMarubozu, useSma, useMacd, useRsi, useFg, useMacro, useVolume, macroWeight, signalThreshold, ...result });
   } catch (err) {
     res.status(500).json({ error: err.message || "Walk-Forward-Validierung fehlgeschlagen." });
   }

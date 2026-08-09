@@ -16,6 +16,7 @@ import {
   stochRsiSignal,
   computeOBVSignal,
   strongCandleSignal,
+  marubozuSignal,
 } from "../lib/signals";
 import PushSubscribeButton from "../components/PushSubscribeButton";
 import InstallPrompt from "../components/InstallPrompt";
@@ -91,7 +92,7 @@ export default function Home() {
     } catch(e) { setError(e.message); } finally { setLoading(false); }
   }
 
-  async function getAiAnalysis(coin, rsi, macd, smaSig, volSig, macro, price, change24h, whaleSig, bollSig, stochRsiSig, obvSig, candleSig) {
+  async function getAiAnalysis(coin, rsi, macd, smaSig, volSig, macro, price, change24h, whaleSig, bollSig, stochRsiSig, obvSig, candleSig, marubozuSig) {
     setAiLoading(prev => ({ ...prev, [coin.id]: true }));
     try {
       const res = await fetch("/api/analyze", {
@@ -109,6 +110,7 @@ export default function Home() {
           stochRsi: stochRsiSig.label,
           obv: obvSig.label,
           candle: candleSig ? candleSig.label : "n/a",
+          marubozu: marubozuSig ? marubozuSig.label : "n/a",
           tf,
         }),
       });
@@ -135,7 +137,7 @@ export default function Home() {
           <div className="brand-mark">₿</div>
           <div>
             <h1>Krypto Signal Dashboard</h1>
-            <p className="subtitle">Binance · FRED · Fear &amp; Greed · SMA + RSI + MACD + Volumen + Bollinger + StochRSI + OBV + Kerze + Whale + KI</p>
+            <p className="subtitle">Binance · FRED · Fear &amp; Greed · SMA + RSI + MACD + Volumen + Bollinger + StochRSI + OBV + Kerze + Marubozu + Whale + KI</p>
           </div>
         </div>
         <div className="header-actions">
@@ -198,6 +200,7 @@ export default function Home() {
             const stochRsiSig=stochRsiSignal(computeStochRSI(c.prices).k);
             const obvSig=computeOBVSignal(c.prices,c.volumes);
             const candleSig=c.highs&&c.lows?strongCandleSignal(c.highs,c.lows,c.prices):{label:"n/a",dir:0};
+            const marubozuSig=c.opens&&c.highs&&c.lows?marubozuSignal(c.opens,c.highs,c.lows,c.prices):{label:"n/a",dir:0};
             const combined=combineSignal(smaSig,rsi,macro,fg?.value??null,macdSig,volSig,{whaleSig});
             const isUp = c.change24h>=0;
             return(
@@ -217,9 +220,10 @@ export default function Home() {
                 <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">StochRSI</span>{stochRsiSig.label}</p>
                 <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">OBV</span>{obvSig.label}</p>
                 <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (noch nicht validiert)"><span className="note-label">Starke Kerze</span>{candleSig.label}</p>
+                <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (noch nicht validiert)"><span className="note-label">Marubozu</span>{marubozuSig.label}</p>
                 <button
                   className="ai-btn"
-                  onClick={(e)=>{e.stopPropagation();getAiAnalysis(c,rsi,macdSig,smaSig,volSig,macro,c.price,c.change24h,whaleSig,bollSig,stochRsiSig,obvSig,candleSig);}}
+                  onClick={(e)=>{e.stopPropagation();getAiAnalysis(c,rsi,macdSig,smaSig,volSig,macro,c.price,c.change24h,whaleSig,bollSig,stochRsiSig,obvSig,candleSig,marubozuSig);}}
                   disabled={aiLoading[c.id]}
                 >
                   {aiLoading[c.id]?"KI analysiert…":"🤖 KI-Analyse"}
