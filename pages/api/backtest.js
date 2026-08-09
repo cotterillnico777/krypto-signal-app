@@ -29,7 +29,7 @@ export default async function handler(req, res) {
   const useBollinger = req.query.boll === "1";
   const useStochRsi = req.query.stoch === "1";
   const useObv = req.query.obv === "1";
-  const macroWeight = req.query.macroWeight != null ? parseFloat(req.query.macroWeight) : 0.3;
+  const macroWeight = req.query.macroWeight != null ? parseFloat(req.query.macroWeight) : 2.0;
   const signalThreshold = req.query.threshold != null ? parseFloat(req.query.threshold) : 1.5;
   const coin = COINS.find((c) => c.id === coinId);
   if (!coin) return res.status(400).json({ error: "Unbekannte Coin." });
