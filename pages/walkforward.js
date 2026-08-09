@@ -1,6 +1,9 @@
 import { useState } from "react";
-import Link from "next/link";
 import { COINS } from "../lib/marketData";
+import AppHeader from "../components/AppHeader";
+import { requireActiveAccess } from "../lib/auth/requireActiveAccess";
+
+export const getServerSideProps = requireActiveAccess;
 
 const PERIODS = [
   { key: 730, label: "2 Jahre" },
@@ -31,7 +34,7 @@ function perCoinLabel(perCoin) {
   return perCoin.map((c) => `${c.symbol} ${fmtPct(c.totalReturnPct)}`).join(" · ");
 }
 
-export default function WalkForward() {
+export default function WalkForward({ user, access }) {
   const [mode, setMode] = useState("single");
   const [coinId, setCoinId] = useState("bitcoin");
   const [days, setDays] = useState(1460);
@@ -59,21 +62,13 @@ export default function WalkForward() {
 
   return (
     <div className="container">
-      <header className="app-header">
-        <div className="brand">
-          <div className="brand-mark">₿</div>
-          <div>
-            <h1>Walk-Forward-Validierung</h1>
-            <p className="subtitle">Mehrere versetzte Trainings-/Test-Fenster statt nur einem</p>
-          </div>
-        </div>
-        <div className="header-actions">
-          <Link href="/optimize" className="icon-btn">🔬 Optimierung</Link>
-          <Link href="/backtest" className="icon-btn">📊 Backtest</Link>
-          <Link href="/portfolio" className="icon-btn">💼 Portfolio</Link>
-          <Link href="/" className="icon-btn">← Dashboard</Link>
-        </div>
-      </header>
+      <AppHeader
+        title="Walk-Forward-Validierung"
+        subtitle="Mehrere versetzte Trainings-/Test-Fenster statt nur einem"
+        active="walkforward"
+        user={user}
+        access={access}
+      />
 
       <div className="toolbar">
         <span className="note-label" style={{ fontSize: 12.5 }}>Modus</span>

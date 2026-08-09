@@ -1,5 +1,6 @@
 import { COINS, fetchHistoricalSeries, fetchMacroData, fetchFearGreedData, fetchFundingRateHistory } from "../../lib/marketData";
 import { runWalkForward, runMultiCoinWalkForward } from "../../lib/optimizer";
+import { requireActiveAccessApi } from "../../lib/auth/requireActiveAccessApi";
 
 export const config = { maxDuration: 60 };
 
@@ -7,6 +8,9 @@ const MAX_DAYS = 3000; // ~8,2 Jahre – BTCUSDT/ETHUSDT sind seit 2017 auf Bina
 const FOLDS = 4;
 
 export default async function handler(req, res) {
+  const ctx = await requireActiveAccessApi(req, res);
+  if (!ctx) return;
+
   const days = Math.min(Math.max(parseInt(req.query.days) || 1460, 365), MAX_DAYS);
   const stopLossPct = req.query.stopLoss ? Math.min(Math.max(parseFloat(req.query.stopLoss), 1), 90) : null;
   const allowShort = req.query.short === "1";

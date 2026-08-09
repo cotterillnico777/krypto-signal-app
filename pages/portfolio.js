@@ -1,5 +1,8 @@
 import { useState } from "react";
-import Link from "next/link";
+import AppHeader from "../components/AppHeader";
+import { requireActiveAccess } from "../lib/auth/requireActiveAccess";
+
+export const getServerSideProps = requireActiveAccess;
 
 const PERIODS = [
   { key: 365, label: "1 Jahr" },
@@ -73,7 +76,7 @@ function EquityChart({ equityCurve }) {
   );
 }
 
-export default function Portfolio() {
+export default function Portfolio({ user, access }) {
   const [days, setDays] = useState(730);
   const [stopLoss, setStopLoss] = useState(null);
   const [allowShort, setAllowShort] = useState(false);
@@ -115,21 +118,13 @@ export default function Portfolio() {
 
   return (
     <div className="container">
-      <header className="app-header">
-        <div className="brand">
-          <div className="brand-mark">₿</div>
-          <div>
-            <h1>Portfolio-Backtest</h1>
-            <p className="subtitle">Echte Kapitalaufteilung über alle 5 Coins gleichzeitig</p>
-          </div>
-        </div>
-        <div className="header-actions">
-          <Link href="/walkforward" className="icon-btn">📈 Walk-Forward</Link>
-          <Link href="/optimize" className="icon-btn">🔬 Optimierung</Link>
-          <Link href="/backtest" className="icon-btn">📊 Backtest</Link>
-          <Link href="/" className="icon-btn">← Dashboard</Link>
-        </div>
-      </header>
+      <AppHeader
+        title="Portfolio-Backtest"
+        subtitle="Echte Kapitalaufteilung über alle 5 Coins gleichzeitig"
+        active="portfolio"
+        user={user}
+        access={access}
+      />
 
       <div className="toolbar">
         <span className="note-label" style={{ fontSize: 12.5 }}>Zeitraum</span>

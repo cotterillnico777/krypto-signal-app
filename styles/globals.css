@@ -457,3 +457,73 @@ button.active {
   font-weight: 500;
   font-size: 12px;
 }
+
+/* ---------- Auth (Login/Signup/Upgrade) ---------- */
+
+.auth-page {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 2rem 2.25rem;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.auth-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.auth-form input {
+  font: inherit;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.auth-form input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ---------- Trial-Banner + User-Info im Header ---------- */
+
+.trial-banner {
+  background: var(--gray-bg);
+  color: var(--gray-text);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  font-size: 13px;
+  margin-bottom: 1.25rem;
+}
+
+.trial-banner a { color: inherit; text-decoration: underline; }
+
+.trial-banner.expiring {
+  background: var(--amber-bg);
+  color: var(--amber-text);
+}
+
+.user-email {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  padding: 0 4px;
+}

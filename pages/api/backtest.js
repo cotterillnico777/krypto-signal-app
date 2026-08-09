@@ -1,10 +1,14 @@
 import { COINS, fetchHistoricalSeries, fetchMacroData, fetchFearGreedData, fetchFundingRateHistory } from "../../lib/marketData";
 import { runBacktest } from "../../lib/backtest";
+import { requireActiveAccessApi } from "../../lib/auth/requireActiveAccessApi";
 
 const MAX_DAYS = 3000; // ~8,2 Jahre – BTCUSDT/ETHUSDT sind seit 2017 auf Binance gelistet
 const MAX_LEVERAGE = 10;
 
 export default async function handler(req, res) {
+  const ctx = await requireActiveAccessApi(req, res);
+  if (!ctx) return;
+
   const coinId = req.query.coin || "bitcoin";
   const days = Math.min(Math.max(parseInt(req.query.days) || 365, 90), MAX_DAYS);
   const stopLossPct = req.query.stopLoss ? Math.min(Math.max(parseFloat(req.query.stopLoss), 1), 90) : null;

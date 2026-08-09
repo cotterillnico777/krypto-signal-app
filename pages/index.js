@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import {
   computeMACD,
   macdSignal,
@@ -20,6 +19,10 @@ import {
 } from "../lib/signals";
 import PushSubscribeButton from "../components/PushSubscribeButton";
 import InstallPrompt from "../components/InstallPrompt";
+import AppHeader from "../components/AppHeader";
+import { requireActiveAccess } from "../lib/auth/requireActiveAccess";
+
+export const getServerSideProps = requireActiveAccess;
 
 function fmtUSD(n) { return n.toLocaleString("de-DE", { maximumFractionDigits: n < 10 ? 3 : 0 }); }
 
@@ -64,7 +67,7 @@ const TIMEFRAMES = [
   { key: "1W", label: "Wöchentlich" },
 ];
 
-export default function Home() {
+export default function Home({ user, access }) {
   const [crypto,setCrypto]=useState(null);
   const [macroRaw,setMacroRaw]=useState(null);
   const [fg,setFg]=useState(null);
@@ -132,23 +135,16 @@ export default function Home() {
 
   return (
     <div className="container">
-      <header className="app-header">
-        <div className="brand">
-          <div className="brand-mark">₿</div>
-          <div>
-            <h1>Krypto Signal Dashboard</h1>
-            <p className="subtitle">Binance · FRED · Fear &amp; Greed · SMA + RSI + MACD + Volumen + Bollinger + StochRSI + OBV + Kerze + Marubozu + Whale + KI</p>
-          </div>
-        </div>
-        <div className="header-actions">
-          <Link href="/backtest" className="icon-btn">📊 Backtest</Link>
-          <Link href="/optimize" className="icon-btn">🔬 Optimierung</Link>
-          <Link href="/walkforward" className="icon-btn">📈 Walk-Forward</Link>
-          <Link href="/portfolio" className="icon-btn">💼 Portfolio</Link>
-          <PushSubscribeButton />
-          <button className="icon-btn" onClick={()=>loadData(tf)} title="Aktualisieren">↻ Aktualisieren</button>
-        </div>
-      </header>
+      <AppHeader
+        title="Krypto Signal Dashboard"
+        subtitle="Binance · FRED · Fear & Greed · SMA + RSI + MACD + Volumen + Bollinger + StochRSI + OBV + Kerze + Marubozu + Whale + KI"
+        active="dashboard"
+        user={user}
+        access={access}
+      >
+        <PushSubscribeButton />
+        <button className="icon-btn" onClick={()=>loadData(tf)} title="Aktualisieren">↻ Aktualisieren</button>
+      </AppHeader>
 
       <InstallPrompt />
 
