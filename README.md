@@ -198,6 +198,7 @@ Gesamt-Score ≥ 1,5 → **Risk-on**, ≤ -1,5 → **Risk-off**, sonst **Neutral
 - **Bollinger:** Mittelband = SMA(20), oberes/unteres Band = Mittelband ± 2 Standardabweichungen. %B misst die Position des Kurses im Band (0 = am unteren Band, 1 = am oberen Band): %B ≤ 0 → überverkauft, %B ≥ 1 → überkauft.
 - **Stochastic RSI:** normiert die RSI-Reihe selbst auf ihr eigenes 14-Tage-Hoch/Tief (0-100) – empfindlicher/schneller als reines RSI. ≤20 → überverkauft, ≥80 → überkauft.
 - **On-Balance-Volume (OBV):** kumuliertes Volumen (addiert bei steigendem, subtrahiert bei fallendem Tagesschluss). Signal per Crossover gegen die eigene SMA(20): darüber → Akkumulation, darunter → Distribution.
+- **Starke Kerze:** ein Tag mit ungewöhnlich großer Handelsspanne (High-Low > 1,8× der zuletzt üblichen Spanne, gemessen per Average True Range) UND eindeutigem Schluss nahe Hoch oder Tief statt mittig in der Spanne – eine Annäherung an ein Marubozu-artiges "starke Kerze"-Muster ohne Eröffnungskurs. Schluss im oberen 30%-Bereich der Spanne → Kaufen, unteres 30% → Verkaufen, sonst Neutral.
 
 **Whale-Signal (Top-Trader-Positionierung):**
 - Nutzt Binances Long/Short-Positionsratio der "Top-Trader" (Accounts mit den größten Positionen nach Volumen auf den USDT-Perpetuals) – kostenlos, kein API-Key nötig, die näheste frei zugängliche Kennzahl zu echtem "Whale-Sentiment" ohne kostenpflichtige On-Chain-Dienste (Whale Alert, Nansen, Arkham).
@@ -207,7 +208,7 @@ Gesamt-Score ≥ 1,5 → **Risk-on**, ≤ -1,5 → **Risk-off**, sonst **Neutral
 **Kombiniertes Signal:**
 - Technisches Signal + Makro-Regime + Fear & Greed + Whale-Positionierung werden zusammengeführt
 - Widersprüche werden als "Vorsicht"-Hinweis angezeigt
-- **Bollinger/Stochastic RSI/OBV fließen standardmäßig NICHT ins Kaufen/Verkaufen-Signal ein**, obwohl sie – anders als Whale – voll historisch verfügbar wären: ein Walk-Forward-Vergleich (08.08.2026, jeder Indikator einzeln über 3 Zeitfenster getestet, siehe Commit-Historie) zeigte, dass keiner davon die Out-of-Sample-Rendite/Sharpe verbessert, meist im Gegenteil (Bollinger am schädlichsten). Sie werden weiterhin berechnet und im Dashboard als Info-Zeilen (abgedunkelt) angezeigt, sind aber deaktivierbar/aktivierbar über `useBollinger`/`useStochRsi`/`useObv` in `runBacktest` bzw. `boll=1`/`stoch=1`/`obv=1` in der Walk-Forward-API – für alle, die selbst mit anderen Gewichten/Schwellenwerten experimentieren wollen.
+- **Bollinger/Stochastic RSI/OBV/Starke Kerze fließen standardmäßig NICHT ins Kaufen/Verkaufen-Signal ein**, obwohl sie – anders als Whale – voll historisch verfügbar wären: ein Walk-Forward-Vergleich (08.08.2026, jeder Indikator einzeln über 3 Zeitfenster getestet, siehe Commit-Historie) zeigte, dass keiner davon konsistent die Out-of-Sample-Rendite/Sharpe verbessert (Bollinger/StochRSI/OBV meist schädlich, Starke Kerze gemischt – hilft in einem Zeitfenster, schadet in einem anderen). Sie werden weiterhin berechnet und im Dashboard als Info-Zeilen (abgedunkelt) angezeigt, sind aber deaktivierbar/aktivierbar über `useBollinger`/`useStochRsi`/`useObv`/`useStrongCandle` in `runBacktest` bzw. `boll=1`/`stoch=1`/`obv=1`/`candle=1` in der Walk-Forward-API – für alle, die selbst mit anderen Gewichten/Schwellenwerten experimentieren wollen.
 
 ---
 
