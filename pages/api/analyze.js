@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
-  const { coin, rsi, macd, sma, volume, macro, feargreed, whale, bollinger, stochRsi, obv, price, change24h, tf } = req.body;
+  const { coin, rsi, macd, sma, volume, macro, feargreed, whale, bollinger, stochRsi, obv, candle, price, change24h, tf } = req.body;
 
   const prompt = `Du bist ein erfahrener Krypto-Analyst. Analysiere folgende Daten für ${coin} (Timeframe: ${tf}) und gib eine klare, kurze Einschätzung auf Deutsch:
 
@@ -13,6 +13,7 @@ Volumen: ${volume}
 Bollinger Bänder: ${bollinger ?? "n/a"}
 Stochastic RSI: ${stochRsi ?? "n/a"}
 On-Balance-Volume (Trend vs. eigene SMA20): ${obv ?? "n/a"}
+Starke Kerze (Tagesspanne deutlich über Durchschnitt + eindeutiger Schluss nahe Hoch/Tief): ${candle ?? "n/a"}
 Fear & Greed Index: ${feargreed}
 Makro-Regime: ${macro}
 Whale-Positionierung (Top-Trader Long/Short auf Binance-Futures, coin-relativ zum 7-Tage-Durchschnitt): ${whale ?? "n/a"}
