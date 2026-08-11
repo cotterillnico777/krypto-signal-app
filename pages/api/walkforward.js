@@ -27,6 +27,7 @@ export default async function handler(req, res) {
   const useFg = req.query.fg !== "0";
   const useMacro = req.query.macro !== "0";
   const useVolume = req.query.vol !== "0";
+  const useNasdaq = req.query.nasdaq === "1";
   const macroWeight = req.query.macroWeight != null ? parseFloat(req.query.macroWeight) : 2.0;
   const signalThreshold = req.query.threshold != null ? parseFloat(req.query.threshold) : 1.5;
   const multiCoin = req.query.mode === "multi";
@@ -90,12 +91,13 @@ export default async function handler(req, res) {
         useFg,
         useMacro,
         useVolume,
+        useNasdaq,
         macroWeight,
         signalThreshold,
         folds: FOLDS,
       });
 
-      return res.status(200).json({ mode: "multi", requestedDays: days, stopLossPct, allowShort, leverage, costPct, useBollinger, useStochRsi, useObv, useStrongCandle, useMarubozu, useSma, useMacd, useRsi, useFg, useMacro, useVolume, macroWeight, signalThreshold, ...result });
+      return res.status(200).json({ mode: "multi", requestedDays: days, stopLossPct, allowShort, leverage, costPct, useBollinger, useStochRsi, useObv, useStrongCandle, useMarubozu, useSma, useMacd, useRsi, useFg, useMacro, useVolume, useNasdaq, macroWeight, signalThreshold, ...result });
     }
 
     const coinId = req.query.coin || "bitcoin";
@@ -137,12 +139,13 @@ export default async function handler(req, res) {
       useFg,
       useMacro,
       useVolume,
+      useNasdaq,
       macroWeight,
       signalThreshold,
       folds: FOLDS,
     });
 
-    res.status(200).json({ mode: "single", coin, days, stopLossPct, allowShort, leverage, costPct, useBollinger, useStochRsi, useObv, useStrongCandle, useMarubozu, useSma, useMacd, useRsi, useFg, useMacro, useVolume, macroWeight, signalThreshold, ...result });
+    res.status(200).json({ mode: "single", coin, days, stopLossPct, allowShort, leverage, costPct, useBollinger, useStochRsi, useObv, useStrongCandle, useMarubozu, useSma, useMacd, useRsi, useFg, useMacro, useVolume, useNasdaq, macroWeight, signalThreshold, ...result });
   } catch (err) {
     res.status(500).json({ error: err.message || "Walk-Forward-Validierung fehlgeschlagen." });
   }

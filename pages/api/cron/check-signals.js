@@ -58,7 +58,7 @@ export default async function handler(req, res) {
       fetchFearGreedData().catch(() => null),
       fetchWhaleData().catch(() => ({})),
     ]);
-    const macro = computeMacroRegime(macroRaw.m2, macroRaw.fedfunds, macroRaw.dxy, macroRaw.yield10y, macroRaw.vix);
+    const macro = computeMacroRegime(macroRaw.m2, macroRaw.fedfunds, macroRaw.dxy, macroRaw.yield10y, macroRaw.vix, macroRaw.sp500, macroRaw.nasdaq);
     const signals = computeAllSignals(coins, macro, fg?.value ?? null, whale);
 
     const { data: subRows, error: subError } = await supabaseAdmin

@@ -30,6 +30,7 @@ export default async function handler(req, res) {
   const useFg = req.query.fg !== "0";
   const useMacro = req.query.macro !== "0";
   const useVolume = req.query.vol !== "0";
+  const useNasdaq = req.query.nasdaq === "1";
   const useBollinger = req.query.boll === "1";
   const useStochRsi = req.query.stoch === "1";
   const useObv = req.query.obv === "1";
@@ -81,6 +82,7 @@ export default async function handler(req, res) {
       useFg,
       useMacro,
       useVolume,
+      useNasdaq,
       useBollinger,
       useStochRsi,
       useObv,
@@ -90,7 +92,7 @@ export default async function handler(req, res) {
       signalThreshold,
     });
 
-    res.status(200).json({ coin, days, stopLossPct, allowShort, leverage, smaFast, smaSlow, rsiBuyThreshold, rsiSellThreshold, adxThreshold, costPct, useSma, useMacd, useRsi, useFg, useMacro, useVolume, useBollinger, useStochRsi, useObv, useStrongCandle, useMarubozu, macroWeight, signalThreshold, ...result });
+    res.status(200).json({ coin, days, stopLossPct, allowShort, leverage, smaFast, smaSlow, rsiBuyThreshold, rsiSellThreshold, adxThreshold, costPct, useSma, useMacd, useRsi, useFg, useMacro, useVolume, useNasdaq, useBollinger, useStochRsi, useObv, useStrongCandle, useMarubozu, macroWeight, signalThreshold, ...result });
   } catch (err) {
     res.status(500).json({ error: err.message || "Backtest fehlgeschlagen." });
   }
