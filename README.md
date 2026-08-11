@@ -130,6 +130,20 @@ Coin-Auswahl ist fest auf alle 5 Coins gesetzt (kein Einzel-Coin-Toggle), Stop-L
 
 ---
 
+## Trades & R:R-Rechner
+
+Zwei Tools fürs eigene (manuelle) Trading, unabhängig von den Dashboard-Signalen:
+
+**"⚖️ R:R-Rechner"** (Route `/risk-reward`): reiner Rechner, keine Datenbank – Entry-Preis, Stop-Loss, Take-Profit, Kontogröße und Risiko% pro Trade eingeben, live berechnet werden Risiko/Rendite-Verhältnis, empfohlene Positionsgröße und Risiko-/Gewinn-Betrag in USD.
+
+**"📓 Trades"** (Route `/trades`): manuelles Trade-Tracking + Trading-Journal in einem (kein Exchange-Zugang, keine automatische Trade-Erkennung – du trägst deine Trades selbst ein). Pro Trade: Symbol, Richtung, Entry-/Stop-/Target-Preis, Positionsgröße (USD-Notional), Notizfeld. PnL/R-Multiple/Status werden aus den eingegebenen Werten berechnet, nicht separat gespeichert. Offene Trades lassen sich direkt in der Tabelle mit einem Exit-Preis schließen.
+
+Der **"🤖 KI-Analyse"**-Button lässt Claude Muster im Journal suchen (Trefferquote, Risikomanagement, wiederkehrende Fehler in den Notizen) – auf max. 5 Analysen pro Tag pro Nutzer begrenzt (Redis-Zähler, `lib/redis.js`), da ein Journal-Prompt mehr Anthropic-Kosten verursacht als die Einzel-Coin-Analyse im Dashboard.
+
+Braucht die `trades`-Tabelle aus `supabase/migrations/0002_trades.sql` (siehe Abschnitt "Accounts & Login" oben).
+
+---
+
 ## Push-Benachrichtigungen einrichten
 
 Die App schickt eine Push-Benachrichtigung, sobald ein Coin **neu** auf "Kaufen" wechselt. Dafür braucht es zwei Dinge: VAPID-Keys (bereits erledigt) und einen Cloud-Speicher für die Abo-Daten.
@@ -180,6 +194,8 @@ Seit dem Public-Launch-Umbau ist die komplette App (Dashboard + alle vier Analys
 Im Supabase-Dashboard → SQL Editor → neue Query → Inhalt von `supabase/migrations/0001_init.sql` einfügen und ausführen. Legt zwei Tabellen an:
 - `profiles` – ein Profil pro Nutzer, trackt Trial-Start/-Ende und Abo-Status (inkl. Row Level Security)
 - `push_subscriptions` – Web-Push-Abos, jetzt an echte Nutzer gebunden statt global geteilt
+
+Danach genauso `supabase/migrations/0002_trades.sql` ausführen (additiv, unabhängig von 0001) – legt die `trades`-Tabelle fürs Trade-Tracking/Journal an (siehe Abschnitt "Trades & R:R-Rechner" unten).
 
 ### 3. Auth-Provider konfigurieren
 Unter Authentication → Providers:
