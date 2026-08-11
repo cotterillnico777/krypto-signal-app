@@ -7,6 +7,8 @@ const TOOLS = [
   { key: "optimize", href: "/optimize", icon: "🔬", label: "Optimierung" },
   { key: "walkforward", href: "/walkforward", icon: "📈", label: "Walk-Forward" },
   { key: "portfolio", href: "/portfolio", icon: "💼", label: "Portfolio" },
+  { key: "trades", href: "/trades", icon: "📓", label: "Trades" },
+  { key: "risk-reward", href: "/risk-reward", icon: "⚖️", label: "R:R-Rechner" },
 ];
 
 // Gemeinsame Header-Komponente für alle 5 gegateten Seiten -- ersetzt das

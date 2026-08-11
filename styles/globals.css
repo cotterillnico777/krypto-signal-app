@@ -502,6 +502,39 @@ button.active {
   outline-offset: 1px;
 }
 
+/* ---------- Formularfelder außerhalb von .auth-form (z.B. Trades-Formular,
+   R:R-Rechner) -- gleiche Deklarationen wie .auth-form input, aber ohne an
+   diese Klasse gebunden zu sein. ---------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.input, .textarea {
+  font: inherit;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.input:focus, .textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 70px;
+}
+
 /* ---------- Trial-Banner + User-Info im Header ---------- */
 
 .trial-banner {
