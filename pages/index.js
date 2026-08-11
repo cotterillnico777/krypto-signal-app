@@ -129,7 +129,7 @@ export default function Home({ user, access }) {
   useEffect(()=>{loadData("1D");},[]);
   function switchTf(newTf) { setTf(newTf); loadData(newTf); }
 
-  const macro=macroRaw?computeMacroRegime(macroRaw.m2,macroRaw.fedfunds,macroRaw.dxy,macroRaw.yield10y,macroRaw.vix):null;
+  const macro=macroRaw?computeMacroRegime(macroRaw.m2,macroRaw.fedfunds,macroRaw.dxy,macroRaw.yield10y,macroRaw.vix,macroRaw.sp500,macroRaw.nasdaq):null;
   const activeCoin=crypto?.find((c)=>c.id===active);
   const tfLabel=TIMEFRAMES.find(t=>t.key===tf)?.label||tf;
 
@@ -165,6 +165,11 @@ export default function Home({ user, access }) {
           <div className="card"><p className="card-label">Dollar-Index (3M-Trend)</p><p className="card-value">{macro.dxyTrend!=null?`${macro.dxyTrend>=0?"+":""}${macro.dxyTrend.toFixed(1)}%`:"n/a"}</p></div>
           <div className="card"><p className="card-label">10J-Rendite (3M-Trend)</p><p className="card-value">{macro.yieldTrend!=null?`${macro.yieldTrend>=0?"+":""}${macro.yieldTrend.toFixed(2)}pp`:"n/a"}</p></div>
           <div className="card"><p className="card-label">VIX (aktuell)</p><p className="card-value">{macro.vixLevel?.toFixed(1)??"n/a"}</p></div>
+        </div>
+
+        <div className="grid grid-3" style={{marginBottom:"1rem"}}>
+          <div className="card" style={{opacity:0.65}} title="Fließt nicht ins Makro-Regime ein (Walk-Forward-Vergleich 09.08.2026 zeigte trotz positiver Korrelationsstudie keinen robusten Vorteil über 365/730/850 Tage)"><p className="card-label">Nasdaq (90T-Trend)</p><p className="card-value">{macro.nasdaqTrend!=null?`${macro.nasdaqTrend>=0?"+":""}${macro.nasdaqTrend.toFixed(1)}%`:"n/a"}</p></div>
+          <div className="card" style={{opacity:0.65}} title="Fließt nicht ins Makro-Regime ein (Korrelationsstudie 09.08.2026 zeigte zu schwachen/uneinheitlichen Zusammenhang)"><p className="card-label">S&amp;P 500 (3M-Trend)</p><p className="card-value">{macro.sp500Trend!=null?`${macro.sp500Trend>=0?"+":""}${macro.sp500Trend.toFixed(1)}%`:"n/a"}</p></div>
         </div>
 
         <div className={`card macro-banner ${macro.cls}`}>
