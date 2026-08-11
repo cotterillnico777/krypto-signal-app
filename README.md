@@ -233,6 +233,8 @@ Fünf Faktoren fließen in einen Score ein, jeder einzeln auf ungefähr -1 bis +
 
 Gesamt-Score ≥ 1,5 → **Risk-on**, ≤ -1,5 → **Risk-off**, sonst **Neutral**.
 
+**Nasdaq/S&P 500 (nur Info, siehe unten):** 90-Tage- bzw. 3-Monats-Trend werden berechnet und im Dashboard angezeigt, fließen aber standardmäßig NICHT in den Makro-Score ein (siehe Begründung unten bei "Kombiniertes Signal").
+
 **Bollinger Bänder, Stochastic RSI, On-Balance-Volume (nur Info, siehe unten):**
 - **Bollinger:** Mittelband = SMA(20), oberes/unteres Band = Mittelband ± 2 Standardabweichungen. %B misst die Position des Kurses im Band (0 = am unteren Band, 1 = am oberen Band): %B ≤ 0 → überverkauft, %B ≥ 1 → überkauft.
 - **Stochastic RSI:** normiert die RSI-Reihe selbst auf ihr eigenes 14-Tage-Hoch/Tief (0-100) – empfindlicher/schneller als reines RSI. ≤20 → überverkauft, ≥80 → überkauft.
@@ -249,6 +251,7 @@ Gesamt-Score ≥ 1,5 → **Risk-on**, ≤ -1,5 → **Risk-off**, sonst **Neutral
 - Technisches Signal + Makro-Regime + Fear & Greed + Whale-Positionierung werden zusammengeführt
 - Widersprüche werden als "Vorsicht"-Hinweis angezeigt
 - **Bollinger/Stochastic RSI/OBV/Starke Kerze/Marubozu fließen standardmäßig NICHT ins Kaufen/Verkaufen-Signal ein**, obwohl sie – anders als Whale – voll historisch verfügbar wären: ein Walk-Forward-Vergleich (08./09.08.2026, jeder Indikator einzeln über 3 Zeitfenster getestet, siehe Commit-Historie) zeigte, dass keiner davon konsistent die Out-of-Sample-Rendite/Sharpe verbessert (Bollinger/StochRSI/OBV meist schädlich, Starke Kerze gemischt, Marubozu praktisch im Rauschen – zu seltenes Muster). Sie werden weiterhin berechnet und im Dashboard als Info-Zeilen (abgedunkelt) angezeigt, sind aber deaktivierbar/aktivierbar über `useBollinger`/`useStochRsi`/`useObv`/`useStrongCandle`/`useMarubozu` in `runBacktest` bzw. `boll=1`/`stoch=1`/`obv=1`/`candle=1`/`marubozu=1` in der Walk-Forward-API – für alle, die selbst mit anderen Gewichten/Schwellenwerten experimentieren wollen.
+- **Nasdaq-Trend fließt ebenfalls standardmäßig NICHT in den Makro-Score ein**, trotz einer positiven Pearson-Korrelationsstudie (09.08.2026, BTC-Forward-14-Tage-Rendite gegen 90-Tage-Nasdaq-Trend, n≈2050 Tage, r≈0.10): ein anschließender Multi-Coin-Walk-Forward-Vergleich mit/ohne Score-Beitrag über 365/730/850 Tage zeigte keinen robusten Vorteil (uneinheitlich über die Fenster – 730 Tage klar besser ohne, 850 Tage etwas besser mit). Gleiche Behandlung wie oben: berechnet/angezeigt, aber standardmäßig aus, aktivierbar über `useNasdaq` in `runBacktest` bzw. `nasdaq=1` in Backtest-/Walk-Forward-API. **S&P 500 fließt gar nicht erst ein** – die Korrelationsstudie zeigte hier von vornherein keinen belastbaren Zusammenhang.
 
 ---
 
@@ -261,6 +264,8 @@ Gesamt-Score ≥ 1,5 → **Risk-on**, ≤ -1,5 → **Risk-off**, sonst **Neutral
 - **Dollar-Index:** [FRED DTWEXBGS](https://fred.stlouisfed.org/series/DTWEXBGS)
 - **10J-Staatsanleihe-Rendite:** [FRED DGS10](https://fred.stlouisfed.org/series/DGS10)
 - **VIX:** [FRED VIXCLS](https://fred.stlouisfed.org/series/VIXCLS)
+- **Nasdaq Composite:** [FRED NASDAQCOM](https://fred.stlouisfed.org/series/NASDAQCOM)
+- **S&P 500:** [FRED SP500](https://fred.stlouisfed.org/series/SP500)
 
 ---
 
