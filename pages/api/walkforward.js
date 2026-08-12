@@ -13,6 +13,7 @@ export default async function handler(req, res) {
 
   const days = Math.min(Math.max(parseInt(req.query.days) || 1460, 365), MAX_DAYS);
   const stopLossPct = req.query.stopLoss ? Math.min(Math.max(parseFloat(req.query.stopLoss), 1), 90) : null;
+  const takeProfitPct = req.query.takeProfit ? Math.min(Math.max(parseFloat(req.query.takeProfit), 1), 500) : null;
   const allowShort = req.query.short === "1";
   const leverage = Math.min(Math.max(parseInt(req.query.leverage) || 1, 1), 10);
   const costPct = req.query.cost != null ? Math.min(Math.max(parseFloat(req.query.cost), 0), 2) : 0.15;
@@ -77,6 +78,7 @@ export default async function handler(req, res) {
         macro,
         fearGreedHistory: fg.history,
         stopLossPct,
+        takeProfitPct,
         allowShort,
         leverage,
         costPct,
@@ -97,7 +99,7 @@ export default async function handler(req, res) {
         folds: FOLDS,
       });
 
-      return res.status(200).json({ mode: "multi", requestedDays: days, stopLossPct, allowShort, leverage, costPct, useBollinger, useStochRsi, useObv, useStrongCandle, useMarubozu, useSma, useMacd, useRsi, useFg, useMacro, useVolume, useNasdaq, macroWeight, signalThreshold, ...result });
+      return res.status(200).json({ mode: "multi", requestedDays: days, stopLossPct, takeProfitPct, allowShort, leverage, costPct, useBollinger, useStochRsi, useObv, useStrongCandle, useMarubozu, useSma, useMacd, useRsi, useFg, useMacro, useVolume, useNasdaq, macroWeight, signalThreshold, ...result });
     }
 
     const coinId = req.query.coin || "bitcoin";
@@ -125,6 +127,7 @@ export default async function handler(req, res) {
       fearGreedHistory: fg.history,
       fundingRates: funding,
       stopLossPct,
+      takeProfitPct,
       allowShort,
       leverage,
       costPct,
@@ -145,7 +148,7 @@ export default async function handler(req, res) {
       folds: FOLDS,
     });
 
-    res.status(200).json({ mode: "single", coin, days, stopLossPct, allowShort, leverage, costPct, useBollinger, useStochRsi, useObv, useStrongCandle, useMarubozu, useSma, useMacd, useRsi, useFg, useMacro, useVolume, useNasdaq, macroWeight, signalThreshold, ...result });
+    res.status(200).json({ mode: "single", coin, days, stopLossPct, takeProfitPct, allowShort, leverage, costPct, useBollinger, useStochRsi, useObv, useStrongCandle, useMarubozu, useSma, useMacd, useRsi, useFg, useMacro, useVolume, useNasdaq, macroWeight, signalThreshold, ...result });
   } catch (err) {
     res.status(500).json({ error: err.message || "Walk-Forward-Validierung fehlgeschlagen." });
   }
