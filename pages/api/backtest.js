@@ -12,6 +12,7 @@ export default async function handler(req, res) {
   const coinId = req.query.coin || "bitcoin";
   const days = Math.min(Math.max(parseInt(req.query.days) || 365, 90), MAX_DAYS);
   const stopLossPct = req.query.stopLoss ? Math.min(Math.max(parseFloat(req.query.stopLoss), 1), 90) : null;
+  const takeProfitPct = req.query.takeProfit ? Math.min(Math.max(parseFloat(req.query.takeProfit), 1), 500) : null;
   const allowShort = req.query.short === "1";
   const leverage = Math.min(Math.max(parseInt(req.query.leverage) || 1, 1), MAX_LEVERAGE);
   // Optionale Strategie-Parameter (z.B. um eine vom Optimizer gefundene Kombination
@@ -67,6 +68,7 @@ export default async function handler(req, res) {
       macro,
       fearGreedHistory: fg.history,
       stopLossPct,
+      takeProfitPct,
       allowShort,
       leverage,
       fundingRates: funding,
@@ -92,7 +94,7 @@ export default async function handler(req, res) {
       signalThreshold,
     });
 
-    res.status(200).json({ coin, days, stopLossPct, allowShort, leverage, smaFast, smaSlow, rsiBuyThreshold, rsiSellThreshold, adxThreshold, costPct, useSma, useMacd, useRsi, useFg, useMacro, useVolume, useNasdaq, useBollinger, useStochRsi, useObv, useStrongCandle, useMarubozu, macroWeight, signalThreshold, ...result });
+    res.status(200).json({ coin, days, stopLossPct, takeProfitPct, allowShort, leverage, smaFast, smaSlow, rsiBuyThreshold, rsiSellThreshold, adxThreshold, costPct, useSma, useMacd, useRsi, useFg, useMacro, useVolume, useNasdaq, useBollinger, useStochRsi, useObv, useStrongCandle, useMarubozu, macroWeight, signalThreshold, ...result });
   } catch (err) {
     res.status(500).json({ error: err.message || "Backtest fehlgeschlagen." });
   }

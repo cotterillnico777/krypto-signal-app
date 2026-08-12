@@ -259,7 +259,7 @@ export default function Backtest({ user, access }) {
                         <td><span className={`badge ${t.direction === "short" ? "badge-red" : "badge-green"}`}>{t.direction === "short" ? "Short" : "Long"}</span></td>
                         <td>{t.entryDate}</td>
                         <td>${fmtUSD(t.entryPrice)}</td>
-                        <td>{t.exitDate}{t.openAtEnd ? " (offen)" : ""}{t.stoppedOut ? " (Stop)" : ""}{t.liquidated ? " (liquidiert)" : ""}</td>
+                        <td>{t.exitDate}{t.openAtEnd ? " (offen)" : ""}{t.stoppedOut ? " (Stop)" : ""}{t.liquidated ? " (liquidiert)" : ""}{t.tookProfit ? " (Target)" : ""}</td>
                         <td>${fmtUSD(t.exitPrice)}</td>
                         <td>
                           <span className={`badge ${t.returnPct >= 0 ? "badge-green" : "badge-red"}`}>{fmtPct(t.returnPct)}</span>

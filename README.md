@@ -64,6 +64,7 @@ Unter „📊 Backtest" (Link im Dashboard-Header, Route `/backtest`) simuliert 
 - Angezeigt werden: Strategie-Rendite vs. Buy & Hold, Max Drawdown, Anzahl Trades, Trefferquote, eine Equity-Kurve und die einzelnen Trades (mit "(Stop)"-Markierung bei Stop-Loss-Ausstiegen).
 - Start-Kapital ist ein hypothetisches $10.000, ohne Gebühren/Slippage. Bis zu 4 Jahre zurück deckt frühere Markt-Regime ab (z.B. den Bärenmarkt 2022), damit die Strategie nicht nur an einem einzelnen, zufälligen Marktumfeld gemessen wird.
 - Der Stop-Loss prüft pro simuliertem Tag das Tagestief/-hoch gegen den Einstiegspreis und schließt die Position zum Stop-Kurs – realistischer als ein reiner Schlusskurs-Check, aber immer noch ohne Slippage.
+- **Take-Profit** (`takeProfitPct` in `runBacktest`, `takeProfit=`-Query-Param bei `/api/backtest` und `/api/walkforward`, kein UI-Regler): spiegelbildlich zum Stop-Loss, schließt die Position beim Erreichen eines Gewinnziels. Empirisch geprüft (Multi-Coin Walk-Forward, mehrere %-Stufen solo und im Bracket mit Stop-Loss) und dabei in den beiden längeren/verlässlicheren Zeitfenstern durchgängig **schlechter** als ganz ohne Gewinnziel abgeschnitten – die Strategie lässt Gewinner sonst per Signal-Exit laufen, ein festes Ziel kappt das vorzeitig. Bleibt deshalb bewusst ohne UI-Regler, nur für eigene Experimente per API nutzbar.
 
 **Long + Short, Hebel:**
 - **Nur Long** (Standard): bei "Verkaufen"-Signal wird die Position glattgestellt (zurück in Cash), kein Short.
