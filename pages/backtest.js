@@ -34,6 +34,20 @@ const COSTS = [
   { key: 0.3, label: "0,3% (konservativ)" },
 ];
 
+// ADX-Trendfilter: schwächt Kaufen/Verkaufen-Crossover-Signale zu Halten ab,
+// wenn der Trend laut ADX zu schwach ist (siehe combineSignal/adxThreshold).
+// Standard "Kein Filter" (wie bisher) -- ein Multi-Coin-Test (11.08.2026,
+// 5 Coins über 365/730/850 Tage) zeigte bei ADX 20 keinen robusten Effekt:
+// half BTC/ETH/XRP teils deutlich, schadete Solana/Bittensor teils deutlich
+// (bis -73% im 850-Tage-Fenster) -- kein globaler Default, aber je nach Coin/
+// Setup einen Blick wert, deshalb als Regler verfügbar statt nur per API.
+const TRENDFILTERS = [
+  { key: null, label: "Kein Filter" },
+  { key: 15, label: "ADX 15" },
+  { key: 20, label: "ADX 20" },
+  { key: 25, label: "ADX 25" },
+];
+
 function fmtUSD(n) {
   return n.toLocaleString("de-DE", { maximumFractionDigits: n < 10 ? 3 : 0 });
 }
@@ -78,6 +92,7 @@ export default function Backtest({ user, access }) {
   const [coinId, setCoinId] = useState("bitcoin");
   const [days, setDays] = useState(365);
   const [stopLoss, setStopLoss] = useState(null);
+  const [adxThreshold, setAdxThreshold] = useState(null);
   const [allowShort, setAllowShort] = useState(false);
   const [leverage, setLeverage] = useState(1);
   const [costPct, setCostPct] = useState(0.15);
@@ -91,10 +106,11 @@ export default function Backtest({ user, access }) {
     setResult(null);
     try {
       const stopParam = stopLoss ? `&stopLoss=${stopLoss}` : "";
+      const adxParam = adxThreshold ? `&adx=${adxThreshold}` : "";
       const shortParam = allowShort ? "&short=1" : "";
       const leverageParam = leverage !== 1 ? `&leverage=${leverage}` : "";
       const costParam = `&cost=${costPct}`;
-      const res = await fetch(`/api/backtest?coin=${coinId}&days=${days}${stopParam}${shortParam}${leverageParam}${costParam}`);
+      const res = await fetch(`/api/backtest?coin=${coinId}&days=${days}${stopParam}${adxParam}${shortParam}${leverageParam}${costParam}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setResult(data);
@@ -138,6 +154,17 @@ export default function Backtest({ user, access }) {
           {STOP_LOSSES.map((s) => (
             <button key={s.label} className={stopLoss === s.key ? "active" : ""} onClick={() => setStopLoss(s.key)} style={{ padding: "5px 10px", fontSize: 12 }}>
               {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="toolbar">
+        <span className="note-label" style={{ fontSize: 12.5 }} title="Schwächt Kaufen/Verkaufen-Crossover-Signale zu Halten ab, wenn der Trend laut ADX zu schwach ist. Gemischte Ergebnisse je Coin (siehe Tooltip auf den Reglern) -- kein Standardverhalten, gezielt zum Ausprobieren.">Trendfilter (ADX)</span>
+        <div className="tabs">
+          {TRENDFILTERS.map((t) => (
+            <button key={t.label} className={adxThreshold === t.key ? "active" : ""} onClick={() => setAdxThreshold(t.key)} style={{ padding: "5px 10px", fontSize: 12 }}>
+              {t.label}
             </button>
           ))}
         </div>
@@ -227,8 +254,8 @@ export default function Backtest({ user, access }) {
           </div>
 
           <div className="card" style={{ marginBottom: "1.5rem" }}>
-            <p className="card-label">Coin / Zeitraum / Stop / Hebel / Kosten</p>
-            <p className="card-value" style={{ fontSize: 16 }}>{result.coin.symbol} · {result.days}T · {result.stopLossPct ? `-${result.stopLossPct}%` : "kein Stop"} · {result.leverage}x{result.allowShort ? " · Short erlaubt" : ""} · {result.costPct}% Kosten/Seite</p>
+            <p className="card-label">Coin / Zeitraum / Stop / Trendfilter / Hebel / Kosten</p>
+            <p className="card-value" style={{ fontSize: 16 }}>{result.coin.symbol} · {result.days}T · {result.stopLossPct ? `-${result.stopLossPct}%` : "kein Stop"} · {result.adxThreshold ? `ADX ${result.adxThreshold}` : "kein Filter"} · {result.leverage}x{result.allowShort ? " · Short erlaubt" : ""} · {result.costPct}% Kosten/Seite</p>
           </div>
 
           <div className="card" style={{ marginBottom: "1.5rem" }}>
