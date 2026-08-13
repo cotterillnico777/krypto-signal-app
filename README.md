@@ -146,6 +146,12 @@ Braucht die `trades`-Tabelle aus `supabase/migrations/0002_trades.sql` (siehe Ab
 
 ---
 
+## Validierungs-Historie (öffentliche Seite)
+
+Route `/validation` – die einzige inhaltliche Seite der App, die **ohne Login** erreichbar ist (kein `getServerSideProps = requireActiveAccess`, folgt stattdessen dem eigenen schlanken Header-Layout von `pages/login.js`). Gedacht als Vertrauensanker für Interessenten vor der Anmeldung: listet **jeden** je getesteten Signal-Faktor auf, mit Datum, Hypothese, Test-Methode (i.d.R. Multi-Coin Walk-Forward über 365/730/850 Tage) und Ergebnis – auch die Fälle, in denen ein Faktor NICHT geholfen oder sogar geschadet hat. Datenquelle ist `lib/validationHistory.js` (ein einfaches Array, kein DB/API-Call) – beim nächsten empirisch getesteten Faktor dort einen neuen Eintrag ergänzen. Verlinkt von `/login`, `/signup` und im `AppHeader`-Nav für eingeloggte Nutzer.
+
+---
+
 ## Push-Benachrichtigungen einrichten
 
 Die App schickt eine Push-Benachrichtigung, sobald ein Coin **neu** auf "Kaufen" wechselt. Dafür braucht es zwei Dinge: VAPID-Keys (bereits erledigt) und einen Cloud-Speicher für die Abo-Daten.

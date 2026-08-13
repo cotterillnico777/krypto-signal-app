@@ -108,6 +108,9 @@ export default function Login() {
         <p style={{ marginTop: "1.5rem", fontSize: 13 }}>
           Noch keinen Account? <Link href="/signup">Jetzt registrieren</Link> (14 Tage kostenlos testen, keine Kreditkarte nötig)
         </p>
+        <p style={{ marginTop: "0.5rem", fontSize: 13 }}>
+          <Link href="/validation">Wie wir unsere Signale entwickeln →</Link>
+        </p>
       </div>
     </div>
   );
