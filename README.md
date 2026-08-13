@@ -279,6 +279,11 @@ Gesamt-Score ≥ 1,5 → **Risk-on**, ≤ -1,5 → **Risk-off**, sonst **Neutral
 - Top-Trader liegen auf Binance strukturell fast immer netto-long (z.B. TAO meist >2.0, BTC eher ~1.5) – ein fester Schwellenwert würde das für jeden Coin unterschiedlich interpretieren. Deshalb vergleicht das Signal die heutige Ratio gegen den 7-Tage-Durchschnitt derselben Coin: eine deutliche Abweichung vom coin-eigenen Normalniveau (≥8% in beide Richtungen) zählt als bullish/bearish, sonst neutral.
 - **Nur live verfügbar** (Dashboard + Push-Cron): Binance hält diese Daten nur ~30 Tage zurück, deshalb ist das Signal in Backtest/Optimierung/Walk-Forward/Portfolio nicht eingebunden – dort würde es für 99%+ der Historie fehlen.
 
+**Liquidität (Orderbuch-Kontext, nur Info):**
+- Geld-Brief-Spanne (Spread) und kumulierte Orderbuch-Tiefe innerhalb ±1% vom Mittelkurs, direkt aus Binances Spot-Orderbuch – kostenlos, kein API-Key nötig.
+- Zeigt, wie teuer/riskant ein sofortiger Handel gerade wäre bzw. wie viel Volumen sich handeln lässt, ohne den Kurs spürbar zu bewegen – reiner Marktkontext, **kein Kaufen/Verkaufen-Signal**.
+- **Nur live verfügbar**, wie das Whale-Signal: Binance liefert Orderbuch-Daten nur als aktuelle Momentaufnahme, keine Historie über die REST-API – daher nicht in Backtest/Optimierung/Walk-Forward/Portfolio eingebunden.
+
 **Kombiniertes Signal:**
 - Technisches Signal + Makro-Regime + Fear & Greed + Whale-Positionierung werden zusammengeführt
 - Widersprüche werden als "Vorsicht"-Hinweis angezeigt
@@ -291,6 +296,7 @@ Gesamt-Score ≥ 1,5 → **Risk-on**, ≤ -1,5 → **Risk-off**, sonst **Neutral
 
 - **Krypto-Kurse:** [Binance API](https://binance-docs.github.io/apidocs/spot/en/) (kostenlos, kein Key nötig, volle Tages-Historie seit Listing)
 - **Whale/Top-Trader-Positionierung:** [Binance Futures Data](https://binance-docs.github.io/apidocs/futures/en/#top-trader-long-short-ratio-position) (kostenlos, kein Key nötig, ~30 Tage Historie – nur Dashboard/Cron)
+- **Orderbuch/Liquidität:** [Binance Spot Depth](https://binance-docs.github.io/apidocs/spot/en/#order-book) (kostenlos, kein Key nötig, nur aktuelle Momentaufnahme – nur Dashboard)
 - **M2-Geldmenge:** [FRED M2SL](https://fred.stlouisfed.org/series/M2SL)
 - **US-Leitzins:** [FRED FEDFUNDS](https://fred.stlouisfed.org/series/FEDFUNDS)
 - **Dollar-Index:** [FRED DTWEXBGS](https://fred.stlouisfed.org/series/DTWEXBGS)

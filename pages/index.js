@@ -9,6 +9,7 @@ import {
   computeMacroRegime,
   combineSignal,
   whaleSignal,
+  liquidityLabel,
   computeBollinger,
   bollingerSignal,
   computeStochRSI,
@@ -72,6 +73,7 @@ export default function Home({ user, access }) {
   const [macroRaw,setMacroRaw]=useState(null);
   const [fg,setFg]=useState(null);
   const [whale,setWhale]=useState(null);
+  const [liquidity,setLiquidity]=useState(null);
   const [active,setActive]=useState("bitcoin");
   const [tf,setTf]=useState("1D");
   const [loading,setLoading]=useState(true);
@@ -82,16 +84,17 @@ export default function Home({ user, access }) {
   async function loadData(timeframe) {
     setLoading(true); setError(null); setAiAnalysis({});
     try {
-      const [cRes,mRes,fRes,wRes]=await Promise.all([
+      const [cRes,mRes,fRes,wRes,lRes]=await Promise.all([
         fetch(`/api/crypto?tf=${timeframe||tf}`),
         fetch("/api/macro"),
         fetch("/api/feargreed"),
         fetch("/api/whale"),
+        fetch("/api/liquidity"),
       ]);
-      const [cJson,mJson,fJson,wJson]=await Promise.all([cRes.json(),mRes.json(),fRes.json(),wRes.json()]);
+      const [cJson,mJson,fJson,wJson,lJson]=await Promise.all([cRes.json(),mRes.json(),fRes.json(),wRes.json(),lRes.json()]);
       if(cJson.error) throw new Error(cJson.error);
       if(mJson.error) throw new Error(mJson.error);
-      setCrypto(cJson); setMacroRaw(mJson); setFg(fJson.error?null:fJson); setWhale(wJson.error?null:wJson);
+      setCrypto(cJson); setMacroRaw(mJson); setFg(fJson.error?null:fJson); setWhale(wJson.error?null:wJson); setLiquidity(lJson.error?null:lJson);
     } catch(e) { setError(e.message); } finally { setLoading(false); }
   }
 
@@ -217,6 +220,13 @@ export default function Home({ user, access }) {
                 <p className="note"><span className="note-label">SMA</span>{smaSig.label}</p>
                 <p className="note"><span className="note-label">Volumen</span>{volSig.label}</p>
                 {whaleSig&&<p className="note"><span className="note-label">🐋 Whale</span>{whaleSig.label}</p>}
+                {liquidity?.[c.id]&&(()=>{const liq=liquidityLabel(liquidity[c.id].spreadPct);return(
+                  <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein -- reiner Marktkontext, keine Historie verfügbar (nur Live-Momentaufnahme)">
+                    <span className="note-label">💧 Liquidität</span>
+                    <span className={`badge ${liq.cls}`} style={{fontSize:11,padding:"1px 6px"}}>{liq.text}</span>
+                    <span style={{marginLeft:6}}>${(liquidity[c.id].depthUsd/1000).toFixed(0)}k Tiefe (±1%)</span>
+                  </p>
+                );})()}
                 <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">Bollinger</span>{bollSig.label}</p>
                 <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">StochRSI</span>{stochRsiSig.label}</p>
                 <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">OBV</span>{obvSig.label}</p>
