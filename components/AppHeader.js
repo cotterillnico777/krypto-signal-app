@@ -2,7 +2,11 @@ import Link from "next/link";
 import TrialBanner from "./TrialBanner";
 import LogoutButton from "./LogoutButton";
 
+// Dashboard ist jetzt Teil der Liste (statt eines separaten "← Dashboard"-
+// Sonderfalls) -- alle Ziele werden immer als vollständige Reiter-Zeile
+// gerendert, das aktuelle wird per .active hervorgehoben statt weggelassen.
 const TOOLS = [
+  { key: "dashboard", href: "/", icon: "🏠", label: "Dashboard" },
   { key: "backtest", href: "/backtest", icon: "📊", label: "Backtest" },
   { key: "optimize", href: "/optimize", icon: "🔬", label: "Optimierung" },
   { key: "walkforward", href: "/walkforward", icon: "📈", label: "Walk-Forward" },
@@ -12,12 +16,15 @@ const TOOLS = [
   { key: "validation", href: "/validation", icon: "✅", label: "Validierung" },
 ];
 
-// Gemeinsame Header-Komponente für alle 5 gegateten Seiten -- ersetzt das
-// zuvor 5x duplizierte <header className="app-header">-Markup. `active`
-// ist der eigene Seiten-Key (oder "dashboard"), damit der jeweils eigene
-// Nav-Link weggelassen wird, genau wie im bisherigen handgeschriebenen
-// Markup jeder Seite. `children` ist der Slot für seitenspezifische Extra-
-// Aktionen (z.B. PushSubscribeButton + Aktualisieren-Button nur im Dashboard).
+// Gemeinsame Header-Komponente für alle gegateten Seiten. Zwei getrennte
+// Zeilen statt einer gemeinsam umbrechenden: `.nav-tabs` (horizontal
+// scrollbare Reiter-Leiste für alle Seitenziele) und `.header-actions`
+// (Account-/Seiten-Aktionen: Push/Aktualisieren-Slot, E-Mail, Abmelden) --
+// bewusst getrennt, weil Nav-Ziele und Aktions-Buttons konzeptionell
+// unterschiedliche Dinge sind, auch wenn sie vorher in derselben
+// umbrechenden Reihe standen. `children` ist der Slot für seitenspezifische
+// Extra-Aktionen (z.B. PushSubscribeButton + Aktualisieren-Button nur im
+// Dashboard).
 export default function AppHeader({ title, subtitle, active, user, access, children }) {
   return (
     <>
@@ -30,16 +37,6 @@ export default function AppHeader({ title, subtitle, active, user, access, child
           </div>
         </div>
         <div className="header-actions">
-          {TOOLS.filter((t) => t.key !== active).map((t) => (
-            <Link key={t.key} href={t.href} className="icon-btn">
-              {t.icon} {t.label}
-            </Link>
-          ))}
-          {active !== "dashboard" && (
-            <Link href="/" className="icon-btn">
-              ← Dashboard
-            </Link>
-          )}
           {children}
           {user && (
             <span className="user-email" title={user.email}>
@@ -49,6 +46,13 @@ export default function AppHeader({ title, subtitle, active, user, access, child
           <LogoutButton />
         </div>
       </header>
+      <nav className="nav-tabs">
+        {TOOLS.map((t) => (
+          <Link key={t.key} href={t.href} className={`nav-tab${t.key === active ? " active" : ""}`}>
+            {t.icon} {t.label}
+          </Link>
+        ))}
+      </nav>
       <TrialBanner access={access} />
     </>
   );
