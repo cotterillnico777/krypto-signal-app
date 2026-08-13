@@ -183,6 +183,14 @@ Manuell testen (lokal):
 curl "http://localhost:3000/api/cron/check-signals?secret=DEIN_CRON_SECRET"
 ```
 
+### 5. Wöchentlicher Trades-Journal-Digest
+Zweiter, eigener Cron-Eintrag (`/api/cron/weekly-digest`, montags 08:00 UTC) – Vercel Hobby erlaubt bis zu 100 Cron-Jobs/Projekt, nur jeder einzelne maximal 1×/Tag, ein zweiter täglicher-oder-seltener Job ist also problemlos möglich. Schickt Push-Abonnenten mit mindestens einem geloggten Trade eine kurze Wochenstatistik ihres Journals ("📊 Dein Wochen-Rückblick: 12 Trades · 58% Trefferquote · Gesamt-PnL +$340", Tap öffnet `/trades`). Rein deterministisch berechnet (`lib/trades.js` `summarizeTrades`) – keine automatische Anthropic-Nutzung, die KI-Analyse bleibt nutzerinitiiert. Ein Redis-Idempotenz-Key (`digest:sent:{userId}:{isoWoche}`) verhindert Doppel-Versand pro Woche. Nutzer ohne Trades werden übersprungen.
+
+Manuell testen (lokal):
+```
+curl "http://localhost:3000/api/cron/weekly-digest?secret=DEIN_CRON_SECRET"
+```
+
 ---
 
 ## Accounts & Login (Betreiber-Setup)
