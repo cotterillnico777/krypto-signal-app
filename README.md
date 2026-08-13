@@ -284,6 +284,11 @@ Gesamt-Score ≥ 1,5 → **Risk-on**, ≤ -1,5 → **Risk-off**, sonst **Neutral
 - Zeigt, wie teuer/riskant ein sofortiger Handel gerade wäre bzw. wie viel Volumen sich handeln lässt, ohne den Kurs spürbar zu bewegen – reiner Marktkontext, **kein Kaufen/Verkaufen-Signal**.
 - **Nur live verfügbar**, wie das Whale-Signal: Binance liefert Orderbuch-Daten nur als aktuelle Momentaufnahme, keine Historie über die REST-API – daher nicht in Backtest/Optimierung/Walk-Forward/Portfolio eingebunden.
 
+**Parameter-Tipp pro Coin (nur Info, Backtest-Empfehlung):**
+- Jede Coin-Karte zeigt einen "💡 Tipp" auf Basis eines Multi-Fold Walk-Forward-Tests über Hebel (1x/2x/3x), Richtung (Nur Long/Long+Short) und Stop-Loss (kein/-10%/-15%/-20%) je Coin, siehe `lib/paramTips.js`.
+- Ein Parameter-Set wird nur dann als Tipp angezeigt, wenn es in **zwei unabhängigen Zeitfenstern** (730 und 850 Tage) sowohl die Ø-Out-of-Sample-Rendite als auch den Sharpe der Standardeinstellung (1x, Nur Long, kein Stop) schlägt und dabei selbst profitabel bleibt – "nur in einem Fenster besser" reicht nicht. Ergebnis (13.08.2026): Ethereum (1x Long+Short, -10% Stop-Loss) und XRP (2x Long+Short, kein Stop-Loss) bestehen diesen Test robust; für Bitcoin, Solana und Bittensor wurde keine robuste Verbesserung gefunden – die Karte zeigt dort ehrlich "Standardeinstellung bleibt beste bekannte Wahl" statt einen erzwungenen Tipp.
+- Reine Info-Anzeige aus historischen Backtest-Daten, **keine Anlageberatung und kein automatischer Bestandteil des Kaufen/Verkaufen-Signals** – wer den Tipp nutzen will, stellt Hebel/Richtung/Stop-Loss manuell im Backtest bzw. beim eigenen Handeln ein.
+
 **Kombiniertes Signal:**
 - Technisches Signal + Makro-Regime + Fear & Greed + Whale-Positionierung werden zusammengeführt
 - Widersprüche werden als "Vorsicht"-Hinweis angezeigt
