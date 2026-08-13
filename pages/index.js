@@ -18,6 +18,7 @@ import {
   strongCandleSignal,
   marubozuSignal,
 } from "../lib/signals";
+import { PARAM_TIPS } from "../lib/paramTips";
 import PushSubscribeButton from "../components/PushSubscribeButton";
 import InstallPrompt from "../components/InstallPrompt";
 import AppHeader from "../components/AppHeader";
@@ -215,6 +216,25 @@ export default function Home({ user, access }) {
                 </div>
                 <p className="card-value">${fmtUSD(c.price)}</p>
                 <span className={`badge ${combined.cls}`} style={{marginBottom:8,fontSize:13}}>{combined.label}</span>
+                {PARAM_TIPS[c.id]&&(PARAM_TIPS[c.id].hasTip?(
+                  <p
+                    className="note"
+                    style={{background:"var(--bg-subtle)",borderRadius:6,padding:"6px 8px",marginTop:0,marginBottom:8}}
+                    title={`Aus dem Backtest ermittelt (Multi-Fold Walk-Forward, 730+850 Tage): ${PARAM_TIPS[c.id].evidence} Keine Anlageberatung -- historische Auswertung, keine Garantie für die Zukunft.`}
+                  >
+                    <span className="note-label">💡 Tipp</span>
+                    <span className="badge badge-green" style={{fontSize:11,padding:"1px 6px"}}>{PARAM_TIPS[c.id].label}</span>
+                  </p>
+                ):(
+                  <p
+                    className="note"
+                    style={{opacity:0.55,marginTop:0,marginBottom:8}}
+                    title={PARAM_TIPS[c.id].note}
+                  >
+                    <span className="note-label">💡 Tipp</span>
+                    <span style={{fontSize:12}}>Standardeinstellung bleibt beste bekannte Wahl</span>
+                  </p>
+                ))}
                 <p className="note"><span className="note-label">RSI</span><span className={`badge ${rsiInfo.cls}`} style={{fontSize:11,padding:"1px 6px"}}>{rsiInfo.text}</span></p>
                 <p className="note"><span className="note-label">MACD</span>{macdSig.label}</p>
                 <p className="note"><span className="note-label">SMA</span>{smaSig.label}</p>
