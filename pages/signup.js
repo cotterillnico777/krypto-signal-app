@@ -65,6 +65,9 @@ export default function Signup() {
         <p style={{ marginTop: "1.5rem", fontSize: 13 }}>
           Schon registriert? <Link href="/login">Anmelden</Link>
         </p>
+        <p style={{ marginTop: "0.5rem", fontSize: 13 }}>
+          <Link href="/validation">Wie wir unsere Signale entwickeln →</Link>
+        </p>
       </div>
     </div>
   );

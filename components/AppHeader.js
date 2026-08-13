@@ -9,6 +9,7 @@ const TOOLS = [
   { key: "portfolio", href: "/portfolio", icon: "💼", label: "Portfolio" },
   { key: "trades", href: "/trades", icon: "📓", label: "Trades" },
   { key: "risk-reward", href: "/risk-reward", icon: "⚖️", label: "R:R-Rechner" },
+  { key: "validation", href: "/validation", icon: "✅", label: "Validierung" },
 ];
 
 // Gemeinsame Header-Komponente für alle 5 gegateten Seiten -- ersetzt das
