@@ -16,6 +16,7 @@ import { getRedis } from "../../../lib/redis";
 import { getSupabaseAdminClient } from "../../../lib/supabase/admin";
 import { fetchCryptoData, fetchMacroData, fetchFearGreedData, fetchWhaleData } from "../../../lib/marketData";
 import { computeMacroRegime, computeAllSignals } from "../../../lib/signals";
+import { hasActiveAccess } from "../../../lib/auth/hasActiveAccess";
 
 function isAuthorized(req) {
   const secret = process.env.CRON_SECRET;
@@ -24,14 +25,6 @@ function isAuthorized(req) {
   if (header === `Bearer ${secret}`) return true;
   if (req.query.secret === secret) return true;
   return false;
-}
-
-// Dieselbe "ist der Zugang aktiv"-Logik wie lib/auth/getProfileAccess.js,
-// hier über die gejointen Zeilen angewendet statt über ein einzelnes Profil.
-function hasActiveAccess(profile) {
-  if (!profile) return false;
-  const trialing = profile.subscription_status === "trialing" && new Date(profile.trial_ends_at) > new Date();
-  return profile.subscription_status === "active" || trialing;
 }
 
 export default async function handler(req, res) {
