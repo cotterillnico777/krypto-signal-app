@@ -1,8 +1,11 @@
 import { useState } from "react";
+import { useRouter } from "next/router";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "../lib/supabase/client";
 
 export default function Signup() {
+  const router = useRouter();
+  const refCode = typeof router.query.ref === "string" ? router.query.ref : null;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -19,7 +22,14 @@ export default function Signup() {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: `${origin}/api/auth/callback` },
+        options: {
+          emailRedirectTo: `${origin}/api/auth/callback`,
+          // Landet in auth.users.raw_user_meta_data -- der DB-Trigger
+          // handle_new_user() (supabase/migrations/0003_referrals.sql) liest
+          // das beim Anlegen des profiles-Eintrags aus und vergibt den
+          // Trial-Bonus für beide Seiten.
+          ...(refCode ? { data: { ref_code: refCode } } : {}),
+        },
       });
       if (error) throw error;
       setDone(true);
@@ -40,6 +50,12 @@ export default function Signup() {
             <p className="subtitle">14 Tage kostenlos testen, keine Kreditkarte nötig</p>
           </div>
         </div>
+
+        {refCode && (
+          <div className="note" style={{ background: "var(--bg-subtle)", borderRadius: 6, padding: "8px 10px", marginBottom: "1rem" }}>
+            🎁 Du wurdest eingeladen -- du bekommst 7 Tage extra Trial (21 statt 14 Tage)!
+          </div>
+        )}
 
         <ul style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.7, margin: "0 0 1.5rem", paddingLeft: 18 }}>
           <li>Jedes Signal kommt mit einer Klartext-Begründung statt einer Blackbox-Empfehlung</li>

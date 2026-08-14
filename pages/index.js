@@ -23,6 +23,7 @@ import { PARAM_TIPS } from "../lib/paramTips";
 import PushSubscribeButton from "../components/PushSubscribeButton";
 import InstallPrompt from "../components/InstallPrompt";
 import OnboardingTour from "../components/OnboardingTour";
+import ReferralCard from "../components/ReferralCard";
 import AppHeader from "../components/AppHeader";
 import { requireActiveAccess } from "../lib/auth/requireActiveAccess";
 
@@ -183,6 +184,7 @@ export default function Home({ user, access }) {
 
       <OnboardingTour />
       <InstallPrompt />
+      <ReferralCard />
 
       {error&&<div className="error-box">Fehler: {error}<div style={{marginTop:8}}><button onClick={()=>loadData(tf)}>Erneut versuchen</button></div></div>}
       {loading&&!error&&(
