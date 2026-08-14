@@ -173,6 +173,8 @@ npx web-push generate-vapid-keys
 ### 3. In der App aktivieren
 Auf "🔔 Push aktivieren" oben rechts klicken und die Browser-Berechtigung erteilen. Funktioniert nur über HTTPS oder `localhost` – nicht über eine `http://`-IP-Adresse.
 
+**iOS-Sonderfall:** Safari auf iPhone/iPad liefert echte Push-Zustellung nur, wenn die App zuvor **zum Home-Bildschirm hinzugefügt** wurde (siehe Installation oben) – im normalen Browser-Tab meldet iOS zwar technisch Unterstützung, ein Abo würde aber mit einem für Nutzer nicht nachvollziehbaren Fehler scheitern. Die App erkennt diesen Fall selbst (`lib/deviceMode.js`, `isIos()` + `isStandalone()`) und zeigt auf iOS-Browser-Tabs statt des Buttons einen deaktivierten Hinweis-Button mit Installationsanleitung, statt den Fehler überhaupt erst zu provozieren.
+
 ### 4. Automatische Prüfung (Cron-Job)
 `vercel.json` enthält bereits einen Cron-Job, der `/api/cron/check-signals` täglich um 07:00 UTC aufruft (im kostenlosen Vercel-Hobby-Plan ist 1×/Tag das Maximum). Uhrzeit anpassbar über das `schedule`-Feld (Cron-Syntax).
 

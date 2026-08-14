@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { isStandalone, isIos } from "../lib/deviceMode";
 
 function urlBase64ToUint8Array(base64String) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -12,10 +13,20 @@ export default function PushSubscribeButton() {
   const [subscribed, setSubscribed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const [iosNeedsInstall, setIosNeedsInstall] = useState(false);
 
   useEffect(() => {
     const ok = typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window;
     setSupported(ok);
+    // iOS Safari meldet PushManager zwar als vorhanden, liefert aber nur im
+    // installierten Home-Bildschirm-Modus ("standalone") echte Push-Zustellung
+    // -- ein Subscribe-Versuch im normalen Browser-Tab scheitert sonst mit
+    // einem für Nutzer nicht nachvollziehbaren Fehler. Statt das zu riskieren,
+    // wird hier direkt ein erklärender Hinweis statt des Buttons gezeigt.
+    if (ok && isIos() && !isStandalone()) {
+      setIosNeedsInstall(true);
+      return;
+    }
     if (!ok) return;
     navigator.serviceWorker.ready.then(async (reg) => {
       const sub = await reg.pushManager.getSubscription();
@@ -77,6 +88,18 @@ export default function PushSubscribeButton() {
   }
 
   if (!supported) return null;
+
+  if (iosNeedsInstall) {
+    return (
+      <button
+        className="icon-btn"
+        disabled
+        title='Auf iPhone/iPad funktionieren Push-Benachrichtigungen nur als installierte App: Teilen-Symbol → "Zum Home-Bildschirm hinzufügen", dann von dort öffnen.'
+      >
+        🔔 Push (App-Installation nötig)
+      </button>
+    );
+  }
 
   return (
     <button
