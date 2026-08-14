@@ -698,6 +698,53 @@ button.active {
   min-height: 70px;
 }
 
+/* ---------- Onboarding-Tour (erster Login) ---------- */
+
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  z-index: 1000;
+}
+
+.onboarding-card {
+  max-width: 440px;
+  width: 100%;
+  padding: 1.75rem;
+}
+
+.onboarding-progress {
+  font-size: 12px;
+  color: var(--text-faint);
+  margin: 0 0 8px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.onboarding-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+
+.onboarding-body {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0 0 1.5rem;
+}
+
+.onboarding-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 /* ---------- Trial-Banner + User-Info im Header ---------- */
 
 .trial-banner {
