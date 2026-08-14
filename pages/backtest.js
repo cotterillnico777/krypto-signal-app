@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { COINS } from "../lib/marketData";
+import { PARAM_TIPS } from "../lib/paramTips";
 import AppHeader from "../components/AppHeader";
 import { requireActiveAccess } from "../lib/auth/requireActiveAccess";
 
@@ -147,6 +148,30 @@ export default function Backtest({ user, access }) {
           ))}
         </div>
       </div>
+
+      {PARAM_TIPS[coinId] && (
+        <div className="card" style={{ marginBottom: "1rem", background: "var(--bg-subtle)" }}>
+          <p className="note-label" style={{ fontSize: 12.5, marginBottom: 6 }}>
+            💡 Tipp für {COINS.find((c) => c.id === coinId)?.symbol} (aus Multi-Fold Walk-Forward, 730+850 Tage)
+          </p>
+          <p style={{ margin: "0 0 6px" }}>
+            <span className={`badge ${PARAM_TIPS[coinId].isDefault ? "badge-gray" : "badge-green"}`} style={{ fontSize: 12.5 }}>
+              {PARAM_TIPS[coinId].label}
+            </span>
+          </p>
+          <p className="note" style={{ marginTop: 0, marginBottom: 8 }}>{PARAM_TIPS[coinId].evidence}</p>
+          <button
+            className="icon-btn"
+            onClick={() => {
+              setStopLoss(PARAM_TIPS[coinId].stopLossPct);
+              setAllowShort(PARAM_TIPS[coinId].allowShort);
+              setLeverage(PARAM_TIPS[coinId].leverage);
+            }}
+          >
+            Tipp übernehmen
+          </button>
+        </div>
+      )}
 
       <div className="toolbar">
         <span className="note-label" style={{ fontSize: 12.5 }}>Stop-Loss</span>
