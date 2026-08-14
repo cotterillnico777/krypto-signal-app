@@ -111,6 +111,9 @@ export default function Login() {
         <p style={{ marginTop: "0.5rem", fontSize: 13 }}>
           <Link href="/validation">Wie wir unsere Signale entwickeln →</Link>
         </p>
+        <p style={{ marginTop: "0.5rem", fontSize: 13 }}>
+          <Link href="/glossar">Glossar: RSI, MACD & Co. erklärt →</Link>
+        </p>
       </div>
     </div>
   );
