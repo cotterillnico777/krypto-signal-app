@@ -41,6 +41,12 @@ export default function Signup() {
           </div>
         </div>
 
+        <ul style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.7, margin: "0 0 1.5rem", paddingLeft: 18 }}>
+          <li>Jedes Signal kommt mit einer Klartext-Begründung statt einer Blackbox-Empfehlung</li>
+          <li>Keine Vorkenntnisse nötig -- Fachbegriffe wie RSI oder MACD werden direkt erklärt</li>
+          <li>Volle Transparenz: <Link href="/validation">wie wir unsere Signale entwickeln →</Link></li>
+        </ul>
+
         {done ? (
           <p>
             Fast geschafft — wir haben eine Bestätigungs-E-Mail an <strong>{email}</strong> geschickt. Bitte den Link darin anklicken, um deine Testphase zu starten.

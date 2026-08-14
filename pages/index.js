@@ -8,6 +8,7 @@ import {
   smaSignal,
   computeMacroRegime,
   combineSignal,
+  explainSignal,
   whaleSignal,
   liquidityLabel,
   computeBollinger,
@@ -232,6 +233,7 @@ export default function Home({ user, access }) {
             const candleSig=c.highs&&c.lows?strongCandleSignal(c.highs,c.lows,c.prices):{label:"n/a",dir:0};
             const marubozuSig=c.opens&&c.highs&&c.lows?marubozuSignal(c.opens,c.highs,c.lows,c.prices):{label:"n/a",dir:0};
             const combined=combineSignal(smaSig,rsi,macro,fg?.value??null,macdSig,volSig,{whaleSig});
+            const why=explainSignal({label:combined.label,smaSig,rsi,macdSig,volSig,macro,fg:fg?.value??null,whaleSig});
             const isUp = c.change24h>=0;
             return(
               <div className={`card coin-card${active===c.id?" selected":""}`} key={c.id} onClick={()=>setActive(c.id)} style={{borderLeftColor:signalAccent(combined.cls)}}>
@@ -240,7 +242,8 @@ export default function Home({ user, access }) {
                   <span className={`change-pill ${isUp?"up":"down"}`}>{isUp?"+":""}{c.change24h.toFixed(1)}%</span>
                 </div>
                 <p className="card-value">${fmtUSD(c.price)}</p>
-                <span className={`badge ${combined.cls}`} style={{marginBottom:8,fontSize:13}}>{combined.label}</span>
+                <span className={`badge ${combined.cls}`} style={{marginBottom:4,fontSize:13}}>{combined.label}</span>
+                <p className="note" style={{marginTop:0,marginBottom:8,fontStyle:"italic"}}>{why}</p>
                 {PARAM_TIPS[c.id]&&(
                   <p
                     className="note"
@@ -251,11 +254,11 @@ export default function Home({ user, access }) {
                     <span className={`badge ${PARAM_TIPS[c.id].isDefault?"badge-gray":"badge-green"}`} style={{fontSize:11,padding:"1px 6px"}}>{PARAM_TIPS[c.id].label}</span>
                   </p>
                 )}
-                <p className="note"><span className="note-label">RSI</span><span className={`badge ${rsiInfo.cls}`} style={{fontSize:11,padding:"1px 6px"}}>{rsiInfo.text}</span></p>
-                <p className="note"><span className="note-label">MACD</span>{macdSig.label}</p>
-                <p className="note"><span className="note-label">SMA</span>{smaSig.label}</p>
-                <p className="note"><span className="note-label">Volumen</span>{volSig.label}</p>
-                {whaleSig&&<p className="note"><span className="note-label">🐋 Whale</span>{whaleSig.label}</p>}
+                <p className="note"><span className="note-label" title="Relative Strength Index: misst, ob eine Coin gerade überkauft ist (über 70, evtl. bald fallend) oder überverkauft (unter 30, evtl. bald steigend).">RSI ⓘ</span><span className={`badge ${rsiInfo.cls}`} style={{fontSize:11,padding:"1px 6px"}}>{rsiInfo.text}</span></p>
+                <p className="note"><span className="note-label" title="Moving Average Convergence/Divergence: vergleicht zwei gleitende Durchschnitte, um einen Wechsel im Kurs-Momentum früh zu erkennen.">MACD ⓘ</span>{macdSig.label}</p>
+                <p className="note"><span className="note-label" title="Gleitender Durchschnitt (Simple Moving Average): zeigt, ob der aktuelle Kurstrend über oder unter seinem längerfristigen Durchschnitt liegt.">SMA ⓘ</span>{smaSig.label}</p>
+                <p className="note"><span className="note-label" title="Heutiges Handelsvolumen im Vergleich zum Schnitt der letzten Tage -- ungewöhnlich hohes Volumen bestätigt eine Kursbewegung stärker.">Volumen ⓘ</span>{volSig.label}</p>
+                {whaleSig&&<p className="note"><span className="note-label" title="Positionierung der 'Top-Trader' (größte Positionen) auf Binance Futures im Vergleich zu ihrem eigenen 7-Tage-Schnitt -- ein Näherungswert für 'was machen die Großen gerade'.">🐋 Whale ⓘ</span>{whaleSig.label}</p>}
                 {liquidity?.[c.id]&&(()=>{const liq=liquidityLabel(liquidity[c.id].spreadPct);return(
                   <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein -- reiner Marktkontext, keine Historie verfügbar (nur Live-Momentaufnahme)">
                     <span className="note-label">💧 Liquidität</span>
