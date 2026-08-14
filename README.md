@@ -144,6 +144,8 @@ Der **"🤖 KI-Analyse"**-Button lässt Claude Muster im Journal suchen (Treffer
 
 Braucht die `trades`-Tabelle aus `supabase/migrations/0002_trades.sql` (siehe Abschnitt "Accounts & Login" oben).
 
+**Gamification (Pull-Faktor #5):** zwei zusätzliche Karten über dem Trade-Formular, sobald mindestens ein Trade existiert – ein **Wochen-Streak** (🔥, wie viele Kalenderwochen in Folge mindestens ein Trade angelegt wurde, plus persönlicher Rekord) und ein **Meilenstein-Fortschrittsbalken** (1/5/10/25/50/100/250/500 Trades). Beides rein aus den bereits geladenen Trades berechnet (`computeGamification()` in `lib/trades.js`), keine eigene Tabelle/Migration nötig. Der Streak wird auch im wöchentlichen Push-Digest erwähnt, sobald er ≥2 Wochen beträgt (`pages/api/cron/weekly-digest.js`).
+
 ---
 
 ## Validierungs-Historie (öffentliche Seite)

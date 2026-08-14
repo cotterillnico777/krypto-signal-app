@@ -14,7 +14,7 @@ import webpush from "web-push";
 import { getRedis } from "../../../lib/redis";
 import { getSupabaseAdminClient } from "../../../lib/supabase/admin";
 import { hasActiveAccess } from "../../../lib/auth/hasActiveAccess";
-import { rowToTrade, summarizeTrades } from "../../../lib/trades";
+import { rowToTrade, summarizeTrades, computeGamification, isoWeekKey } from "../../../lib/trades";
 
 function isAuthorized(req) {
   const secret = process.env.CRON_SECRET;
@@ -23,18 +23,6 @@ function isAuthorized(req) {
   if (header === `Bearer ${secret}`) return true;
   if (req.query.secret === secret) return true;
   return false;
-}
-
-// ISO-8601-Kalenderwoche (Montag-Start, Woche mit Jahres-Donnerstag = Woche 1)
-// -- als Redis-Key-Suffix, damit ein Nutzer pro Woche höchstens einen Digest
-// bekommt, unabhängig davon wie oft der Cron in dieser Woche feuert.
-function isoWeekKey(date) {
-  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const weekNum = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
-  return `${d.getUTCFullYear()}-W${String(weekNum).padStart(2, "0")}`;
 }
 
 function fmtPnl(n) {
@@ -104,9 +92,11 @@ export default async function handler(req, res) {
       }
 
       const stats = summarizeTrades(trades);
+      const { currentStreak } = computeGamification(trades);
+      const streakSuffix = currentStreak >= 2 ? ` · 🔥 ${currentStreak} Wochen-Streak` : "";
       const payload = JSON.stringify({
         title: "📊 Dein Wochen-Rückblick",
-        body: `${stats.tradeCount} Trade${stats.tradeCount === 1 ? "" : "s"} im Journal · ${stats.winRate != null ? `${stats.winRate.toFixed(0)}% Trefferquote` : "noch keine geschlossen"} · Gesamt-PnL ${fmtPnl(stats.totalPnl)}`,
+        body: `${stats.tradeCount} Trade${stats.tradeCount === 1 ? "" : "s"} im Journal · ${stats.winRate != null ? `${stats.winRate.toFixed(0)}% Trefferquote` : "noch keine geschlossen"} · Gesamt-PnL ${fmtPnl(stats.totalPnl)}${streakSuffix}`,
         tag: "weekly-digest",
         url: "/trades",
       });

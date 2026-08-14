@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import AppHeader from "../components/AppHeader";
 import { requireActiveAccess } from "../lib/auth/requireActiveAccess";
-import { computeTradeMetrics, summarizeTrades } from "../lib/trades";
+import { computeTradeMetrics, summarizeTrades, computeGamification } from "../lib/trades";
 
 export const getServerSideProps = requireActiveAccess;
 
@@ -132,6 +132,7 @@ export default function Trades({ user, access }) {
   }
 
   const stats = summarizeTrades(trades);
+  const game = computeGamification(trades);
 
   return (
     <div className="container">
@@ -163,6 +164,29 @@ export default function Trades({ user, access }) {
           <p className="note">Ø-PnL pro Trade: {stats.avgPnlPct == null ? "n/a" : fmtPct(stats.avgPnlPct)}</p>
         </div>
       </div>
+
+      {trades.length > 0 && (
+        <div className="grid grid-3" style={{ marginBottom: "1.5rem" }}>
+          <div className="card">
+            <p className="card-label">Wochen-Streak</p>
+            <p className="card-value">🔥 {game.currentStreak}</p>
+            <p className="note">{game.currentStreak === 1 ? "Woche" : "Wochen"} in Folge mit mind. 1 Trade{game.longestStreak > game.currentStreak ? ` (Rekord: ${game.longestStreak})` : ""}</p>
+          </div>
+          <div className="card" style={{ gridColumn: "span 2" }}>
+            <p className="card-label">Meilensteine{game.currentMilestone ? ` -- zuletzt ${game.currentMilestone} Trades erreicht` : ""}</p>
+            {game.next ? (
+              <>
+                <p className="note" style={{ marginBottom: 6 }}>Noch {game.next - stats.tradeCount} bis {game.next} Trades</p>
+                <div style={{ background: "var(--bg-subtle)", borderRadius: 999, height: 8, overflow: "hidden" }}>
+                  <div style={{ width: `${game.progressPct}%`, height: "100%", background: "var(--accent)", borderRadius: 999, transition: "width 0.3s ease" }} />
+                </div>
+              </>
+            ) : (
+              <p className="note">Alle Meilensteine erreicht 🏆</p>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="card" style={{ marginBottom: "1.5rem" }}>
         <p className="section-title">Neuer Trade</p>
