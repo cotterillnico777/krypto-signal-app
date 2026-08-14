@@ -221,6 +221,8 @@ Im Supabase-Dashboard → SQL Editor → neue Query → Inhalt von `supabase/mig
 
 Danach genauso `supabase/migrations/0002_trades.sql` ausführen (additiv, unabhängig von 0001) – legt die `trades`-Tabelle fürs Trade-Tracking/Journal an (siehe Abschnitt "Trades & R:R-Rechner" unten).
 
+Danach `supabase/migrations/0003_referrals.sql` ausführen (additiv) – erweitert `profiles` um `referral_code`/`referred_by`/`referral_bonus_days` und den bestehenden Signup-Trigger, siehe Abschnitt "Referral-Programm" unten. **Ohne diese Migration bleibt `/api/referral` einfach inaktiv** (gibt einen Fehler zurück, den `components/ReferralCard.js` still abfängt – die "🎁 Freunde einladen"-Karte zeigt sich dann einfach nicht, keine sichtbaren Fehler im Dashboard).
+
 ### 3. Auth-Provider konfigurieren
 Unter Authentication → Providers:
 - E-Mail/Passwort ist standardmäßig aktiv
@@ -235,6 +237,14 @@ Unter Authentication → URL Configuration:
 
 ### Wie der Trial funktioniert
 Bei Signup legt ein Datenbank-Trigger automatisch ein Profil mit `trial_ends_at = jetzt + 14 Tage` an. Jede geschützte Seite/API-Route prüft serverseitig (`lib/auth/requireActiveAccess.js` bzw. `requireActiveAccessApi.js`), ob der Zugang aktiv ist (`subscription_status = 'active'` ODER Trial noch nicht abgelaufen) – läuft der Trial ab, landet man auf `/upgrade`. Die eigentliche Zahlungsabwicklung (Stripe) ist noch nicht gebaut; `profiles.subscription_status`/`stripe_customer_id` sind aber schon als Anknüpfungspunkt angelegt.
+
+### Referral-Programm (Pull-Faktor #4)
+
+Jeder Nutzer hat einen persönlichen Empfehlungslink (`/signup?ref=CODE`), sichtbar im Dashboard über die "🎁 Freunde einladen"-Karte (`components/ReferralCard.js`, holt Code + Anzahl der Empfehlungen über `/api/referral.js`). Meldet sich jemand über diesen Link an:
+- Der **neue** Nutzer bekommt automatisch 21 statt 14 Tage Trial (+7 Tage Bonus).
+- Der **werbende** Nutzer bekommt ebenfalls +7 Tage auf sein eigenes `trial_ends_at` – aber nur, solange er selbst noch im Trial ist (ein bereits zahlender Account hat kein sinnvoll verlängerbares Trial-Enddatum) und nur bis zu einem Cap von 5 belohnten Empfehlungen (`profiles.referral_bonus_days`, verhindert Missbrauch).
+
+Die gesamte Logik steckt in einer einzigen erweiterten Datenbank-Funktion (`handle_new_user()` in `supabase/migrations/0003_referrals.sql`, derselbe Trigger, der auch das Trial-Datum setzt) – kein Cron-Job, keine separate `referrals`-Tabelle nötig, da die Beziehung "wer hat mich geworben" 1:1 pro Nutzer ist. `pages/signup.js` liest den `?ref=`-Query-Parameter und gibt ihn als `ref_code` in `options.data` an `supabase.auth.signUp()` mit, wo ihn der Trigger aus `raw_user_meta_data` ausliest.
 
 ---
 
