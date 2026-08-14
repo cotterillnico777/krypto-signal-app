@@ -91,6 +91,20 @@ export default function Home({ user, access }) {
   const [aiAnalysis,setAiAnalysis]=useState({});
   const [aiLoading,setAiLoading]=useState({});
   const [detailsOpen,setDetailsOpen]=useState({});
+  const [beginnerMode,setBeginnerMode]=useState(false);
+
+  useEffect(()=>{
+    if(typeof window==="undefined") return;
+    setBeginnerMode(localStorage.getItem("beginnerMode")==="1");
+  },[]);
+
+  function toggleBeginnerMode() {
+    setBeginnerMode(prev=>{
+      const next=!prev;
+      localStorage.setItem("beginnerMode", next?"1":"0");
+      return next;
+    });
+  }
 
   async function loadData(timeframe) {
     setLoading(true); setError(null); setAiAnalysis({});
@@ -158,6 +172,13 @@ export default function Home({ user, access }) {
       >
         <PushSubscribeButton />
         <button className="icon-btn" onClick={()=>loadData(tf)} title="Aktualisieren">↻ Aktualisieren</button>
+        <button
+          className={`icon-btn${beginnerMode?" primary":""}`}
+          onClick={toggleBeginnerMode}
+          title="Vereinfachte Ansicht: zeigt nur Preis, Einschätzung und die Warum-Erklärung, technische Details ausklappbar statt immer sichtbar"
+        >
+          🎓 Einsteiger-Modus{beginnerMode?" an":""}
+        </button>
       </AppHeader>
 
       <OnboardingTour />
@@ -256,31 +277,45 @@ export default function Home({ user, access }) {
                     <span className={`badge ${PARAM_TIPS[c.id].isDefault?"badge-gray":"badge-green"}`} style={{fontSize:11,padding:"1px 6px"}}>{PARAM_TIPS[c.id].label}</span>
                   </p>
                 )}
-                <p className="note"><span className="note-label" title="Relative Strength Index: misst, ob eine Coin gerade überkauft ist (über 70, evtl. bald fallend) oder überverkauft (unter 30, evtl. bald steigend).">RSI ⓘ</span><span className={`badge ${rsiInfo.cls}`} style={{fontSize:11,padding:"1px 6px"}}>{rsiInfo.text}</span></p>
-                <p className="note"><span className="note-label" title="Moving Average Convergence/Divergence: vergleicht zwei gleitende Durchschnitte, um einen Wechsel im Kurs-Momentum früh zu erkennen.">MACD ⓘ</span>{macdSig.label}</p>
-                <p className="note"><span className="note-label" title="Gleitender Durchschnitt (Simple Moving Average): zeigt, ob der aktuelle Kurstrend über oder unter seinem längerfristigen Durchschnitt liegt.">SMA ⓘ</span>{smaSig.label}</p>
-                <p className="note"><span className="note-label" title="Heutiges Handelsvolumen im Vergleich zum Schnitt der letzten Tage -- ungewöhnlich hohes Volumen bestätigt eine Kursbewegung stärker.">Volumen ⓘ</span>{volSig.label}</p>
-                {whaleSig&&<p className="note"><span className="note-label" title="Positionierung der 'Top-Trader' (größte Positionen) auf Binance Futures im Vergleich zu ihrem eigenen 7-Tage-Schnitt -- ein Näherungswert für 'was machen die Großen gerade'.">🐋 Whale ⓘ</span>{whaleSig.label}</p>}
-                {liquidity?.[c.id]&&(()=>{const liq=liquidityLabel(liquidity[c.id].spreadPct);return(
-                  <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein -- reiner Marktkontext, keine Historie verfügbar (nur Live-Momentaufnahme)">
-                    <span className="note-label">💧 Liquidität</span>
-                    <span className={`badge ${liq.cls}`} style={{fontSize:11,padding:"1px 6px"}}>{liq.text}</span>
-                    <span style={{marginLeft:6}}>${(liquidity[c.id].depthUsd/1000).toFixed(0)}k Tiefe (±1%)</span>
-                  </p>
-                );})()}
-                <button
-                  className="details-toggle"
-                  onClick={(e)=>{e.stopPropagation();setDetailsOpen(prev=>({...prev,[c.id]:!prev[c.id]}));}}
-                >
-                  {detailsOpen[c.id]?"Weniger Details ▴":"Weitere Indikatoren ▾"}
-                </button>
-                {detailsOpen[c.id]&&(<>
-                  <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">Bollinger</span>{bollSig.label}</p>
-                  <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">StochRSI</span>{stochRsiSig.label}</p>
-                  <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">OBV</span>{obvSig.label}</p>
-                  <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (noch nicht validiert)"><span className="note-label">Starke Kerze</span>{candleSig.label}</p>
-                  <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (noch nicht validiert)"><span className="note-label">Marubozu</span>{marubozuSig.label}</p>
-                </>)}
+                {(() => {
+                  const primaryRows = (
+                    <>
+                      <p className="note"><span className="note-label" title="Relative Strength Index: misst, ob eine Coin gerade überkauft ist (über 70, evtl. bald fallend) oder überverkauft (unter 30, evtl. bald steigend).">RSI ⓘ</span><span className={`badge ${rsiInfo.cls}`} style={{fontSize:11,padding:"1px 6px"}}>{rsiInfo.text}</span></p>
+                      <p className="note"><span className="note-label" title="Moving Average Convergence/Divergence: vergleicht zwei gleitende Durchschnitte, um einen Wechsel im Kurs-Momentum früh zu erkennen.">MACD ⓘ</span>{macdSig.label}</p>
+                      <p className="note"><span className="note-label" title="Gleitender Durchschnitt (Simple Moving Average): zeigt, ob der aktuelle Kurstrend über oder unter seinem längerfristigen Durchschnitt liegt.">SMA ⓘ</span>{smaSig.label}</p>
+                      <p className="note"><span className="note-label" title="Heutiges Handelsvolumen im Vergleich zum Schnitt der letzten Tage -- ungewöhnlich hohes Volumen bestätigt eine Kursbewegung stärker.">Volumen ⓘ</span>{volSig.label}</p>
+                      {whaleSig&&<p className="note"><span className="note-label" title="Positionierung der 'Top-Trader' (größte Positionen) auf Binance Futures im Vergleich zu ihrem eigenen 7-Tage-Schnitt -- ein Näherungswert für 'was machen die Großen gerade'.">🐋 Whale ⓘ</span>{whaleSig.label}</p>}
+                      {liquidity?.[c.id]&&(()=>{const liq=liquidityLabel(liquidity[c.id].spreadPct);return(
+                        <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein -- reiner Marktkontext, keine Historie verfügbar (nur Live-Momentaufnahme)">
+                          <span className="note-label">💧 Liquidität</span>
+                          <span className={`badge ${liq.cls}`} style={{fontSize:11,padding:"1px 6px"}}>{liq.text}</span>
+                          <span style={{marginLeft:6}}>${(liquidity[c.id].depthUsd/1000).toFixed(0)}k Tiefe (±1%)</span>
+                        </p>
+                      );})()}
+                    </>
+                  );
+                  const secondaryRows = (
+                    <>
+                      <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">Bollinger</span>{bollSig.label}</p>
+                      <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">StochRSI</span>{stochRsiSig.label}</p>
+                      <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">OBV</span>{obvSig.label}</p>
+                      <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (noch nicht validiert)"><span className="note-label">Starke Kerze</span>{candleSig.label}</p>
+                      <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (noch nicht validiert)"><span className="note-label">Marubozu</span>{marubozuSig.label}</p>
+                    </>
+                  );
+                  return (
+                    <>
+                      {!beginnerMode && primaryRows}
+                      <button
+                        className="details-toggle"
+                        onClick={(e)=>{e.stopPropagation();setDetailsOpen(prev=>({...prev,[c.id]:!prev[c.id]}));}}
+                      >
+                        {detailsOpen[c.id]?"Weniger Details ▴":(beginnerMode?"Details anzeigen ▾":"Weitere Indikatoren ▾")}
+                      </button>
+                      {detailsOpen[c.id]&&(<>{beginnerMode && primaryRows}{secondaryRows}</>)}
+                    </>
+                  );
+                })()}
                 <button
                   className="ai-btn"
                   onClick={(e)=>{e.stopPropagation();getAiAnalysis(c,rsi,macdSig,smaSig,volSig,macro,c.price,c.change24h,whaleSig,bollSig,stochRsiSig,obvSig,candleSig,marubozuSig);}}
