@@ -69,6 +69,13 @@ const TIMEFRAMES = [
   { key: "1W", label: "Wöchentlich" },
 ];
 
+function signalAccent(cls) {
+  if (cls === "badge-green") return "var(--green-text)";
+  if (cls === "badge-red") return "var(--red-text)";
+  if (cls === "badge-amber") return "var(--amber-text)";
+  return "var(--border)";
+}
+
 export default function Home({ user, access }) {
   const [crypto,setCrypto]=useState(null);
   const [macroRaw,setMacroRaw]=useState(null);
@@ -81,6 +88,7 @@ export default function Home({ user, access }) {
   const [error,setError]=useState(null);
   const [aiAnalysis,setAiAnalysis]=useState({});
   const [aiLoading,setAiLoading]=useState({});
+  const [detailsOpen,setDetailsOpen]=useState({});
 
   async function loadData(timeframe) {
     setLoading(true); setError(null); setAiAnalysis({});
@@ -153,7 +161,14 @@ export default function Home({ user, access }) {
       <InstallPrompt />
 
       {error&&<div className="error-box">Fehler: {error}<div style={{marginTop:8}}><button onClick={()=>loadData(tf)}>Erneut versuchen</button></div></div>}
-      {loading&&!error&&<div className="loading-state"><span className="spinner" />Lade aktuelle Daten…</div>}
+      {loading&&!error&&(
+        <>
+          <div className="loading-state"><span className="spinner" />Lade aktuelle Daten…</div>
+          <div className="skeleton-grid" style={{marginBottom:"1rem"}}>
+            <div className="skeleton-card" /><div className="skeleton-card" /><div className="skeleton-card" />
+          </div>
+        </>
+      )}
 
       {!loading&&!error&&macro&&(<>
         <div className="grid grid-3" style={{marginBottom:"1rem"}}>
@@ -181,11 +196,21 @@ export default function Home({ user, access }) {
           <span className="hint">M2 · Zins-Trend · Dollar · 10J-Rendite · VIX</span>
         </div>
 
+        <div className="ticker-strip">
+          {crypto.map((c)=>{
+            const cIsUp=c.change24h>=0;
+            return(
+              <button key={c.id} className={`ticker-item${active===c.id?" active":""}`} onClick={()=>setActive(c.id)}>
+                <span className="ticker-symbol"><span className={`ticker-dot ${cIsUp?"up":"down"}`} />{c.symbol}</span>
+                <span className="ticker-price">${fmtUSD(c.price)}</span>
+                <span className={`ticker-change ${cIsUp?"up":"down"}`}>{cIsUp?"+":""}{c.change24h.toFixed(1)}%</span>
+              </button>
+            );
+          })}
+        </div>
+
         <div className="toolbar">
-          <div className="tabs">
-            {crypto.map((c)=><button key={c.id} className={active===c.id?"active":""} onClick={()=>setActive(c.id)}>{c.symbol}</button>)}
-          </div>
-          <div className="timeframe-group">
+          <div className="timeframe-group" style={{marginLeft:0}}>
             {TIMEFRAMES.map((t)=>(
               <button key={t.key} className={tf===t.key?"active":""} onClick={()=>switchTf(t.key)} style={{padding:"5px 10px",fontSize:12}}>{t.key}</button>
             ))}
@@ -209,7 +234,7 @@ export default function Home({ user, access }) {
             const combined=combineSignal(smaSig,rsi,macro,fg?.value??null,macdSig,volSig,{whaleSig});
             const isUp = c.change24h>=0;
             return(
-              <div className={`card coin-card${active===c.id?" selected":""}`} key={c.id} onClick={()=>setActive(c.id)}>
+              <div className={`card coin-card${active===c.id?" selected":""}`} key={c.id} onClick={()=>setActive(c.id)} style={{borderLeftColor:signalAccent(combined.cls)}}>
                 <div className="coin-card-top">
                   <p className="card-label" style={{margin:0}}>{c.name}</p>
                   <span className={`change-pill ${isUp?"up":"down"}`}>{isUp?"+":""}{c.change24h.toFixed(1)}%</span>
@@ -238,11 +263,19 @@ export default function Home({ user, access }) {
                     <span style={{marginLeft:6}}>${(liquidity[c.id].depthUsd/1000).toFixed(0)}k Tiefe (±1%)</span>
                   </p>
                 );})()}
-                <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">Bollinger</span>{bollSig.label}</p>
-                <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">StochRSI</span>{stochRsiSig.label}</p>
-                <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">OBV</span>{obvSig.label}</p>
-                <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (noch nicht validiert)"><span className="note-label">Starke Kerze</span>{candleSig.label}</p>
-                <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (noch nicht validiert)"><span className="note-label">Marubozu</span>{marubozuSig.label}</p>
+                <button
+                  className="details-toggle"
+                  onClick={(e)=>{e.stopPropagation();setDetailsOpen(prev=>({...prev,[c.id]:!prev[c.id]}));}}
+                >
+                  {detailsOpen[c.id]?"Weniger Details ▴":"Weitere Indikatoren ▾"}
+                </button>
+                {detailsOpen[c.id]&&(<>
+                  <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">Bollinger</span>{bollSig.label}</p>
+                  <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">StochRSI</span>{stochRsiSig.label}</p>
+                  <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">OBV</span>{obvSig.label}</p>
+                  <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (noch nicht validiert)"><span className="note-label">Starke Kerze</span>{candleSig.label}</p>
+                  <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (noch nicht validiert)"><span className="note-label">Marubozu</span>{marubozuSig.label}</p>
+                </>)}
                 <button
                   className="ai-btn"
                   onClick={(e)=>{e.stopPropagation();getAiAnalysis(c,rsi,macdSig,smaSig,volSig,macro,c.price,c.change24h,whaleSig,bollSig,stochRsiSig,obvSig,candleSig,marubozuSig);}}
