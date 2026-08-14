@@ -152,6 +152,12 @@ Route `/validation` – die einzige inhaltliche Seite der App, die **ohne Login*
 
 ---
 
+## Glossar (öffentliche Seite)
+
+Route `/glossar` – zweite öffentliche Seite (gleiches Muster wie `/validation`: kein Login nötig, eigenes schlankes Header-Layout). Erklärt alle Fachbegriffe aus dem Dashboard (RSI, MACD, SMA, Makro-Regime, Fear & Greed, Long/Short, Hebel, Liquidation, Stop-Loss, Backtest, Walk-Forward, Sharpe-Ratio, Max Drawdown, ...) ausführlicher, als es die einzeiligen Dashboard-Tooltips erlauben – Pull-Faktor für Retail-/Neuling-Investoren. Datenquelle `lib/glossary.js` (statisches, nach Kategorie gruppiertes Array). Verlinkt von `/login`, `/signup`, `/validation` und im `AppHeader`-Nav.
+
+---
+
 ## Push-Benachrichtigungen einrichten
 
 Die App schickt eine Push-Benachrichtigung, sobald ein Coin **neu** auf "Kaufen" wechselt. Dafür braucht es zwei Dinge: VAPID-Keys (bereits erledigt) und einen Cloud-Speicher für die Abo-Daten.

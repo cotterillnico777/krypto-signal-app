@@ -14,6 +14,7 @@ const TOOLS = [
   { key: "trades", href: "/trades", icon: "📓", label: "Trades" },
   { key: "risk-reward", href: "/risk-reward", icon: "⚖️", label: "R:R-Rechner" },
   { key: "validation", href: "/validation", icon: "✅", label: "Validierung" },
+  { key: "glossar", href: "/glossar", icon: "📖", label: "Glossar" },
 ];
 
 // Gemeinsame Header-Komponente für alle gegateten Seiten. Zwei getrennte

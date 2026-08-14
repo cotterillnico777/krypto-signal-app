@@ -39,6 +39,9 @@ export default function Validation() {
         <p className="note" style={{ marginTop: 10 }}>
           Die Liste unten zeigt <strong>alle</strong> bisher getesteten Faktoren — auch die, die nicht geholfen oder sogar geschadet haben. Kein Cherry-Picking.
         </p>
+        <p className="note" style={{ marginTop: 6 }}>
+          Fachbegriffe unbekannt? <Link href="/glossar">Glossar mit allen Begriffen →</Link>
+        </p>
       </div>
 
       {VALIDATION_HISTORY.map((entry) => {
