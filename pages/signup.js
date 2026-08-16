@@ -47,7 +47,7 @@ export default function Signup() {
           <div className="brand-mark">₿</div>
           <div>
             <h1>Account erstellen</h1>
-            <p className="subtitle">14 Tage kostenlos testen, keine Kreditkarte nötig</p>
+            <p className="subtitle">14 Tage kostenlos testen</p>
           </div>
         </div>
 
