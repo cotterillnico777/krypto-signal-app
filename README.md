@@ -132,6 +132,16 @@ Coin-Auswahl ist fest auf alle 5 Coins gesetzt (kein Einzel-Coin-Toggle), Stop-L
 
 ---
 
+## Chart-Analyse (Bild-Upload, KI)
+
+Route `/chart-analysis`: Nutzer laden ein beliebiges Chart-Bild hoch (nicht auf die 5 Dashboard-Coins beschränkt), wählen einen Horizont (**Day-Trade** oder **Swing-Trade**, steuert den Prompt-Fokus – kurzfristiges Momentum vs. übergeordneter Trend), und Claude (Vision) beschreibt Trend/Muster/Unterstützung-Widerstand und leitet daraus priorisierte Szenarien ab.
+
+**Bewusst KEINE Prozent-Wahrscheinlichkeiten:** eine Bild-Analyse liefert keine echte Statistik – eine erfundene Zahl ("70% Chance") würde nur eine Präzision vortäuschen, die nicht vorhanden ist und die App näher an Anlageberatung rücken. Der Prompt (`pages/api/chart-analysis.js`) verbietet explizit Prozentzahlen und verlangt stattdessen sprachliche Abstufungen ("deutlich wahrscheinlicher", "möglich, aber weniger wahrscheinlich") sowie ein Haupt- und ein Alternativszenario mit der jeweiligen Auslöse-Bedingung. Gleiches Prinzip wie die Klartext-Erklärung im Dashboard (`explainSignal()`).
+
+Rate-limitiert auf 5 Analysen/Tag/Nutzer (Redis, gleiches Muster wie die Journal-KI-Analyse) – Vision-Aufrufe verbrauchen durch die Bilddaten deutlich mehr Tokens als reine Text-Prompts. Bilder bis 6MB (PNG/JPEG/WebP/GIF), Validierung auf Client UND Server.
+
+---
+
 ## Trades & R:R-Rechner
 
 Zwei Tools fürs eigene (manuelle) Trading, unabhängig von den Dashboard-Signalen:
