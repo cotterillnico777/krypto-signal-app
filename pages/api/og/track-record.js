@@ -88,9 +88,6 @@ export default async function handler() {
             <div style={{ fontSize: 18, color: "#9aa0ab" }}>Ø Out-of-Sample-Sharpe</div>
             <div style={{ fontSize: 32, fontWeight: 700, color: "#f5f5f7" }}>{oosSharpe != null ? oosSharpe.toFixed(2) : "n/a"}</div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
-            <div style={{ fontSize: 18, color: "#9aa0ab" }}>Echte Zahlen, nichts geschönt</div>
-          </div>
         </div>
       </div>
     ),
