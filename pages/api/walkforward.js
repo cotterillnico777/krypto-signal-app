@@ -22,6 +22,8 @@ export default async function handler(req, res) {
   const useObv = req.query.obv === "1";
   const useStrongCandle = req.query.candle === "1";
   const useMarubozu = req.query.marubozu === "1";
+  const useSuperTrend = req.query.st === "1";
+  const useDonchian = req.query.dc === "1";
   const useSma = req.query.sma !== "0";
   const useMacd = req.query.macd !== "0";
   const useRsi = req.query.rsi !== "0";
@@ -29,6 +31,7 @@ export default async function handler(req, res) {
   const useMacro = req.query.macro !== "0";
   const useVolume = req.query.vol !== "0";
   const useNasdaq = req.query.nasdaq === "1";
+  const useSp500 = req.query.sp500 === "1";
   const macroWeight = req.query.macroWeight != null ? parseFloat(req.query.macroWeight) : 2.0;
   const signalThreshold = req.query.threshold != null ? parseFloat(req.query.threshold) : 1.5;
   const multiCoin = req.query.mode === "multi";
@@ -87,6 +90,8 @@ export default async function handler(req, res) {
         useObv,
         useStrongCandle,
         useMarubozu,
+        useSuperTrend,
+        useDonchian,
         useSma,
         useMacd,
         useRsi,
@@ -94,12 +99,13 @@ export default async function handler(req, res) {
         useMacro,
         useVolume,
         useNasdaq,
+        useSp500,
         macroWeight,
         signalThreshold,
         folds: FOLDS,
       });
 
-      return res.status(200).json({ mode: "multi", requestedDays: days, stopLossPct, takeProfitPct, allowShort, leverage, costPct, useBollinger, useStochRsi, useObv, useStrongCandle, useMarubozu, useSma, useMacd, useRsi, useFg, useMacro, useVolume, useNasdaq, macroWeight, signalThreshold, ...result });
+      return res.status(200).json({ mode: "multi", requestedDays: days, stopLossPct, takeProfitPct, allowShort, leverage, costPct, useBollinger, useStochRsi, useObv, useStrongCandle, useMarubozu, useSuperTrend, useDonchian, useSma, useMacd, useRsi, useFg, useMacro, useVolume, useNasdaq, useSp500, macroWeight, signalThreshold, ...result });
     }
 
     const coinId = req.query.coin || "bitcoin";
@@ -136,6 +142,8 @@ export default async function handler(req, res) {
       useObv,
       useStrongCandle,
       useMarubozu,
+      useSuperTrend,
+      useDonchian,
       useSma,
       useMacd,
       useRsi,
@@ -143,12 +151,13 @@ export default async function handler(req, res) {
       useMacro,
       useVolume,
       useNasdaq,
+      useSp500,
       macroWeight,
       signalThreshold,
       folds: FOLDS,
     });
 
-    res.status(200).json({ mode: "single", coin, days, stopLossPct, takeProfitPct, allowShort, leverage, costPct, useBollinger, useStochRsi, useObv, useStrongCandle, useMarubozu, useSma, useMacd, useRsi, useFg, useMacro, useVolume, useNasdaq, macroWeight, signalThreshold, ...result });
+    res.status(200).json({ mode: "single", coin, days, stopLossPct, takeProfitPct, allowShort, leverage, costPct, useBollinger, useStochRsi, useObv, useStrongCandle, useMarubozu, useSuperTrend, useDonchian, useSma, useMacd, useRsi, useFg, useMacro, useVolume, useNasdaq, useSp500, macroWeight, signalThreshold, ...result });
   } catch (err) {
     res.status(500).json({ error: err.message || "Walk-Forward-Validierung fehlgeschlagen." });
   }
