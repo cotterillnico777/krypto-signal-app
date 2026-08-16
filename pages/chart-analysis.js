@@ -4,19 +4,50 @@ import { requireActiveAccess } from "../lib/auth/requireActiveAccess";
 
 export const getServerSideProps = requireActiveAccess;
 
-const MAX_FILE_BYTES = 6 * 1024 * 1024;
+const MAX_FILE_BYTES = 20 * 1024 * 1024;
+// Anthropics eigene Empfehlung für die längste Bildkante (mehr bringt keine
+// bessere Analysequalität, nur mehr Tokens). Wichtiger hier: Vercels
+// Serverless-Functions haben ein hartes, nicht konfigurierbares Body-Limit
+// von ca. 4,5MB -- ein unveränderter Screenshot (v.a. von Retina-Displays,
+// oft 3-8MB als PNG) würde das reißen und mit einem kryptischen
+// "FUNCTION_PAYLOAD_TOO_LARGE" scheitern, das obendrein kein JSON ist und
+// den bisherigen res.json()-Aufruf mit "Unexpected token" crashen ließ.
+// Deshalb wird JEDES Bild vor dem Upload auf Canvas verkleinert und als
+// JPEG neu kodiert -- ein typischer Chart-Screenshot landet danach bei
+// wenigen Hundert KB, weit unter jedem Limit.
+const MAX_DIMENSION = 1568;
+const JPEG_QUALITY = 0.85;
 
-function readFileAsBase64(file) {
+function resizeImageToBase64(file) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      // reader.result hat die Form "data:image/png;base64,AAAA..." --
-      // Anthropics API will nur den reinen Base64-Teil ohne Data-URL-Prefix.
-      const [, base64] = reader.result.split(",");
-      resolve(base64);
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+        const scale = MAX_DIMENSION / Math.max(width, height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(objectUrl);
+          if (!blob) { reject(new Error("Bild konnte nicht verarbeitet werden.")); return; }
+          const reader = new FileReader();
+          reader.onload = () => resolve({ base64: reader.result.split(",")[1], mediaType: "image/jpeg" });
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        },
+        "image/jpeg",
+        JPEG_QUALITY
+      );
     };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+    img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error("Bild konnte nicht gelesen werden.")); };
+    img.src = objectUrl;
   });
 }
 
@@ -42,7 +73,7 @@ export default function ChartAnalysis({ user, access }) {
       return;
     }
     if (f.size > MAX_FILE_BYTES) {
-      setError("Bild zu groß (max. 6MB).");
+      setError("Bild zu groß (max. 20MB).");
       return;
     }
     setFile(f);
@@ -55,12 +86,20 @@ export default function ChartAnalysis({ user, access }) {
     setError(null);
     setResult(null);
     try {
-      const imageBase64 = await readFileAsBase64(file);
+      const { base64, mediaType } = await resizeImageToBase64(file);
       const res = await fetch("/api/chart-analysis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64, mediaType: file.type, mode }),
+        body: JSON.stringify({ imageBase64: base64, mediaType, mode }),
       });
+      // Manche Fehler (z.B. Vercels eigenes "Payload zu groß") kommen als
+      // Klartext statt JSON zurück -- res.json() würde daran mit einer
+      // verwirrenden "Unexpected token"-Meldung scheitern. Content-Type
+      // vorher prüfen und in dem Fall eine verständliche Meldung zeigen.
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        throw new Error(res.status === 413 ? "Bild zu groß für die Analyse -- bitte ein kleineres Bild versuchen." : `Unerwarteter Serverfehler (${res.status}).`);
+      }
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setResult(data.analysis);
@@ -84,7 +123,7 @@ export default function ChartAnalysis({ user, access }) {
       <div className="card" style={{ marginBottom: "1.5rem" }}>
         <p className="section-title">Chart hochladen</p>
         <label className="field" style={{ marginBottom: "1rem" }}>
-          Bild (PNG, JPEG, WebP, GIF -- max. 6MB)
+          Bild (PNG, JPEG, WebP, GIF -- max. 20MB, wird vor dem Hochladen automatisch verkleinert)
           <input className="input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={onFileChange} />
         </label>
 

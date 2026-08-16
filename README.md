@@ -138,7 +138,7 @@ Route `/chart-analysis`: Nutzer laden ein beliebiges Chart-Bild hoch (nicht auf 
 
 **Bewusst KEINE Prozent-Wahrscheinlichkeiten:** eine Bild-Analyse liefert keine echte Statistik – eine erfundene Zahl ("70% Chance") würde nur eine Präzision vortäuschen, die nicht vorhanden ist und die App näher an Anlageberatung rücken. Der Prompt (`pages/api/chart-analysis.js`) verbietet explizit Prozentzahlen und verlangt stattdessen sprachliche Abstufungen ("deutlich wahrscheinlicher", "möglich, aber weniger wahrscheinlich") sowie ein Haupt- und ein Alternativszenario mit der jeweiligen Auslöse-Bedingung. Gleiches Prinzip wie die Klartext-Erklärung im Dashboard (`explainSignal()`).
 
-Rate-limitiert auf 5 Analysen/Tag/Nutzer (Redis, gleiches Muster wie die Journal-KI-Analyse) – Vision-Aufrufe verbrauchen durch die Bilddaten deutlich mehr Tokens als reine Text-Prompts. Bilder bis 6MB (PNG/JPEG/WebP/GIF), Validierung auf Client UND Server.
+Rate-limitiert auf 5 Analysen/Tag/Nutzer (Redis, gleiches Muster wie die Journal-KI-Analyse) – Vision-Aufrufe verbrauchen durch die Bilddaten deutlich mehr Tokens als reine Text-Prompts. Bilder bis 20MB werden akzeptiert, aber **vor dem Upload clientseitig per Canvas auf max. 1568px Kante verkleinert und als JPEG neu kodiert** (`pages/chart-analysis.js`) – Vercel Serverless Functions haben ein hartes, nicht konfigurierbares Body-Limit von ca. 4,5MB, ein unveränderter Screenshot (v.a. von Retina-Displays) würde das leicht reißen und mit einem kryptischen `FUNCTION_PAYLOAD_TOO_LARGE` scheitern. Validierung zusätzlich auf dem Server (`pages/api/chart-analysis.js`, `MAX_BASE64_LENGTH`) als Auffangnetz gegen direkte API-Aufrufe.
 
 ---
 
