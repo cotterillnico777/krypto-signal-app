@@ -1,6 +1,10 @@
 import { useState } from "react";
 import AppHeader from "../components/AppHeader";
 import { requireActiveAccess } from "../lib/auth/requireActiveAccess";
+import { COINS } from "../lib/marketData";
+
+const COIN_SYMBOLS = COINS.map((c) => c.symbol).join(", ");
+const PER_COIN_CASH = Math.round(10000 / COINS.length);
 
 export const getServerSideProps = requireActiveAccess;
 
@@ -66,7 +70,7 @@ function EquityChart({ equityCurve }) {
     <div>
       <div className="chart-legend">
         <span className="legend-item"><span className="dot dot-accent" />Portfolio</span>
-        <span className="legend-item"><span className="dot dot-muted" />Buy &amp; Hold (alle 5, gleichgewichtet)</span>
+        <span className="legend-item"><span className="dot dot-muted" />Buy &amp; Hold (alle {COINS.length}, gleichgewichtet)</span>
       </div>
       <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h}>
         <polyline points={toPoints("buyHoldEquity")} fill="none" stroke="var(--text-faint)" strokeWidth="2" />
@@ -120,7 +124,7 @@ export default function Portfolio({ user, access }) {
     <div className="container">
       <AppHeader
         title="Portfolio-Backtest"
-        subtitle="Echte Kapitalaufteilung über alle 5 Coins gleichzeitig"
+        subtitle={`Echte Kapitalaufteilung über alle ${COINS.length} Coins gleichzeitig`}
         active="portfolio"
         user={user}
         access={access}
@@ -180,7 +184,7 @@ export default function Portfolio({ user, access }) {
 
       <div className="toast-banner" style={{ marginBottom: "1rem" }}>
         <span className="msg">
-          💼 Verteilt $10.000 gleichmäßig auf BTC, ETH, SOL, XRP, TAO ($2.000 je Coin) und lässt jeden mit der Dashboard-Signal-Strategie unabhängig handeln – kein Rebalancing zwischen den Coins. Zeigt, ob die Streuung über mehrere Coins den Drawdown/Sharpe im Vergleich zu den Einzelcoins verbessert.
+          💼 Verteilt $10.000 gleichmäßig auf {COIN_SYMBOLS} (${PER_COIN_CASH.toLocaleString("de-DE")} je Coin) und lässt jeden mit der Dashboard-Signal-Strategie unabhängig handeln – kein Rebalancing zwischen den Coins. Zeigt, ob die Streuung über mehrere Coins den Drawdown/Sharpe im Vergleich zu den Einzelcoins verbessert.
         </span>
       </div>
 
@@ -205,7 +209,7 @@ export default function Portfolio({ user, access }) {
               <p className="card-value" style={{ color: result.buyHoldReturnPct >= 0 ? "var(--green-text)" : "var(--red-text)" }}>
                 {fmtPct(result.buyHoldReturnPct)}
               </p>
-              <p className="note">Alle 5 Coins gleichgewichtet kaufen &amp; halten</p>
+              <p className="note">Alle {COINS.length} Coins gleichgewichtet kaufen &amp; halten</p>
             </div>
             <div className="card">
               <p className="card-label">Portfolio Max Drawdown</p>
@@ -271,7 +275,7 @@ export default function Portfolio({ user, access }) {
               </table>
             </div>
             <p className="note" style={{ marginTop: 12 }}>
-              Diversifikationseffekt: Der Portfolio-Max-Drawdown ({result.maxDrawdown.toFixed(1)}%) im Vergleich zum Durchschnitt der Einzelcoins ({avgCoinMaxDrawdown.toFixed(1)}%) zeigt, ob unkorrelierte Bewegungen zwischen den Coins die Schwankungen im Vergleich zu einer Einzelcoin-Position abfedern. Da alle 5 Coins derselben Signal-Logik folgen und Krypto-Assets tendenziell stark korrelieren, ist der Effekt oft kleiner als bei klassischen Multi-Asset-Portfolios (Aktien/Anleihen/Rohstoffe) – aber selten null.
+              Diversifikationseffekt: Der Portfolio-Max-Drawdown ({result.maxDrawdown.toFixed(1)}%) im Vergleich zum Durchschnitt der Einzelcoins ({avgCoinMaxDrawdown.toFixed(1)}%) zeigt, ob unkorrelierte Bewegungen zwischen den Coins die Schwankungen im Vergleich zu einer Einzelcoin-Position abfedern. Da alle {COINS.length} Coins derselben Signal-Logik folgen und Krypto-Assets tendenziell stark korrelieren, ist der Effekt oft kleiner als bei klassischen Multi-Asset-Portfolios (Aktien/Anleihen/Rohstoffe) – aber selten null.
               {lowSampleSize && (
                 <> Mit Ø {avgTradesPerCoin.toFixed(1)} Trades je Coin in diesem Lauf ist das Ergebnis allerdings eher eine Summe weniger dominanter Einzelwetten als ein statistisch belastbarer Beleg für echte Diversifikation – für ein verlässlicheres Bild einen längeren Zeitraum wählen oder mehrere Zeiträume vergleichen.</>
               )}
@@ -281,10 +285,10 @@ export default function Portfolio({ user, access }) {
       )}
 
       <div className="disclaimer">
-        Portfolio-Backtest: $10.000 gleichmäßig auf BTC/ETH/SOL/XRP/TAO verteilt, jeder Coin handelt unabhängig nach der Dashboard-Signal-Strategie (SMA + RSI + MACD + Volumen + Makro + Fear &amp; Greed), kein Rebalancing zwischen den Coins über die Zeit. Handelskosten (Fee + Slippage) mit 0,15% je Seite standardmäßig aktiv, auch beim Buy&amp;Hold-Vergleich.
+        Portfolio-Backtest: $10.000 gleichmäßig auf {COIN_SYMBOLS} verteilt, jeder Coin handelt unabhängig nach der Dashboard-Signal-Strategie (SMA + RSI + MACD + Volumen + Makro + Fear &amp; Greed), kein Rebalancing zwischen den Coins über die Zeit. Handelskosten (Fee + Slippage) mit 0,15% je Seite standardmäßig aktiv, auch beim Buy&amp;Hold-Vergleich.
         Der gemeinsame Betrachtungszeitraum richtet sich nach dem am kürzesten gelisteten Coin.
         <br /><br />
-        <strong>Zwei Einschränkungen, die die Aussagekraft begrenzen:</strong> Alle 5 Coins handeln mit denselben Standard-Parametern statt je Coin optimierten Werten (siehe "🔬 Optimierung"), und es ist ein einzelner statischer Lauf ohne Trainings-/Test-Split oder Walk-Forward-Check. Bei kurzen/mittleren Zeiträumen kann jeder Coin nur 1-2 Trades ausführen – dann ist das "Portfolio" im Kern eine Summe weniger dominanter Einzelwetten, keine statistisch robuste Stichprobe.
+        <strong>Zwei Einschränkungen, die die Aussagekraft begrenzen:</strong> Alle {COINS.length} Coins handeln mit denselben Standard-Parametern statt je Coin optimierten Werten (siehe "🔬 Optimierung"), und es ist ein einzelner statischer Lauf ohne Trainings-/Test-Split oder Walk-Forward-Check. Bei kurzen/mittleren Zeiträumen kann jeder Coin nur 1-2 Trades ausführen – dann ist das "Portfolio" im Kern eine Summe weniger dominanter Einzelwetten, keine statistisch robuste Stichprobe.
         <br /><br />
         Vergangene Wertentwicklung ist keine Garantie für zukünftige Ergebnisse. Keine Anlageberatung.
       </div>
