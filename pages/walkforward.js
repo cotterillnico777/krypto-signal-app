@@ -74,7 +74,7 @@ export default function WalkForward({ user, access }) {
         <span className="note-label" style={{ fontSize: 12.5 }}>Modus</span>
         <div className="tabs">
           <button className={mode === "single" ? "active" : ""} onClick={() => setMode("single")} style={{ padding: "5px 10px", fontSize: 12 }}>1 Coin</button>
-          <button className={mode === "multi" ? "active" : ""} onClick={() => setMode("multi")} style={{ padding: "5px 10px", fontSize: 12 }}>Alle 5 Coins</button>
+          <button className={mode === "multi" ? "active" : ""} onClick={() => setMode("multi")} style={{ padding: "5px 10px", fontSize: 12 }}>Alle {COINS.length} Coins</button>
         </div>
       </div>
 
@@ -111,7 +111,7 @@ export default function WalkForward({ user, access }) {
       <div className="toast-banner" style={{ marginBottom: "1rem" }}>
         <span className="msg">
           📈 Teilt den Zeitraum in 5 aufeinanderfolgende Segmente. Pro Fold wird auf allen Segmenten bis dahin (wachsendes Trainingsfenster) die beste Kombination aus 80 gesucht und direkt auf dem nächsten, ungesehenen Segment getestet – simuliert, wie ein regelmäßiges Neu-Optimieren in der Praxis abgeschnitten hätte.
-          {mode === "multi" ? " Im Multi-Coin-Modus wird die Kombination pro Fold über alle 5 Coins gleichzeitig gerankt (Ø-Sharpe) – kombiniert die beiden strengsten Overfitting-Checks." : ""}
+          {mode === "multi" ? ` Im Multi-Coin-Modus wird die Kombination pro Fold über alle ${COINS.length} Coins gleichzeitig gerankt (Ø-Sharpe) – kombiniert die beiden strengsten Overfitting-Checks.` : ""}
         </span>
       </div>
 
@@ -129,7 +129,7 @@ export default function WalkForward({ user, access }) {
               <p className="card-value" style={{ color: result.avgOosReturnPct >= 0 ? "var(--green-text)" : "var(--red-text)" }}>
                 {fmtPct(result.avgOosReturnPct)}
               </p>
-              <p className="note">Durchschnitt über alle {result.foldCount} Test-Fenster{mode === "multi" ? " (Ø über 5 Coins)" : ""}</p>
+              <p className="note">Durchschnitt über alle {result.foldCount} Test-Fenster{mode === "multi" ? ` (Ø über ${COINS.length} Coins)` : ""}</p>
             </div>
             <div className="card">
               <p className="card-label">Ø Out-of-Sample-Sharpe</p>
@@ -188,7 +188,7 @@ export default function WalkForward({ user, access }) {
 
           {mode === "multi" && (
             <div className="card">
-              <p className="section-title">Folds im Detail (über alle 5 Coins gerankt)</p>
+              <p className="section-title">Folds im Detail (über alle {COINS.length} Coins gerankt)</p>
               <div className="table-wrap">
                 <table className="table">
                   <thead>
@@ -227,7 +227,7 @@ export default function WalkForward({ user, access }) {
                 ))}
               </div>
               <p className="note" style={{ marginTop: 12 }}>
-                Kombiniert die beiden strengsten Overfitting-Checks: pro Fold wird die Parameter-Kombination über alle 5 Coins gleichzeitig gerankt (nicht nur eine, die zufällig zu einem einzelnen Coin passt), UND über 4 zeitlich versetzte Test-Fenster geprüft (nicht nur ein einzelner Split). "Konsistenz" zeigt, bei wie vielen Coins der Fold im Test positiv war – niedrige Konsistenz trotz positiver Ø-Rendite bedeutet, dass ein einzelner Ausreißer-Coin das Ergebnis trägt.
+                Kombiniert die beiden strengsten Overfitting-Checks: pro Fold wird die Parameter-Kombination über alle {COINS.length} Coins gleichzeitig gerankt (nicht nur eine, die zufällig zu einem einzelnen Coin passt), UND über 4 zeitlich versetzte Test-Fenster geprüft (nicht nur ein einzelner Split). "Konsistenz" zeigt, bei wie vielen Coins der Fold im Test positiv war – niedrige Konsistenz trotz positiver Ø-Rendite bedeutet, dass ein einzelner Ausreißer-Coin das Ergebnis trägt.
               </p>
             </div>
           )}

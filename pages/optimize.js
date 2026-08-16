@@ -75,7 +75,7 @@ export default function Optimize({ user, access }) {
         <span className="note-label" style={{ fontSize: 12.5 }}>Modus</span>
         <div className="tabs">
           <button className={mode === "single" ? "active" : ""} onClick={() => setMode("single")} style={{ padding: "5px 10px", fontSize: 12 }}>1 Coin</button>
-          <button className={mode === "multi" ? "active" : ""} onClick={() => setMode("multi")} style={{ padding: "5px 10px", fontSize: 12 }}>Alle 5 Coins</button>
+          <button className={mode === "multi" ? "active" : ""} onClick={() => setMode("multi")} style={{ padding: "5px 10px", fontSize: 12 }}>Alle {COINS.length} Coins</button>
         </div>
       </div>
 
@@ -112,7 +112,7 @@ export default function Optimize({ user, access }) {
       <div className="toast-banner" style={{ marginBottom: "1rem" }}>
         <span className="msg">
           🔬 {mode === "multi"
-            ? "Testet 80 Kombinationen über alle 5 Coins gleichzeitig und rankt nach durchschnittlichem Sharpe – eine Kombination, die nur bei einem Coin gut aussieht, fällt im Schnitt durch. Dauert länger (~30-60s)."
+            ? `Testet 80 Kombinationen über alle ${COINS.length} Coins gleichzeitig und rankt nach durchschnittlichem Sharpe – eine Kombination, die nur bei einem Coin gut aussieht, fällt im Schnitt durch. Dauert länger (~30-60s).`
             : "Testet automatisch 80 Kombinationen (5 SMA-Paare × 4 RSI-Schwellen × 4 ADX-Filter) auf den ersten 70% des Zeitraums (Training), prüft die Top 5 nach Sharpe Ratio dann auf den letzten 30% (Test) nach. Kann ~10-30s dauern."}
         </span>
       </div>
@@ -230,7 +230,7 @@ export default function Optimize({ user, access }) {
               ))}
             </div>
             <p className="note" style={{ marginTop: 12 }}>
-              "Konsistenz" zählt, bei wie vielen der 5 Coins die Kombination eine positive Rendite lieferte. Eine Kombination mit hohem Ø-Sharpe aber niedriger Konsistenz wird meist nur von einem einzelnen Ausreißer-Coin getragen – weniger überzeugend als eine, die über mehrere Coins hinweg konsistent funktioniert.
+              "Konsistenz" zählt, bei wie vielen der {COINS.length} Coins die Kombination eine positive Rendite lieferte. Eine Kombination mit hohem Ø-Sharpe aber niedriger Konsistenz wird meist nur von einem einzelnen Ausreißer-Coin getragen – weniger überzeugend als eine, die über mehrere Coins hinweg konsistent funktioniert.
             </p>
           </div>
         </>
