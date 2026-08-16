@@ -178,9 +178,17 @@ Braucht die `holdings`-Tabelle aus `supabase/migrations/0005_holdings.sql` (sieh
 
 ---
 
+## Live-Track-Record (öffentliche Seite)
+
+Route `/track-record` – **ohne Login** erreichbar, gleiches Layout-Muster wie `/validation`. Zeigt echte, laufend aktualisierte Backtest-Zahlen der aktuellen Standard-Konfiguration (Portfolio-Backtest-Rendite vs. Buy&Hold, Max Drawdown, und die strengere Multi-Coin-Walk-Forward-Out-of-Sample-Kennzahl), bewusst **inklusive der schlechten Zahlen** (Drawdown, ein negativer Ø-Out-of-Sample-Wert bleibt sichtbar, nicht versteckt) – gleicher Transparenz-Anspruch wie `/validation`, aber ergebnis- statt methodikfokussiert.
+
+**Wichtig: die Seite selbst löst nie eine Berechnung aus.** Ein täglicher Cron (`pages/api/cron/refresh-track-record.js`, 07:10 UTC) berechnet den Snapshot (730 Tage, alle Coins, Standardeinstellungen) einmal und cached ihn in Redis (`track-record:snapshot`, 3 Tage TTL als Puffer) – die öffentliche, nicht eingeloggte Seite liest nur diesen Cache (`getServerSideProps` ohne `requireActiveAccess`). Absichtlich so gebaut: eine öffentliche Seite, die bei jedem Besuch einen mehrere-Sekunden-Multi-Coin-Backtest auslöst, wäre ein Kosten-/Abuse-Risiko. Zeigt einen Hinweis ("wird gerade berechnet"), falls noch kein Snapshot existiert (z.B. direkt nach dem ersten Deploy vor dem ersten Cron-Lauf).
+
+---
+
 ## Validierungs-Historie (öffentliche Seite)
 
-Route `/validation` – die einzige inhaltliche Seite der App, die **ohne Login** erreichbar ist (kein `getServerSideProps = requireActiveAccess`, folgt stattdessen dem eigenen schlanken Header-Layout von `pages/login.js`). Gedacht als Vertrauensanker für Interessenten vor der Anmeldung: listet **jeden** je getesteten Signal-Faktor auf, mit Datum, Hypothese, Test-Methode (i.d.R. Multi-Coin Walk-Forward über 365/730/850 Tage) und Ergebnis – auch die Fälle, in denen ein Faktor NICHT geholfen oder sogar geschadet hat. Datenquelle ist `lib/validationHistory.js` (ein einfaches Array, kein DB/API-Call) – beim nächsten empirisch getesteten Faktor dort einen neuen Eintrag ergänzen. Verlinkt von `/login`, `/signup` und im `AppHeader`-Nav für eingeloggte Nutzer.
+Route `/validation` – ebenfalls **ohne Login** erreichbar (kein `getServerSideProps = requireActiveAccess`, folgt dem eigenen schlanken Header-Layout von `pages/login.js`). Gedacht als Vertrauensanker für Interessenten vor der Anmeldung: listet **jeden** je getesteten Signal-Faktor auf, mit Datum, Hypothese, Test-Methode (i.d.R. Multi-Coin Walk-Forward über 365/730/850 Tage) und Ergebnis – auch die Fälle, in denen ein Faktor NICHT geholfen oder sogar geschadet hat. Datenquelle ist `lib/validationHistory.js` (ein einfaches Array, kein DB/API-Call) – beim nächsten empirisch getesteten Faktor dort einen neuen Eintrag ergänzen. Verlinkt von `/login`, `/signup` und im `AppHeader`-Nav für eingeloggte Nutzer.
 
 ---
 
