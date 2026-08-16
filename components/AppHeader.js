@@ -39,6 +39,7 @@ const NAV_GROUPS = [
     icon: "ℹ️",
     label: "Info",
     items: [
+      { key: "track-record", href: "/track-record", icon: "📈", label: "Track-Record" },
       { key: "validation", href: "/validation", icon: "✅", label: "Validierung" },
       { key: "glossar", href: "/glossar", icon: "📖", label: "Glossar" },
     ],
