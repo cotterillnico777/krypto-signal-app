@@ -30,6 +30,7 @@ const NAV_GROUPS = [
     items: [
       { key: "trades", href: "/trades", icon: "📓", label: "Trades" },
       { key: "risk-reward", href: "/risk-reward", icon: "⚖️", label: "R:R-Rechner" },
+      { key: "alerts", href: "/alerts", icon: "🔔", label: "Preis-Alarme" },
     ],
   },
   {

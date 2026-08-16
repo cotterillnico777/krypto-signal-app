@@ -158,6 +158,16 @@ Braucht die `trades`-Tabelle aus `supabase/migrations/0002_trades.sql` (siehe Ab
 
 ---
 
+## Preis-Alarme
+
+**"🔔 Preis-Alarme"** (Route `/alerts`): eigene Preisschwelle pro Coin festlegen ("BTC über 100.000$" o.ä.) – löst **einmalig** aus (Push-Benachrichtigung) und wird danach automatisch aus der Datenbank entfernt, kein Re-Trigger.
+
+**Wichtige Einschränkung:** Vercel Hobby erlaubt Cron-Jobs nur **1x/Tag** (keine Ausnahme, auch nicht für einzelne Jobs – siehe `pages/api/cron/check-alerts.js`, läuft täglich 07:05 UTC). Ein Preis-Alarm ist deshalb **keine Echtzeit-Benachrichtigung**. Um trotzdem kein kurzes Über-/Unterschreiten zwischen zwei täglichen Prüfungen zu verpassen, wird gegen das **24h-Hoch/Tief** des jeweiligen Coins geprüft (`ticker.highPrice`/`lowPrice` von Binance, kostenlos im selben Ticker-Aufruf enthalten, den `fetchCryptoData` ohnehin schon macht – kein Zusatz-Request) statt nur gegen den Punktpreis zum Cron-Zeitpunkt.
+
+Braucht die `price_alerts`-Tabelle aus `supabase/migrations/0004_price_alerts.sql` (siehe Abschnitt "Accounts & Login" oben) sowie den neuen Cron-Eintrag in `vercel.json`.
+
+---
+
 ## Validierungs-Historie (öffentliche Seite)
 
 Route `/validation` – die einzige inhaltliche Seite der App, die **ohne Login** erreichbar ist (kein `getServerSideProps = requireActiveAccess`, folgt stattdessen dem eigenen schlanken Header-Layout von `pages/login.js`). Gedacht als Vertrauensanker für Interessenten vor der Anmeldung: listet **jeden** je getesteten Signal-Faktor auf, mit Datum, Hypothese, Test-Methode (i.d.R. Multi-Coin Walk-Forward über 365/730/850 Tage) und Ergebnis – auch die Fälle, in denen ein Faktor NICHT geholfen oder sogar geschadet hat. Datenquelle ist `lib/validationHistory.js` (ein einfaches Array, kein DB/API-Call) – beim nächsten empirisch getesteten Faktor dort einen neuen Eintrag ergänzen. Verlinkt von `/login`, `/signup` und im `AppHeader`-Nav für eingeloggte Nutzer.
