@@ -13,6 +13,7 @@ const TOOLS = [
   { key: "portfolio", href: "/portfolio", icon: "💼", label: "Portfolio" },
   { key: "trades", href: "/trades", icon: "📓", label: "Trades" },
   { key: "risk-reward", href: "/risk-reward", icon: "⚖️", label: "R:R-Rechner" },
+  { key: "chart-analysis", href: "/chart-analysis", icon: "🔍", label: "Chart-Analyse" },
   { key: "validation", href: "/validation", icon: "✅", label: "Validierung" },
   { key: "glossar", href: "/glossar", icon: "📖", label: "Glossar" },
 ];
