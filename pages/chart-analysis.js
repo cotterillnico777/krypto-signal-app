@@ -114,7 +114,7 @@ export default function ChartAnalysis({ user, access }) {
     <div className="container">
       <AppHeader
         title="Chart-Analyse"
-        subtitle="Chart-Bild hochladen, Claude beschreibt Szenarien -- in Worten, nicht in erfundenen Prozentzahlen"
+        subtitle="Chart hochladen, KI beschreibt mögliche Szenarien"
         active="chart-analysis"
         user={user}
         access={access}

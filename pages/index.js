@@ -166,7 +166,7 @@ export default function Home({ user, access }) {
     <div className="container">
       <AppHeader
         title="Krypto Signal Dashboard"
-        subtitle="Binance · FRED · Fear & Greed · SMA + RSI + MACD + Volumen + Bollinger + StochRSI + OBV + Kerze + Marubozu + Whale + KI"
+        subtitle="Krypto-Signale mit Makro-Kontext und KI-Analyse"
         active="dashboard"
         user={user}
         access={access}
