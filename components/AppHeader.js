@@ -28,6 +28,7 @@ const NAV_GROUPS = [
     icon: "📓",
     label: "Journal",
     items: [
+      { key: "holdings", href: "/holdings", icon: "💰", label: "Mein Portfolio" },
       { key: "trades", href: "/trades", icon: "📓", label: "Trades" },
       { key: "risk-reward", href: "/risk-reward", icon: "⚖️", label: "R:R-Rechner" },
       { key: "alerts", href: "/alerts", icon: "🔔", label: "Preis-Alarme" },
