@@ -1,5 +1,8 @@
 import Link from "next/link";
+import Head from "next/head";
 import { getRedis } from "../lib/redis";
+
+const SITE_URL = "https://krypto-signal-app.vercel.app";
 
 // Bewusst KEIN getServerSideProps = requireActiveAccess -- öffentliche
 // Vertrauens-/Marketing-Seite (gleiches Muster wie pages/validation.js),
@@ -18,8 +21,29 @@ function fmtPct(n) {
 }
 
 export default function TrackRecord({ snapshot }) {
+  const description = snapshot
+    ? `Portfolio-Backtest: ${fmtPct(snapshot.portfolio.totalReturnPct)} (Buy&Hold: ${fmtPct(snapshot.portfolio.buyHoldReturnPct)}), Max Drawdown ${snapshot.portfolio.maxDrawdown.toFixed(1)}% -- echte Zahlen, nichts geschönt.`
+    : "Echte, laufend aktualisierte Backtest-Ergebnisse der Krypto-Signal-Dashboard-Standardstrategie.";
+  const ogImage = `${SITE_URL}/api/og/track-record`;
+
   return (
     <div className="container">
+      <Head>
+        <title>Live-Track-Record -- Krypto Signal Dashboard</title>
+        <meta name="description" content={description} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Live-Track-Record -- Krypto Signal Dashboard" />
+        <meta property="og:description" content={description} />
+        <meta property="og:url" content={`${SITE_URL}/track-record`} />
+        <meta property="og:image" content={ogImage} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Live-Track-Record -- Krypto Signal Dashboard" />
+        <meta name="twitter:description" content={description} />
+        <meta name="twitter:image" content={ogImage} />
+      </Head>
+
       <div className="brand" style={{ marginBottom: "0.75rem" }}>
         <div className="brand-mark">₿</div>
         <div>
