@@ -1,11 +1,17 @@
 import { requireActiveAccessApi } from "../../lib/auth/requireActiveAccessApi";
 import { getRedis } from "../../lib/redis";
 
+// Vercel Serverless Functions haben ein hartes, nicht konfigurierbares
+// Body-Limit von ca. 4,5MB -- unabhängig von jeder Next.js-Konfiguration.
+// pages/chart-analysis.js verkleinert JEDES Bild vor dem Senden auf Canvas
+// (max. 1568px Kante, JPEG q0.85), reale Payloads liegen damit typischerweise
+// weit unter 1MB. Dieses Limit ist nur ein defensives Auffangnetz gegen
+// direkte API-Aufrufe, die die UI umgehen -- sollte im Normalbetrieb nie
+// greifen.
+export const config = { api: { bodyParser: { sizeLimit: "4mb" } } };
+
 const DAILY_LIMIT = 5;
-// ~6MB Rohbild als Obergrenze (base64 ist ca. 1,37x größer als die Rohdaten,
-// die Anthropic-API selbst begrenzt Bilder ohnehin auf ~5MB/Bild) --
-// verhindert übergroße Uploads, bevor sie überhaupt an die API gehen.
-const MAX_BASE64_LENGTH = 8_000_000;
+const MAX_BASE64_LENGTH = 4_000_000;
 const ALLOWED_MEDIA_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 
 const MODE_INSTRUCTIONS = {
@@ -30,7 +36,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Nicht unterstütztes Bildformat (erlaubt: PNG, JPEG, WebP, GIF)." });
   }
   if (imageBase64.length > MAX_BASE64_LENGTH) {
-    return res.status(400).json({ error: "Bild zu groß (max. ca. 5-6MB)." });
+    return res.status(400).json({ error: "Bild nach Verkleinerung immer noch zu groß -- bitte ein anderes Bild versuchen." });
   }
   const modeInstruction = MODE_INSTRUCTIONS[mode] || MODE_INSTRUCTIONS.swing;
 
