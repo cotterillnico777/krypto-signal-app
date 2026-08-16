@@ -168,6 +168,16 @@ Braucht die `price_alerts`-Tabelle aus `supabase/migrations/0004_price_alerts.sq
 
 ---
 
+## Mein Portfolio (echte Bestände)
+
+**"💰 Mein Portfolio"** (Route `/holdings`): Nutzer tragen ihre echten Coin-Bestände ein (Coin, Menge, Einstandspreis pro Einheit) – kein Exchange-API-Zugang (bewusste Scope-Entscheidung), reine manuelle Erfassung wie bei "📓 Trades". Aktueller Wert/Gewinn-Verlust wird live aus dem bestehenden Binance-Preisfeed berechnet (`fetchCryptoData`, nichts Neues geladen), nicht gespeichert – ändert sich also bei jedem Seitenaufruf mit dem echten Kurs.
+
+Nicht zu verwechseln mit dem hypothetischen **"💼 Portfolio-Backtest"** (`/portfolio`, oben) – dort simuliert die App eine $10.000-Strategie über historische Daten, hier trägt der Nutzer seine tatsächlichen Bestände ein.
+
+Braucht die `holdings`-Tabelle aus `supabase/migrations/0005_holdings.sql` (siehe Abschnitt "Accounts & Login" oben).
+
+---
+
 ## Validierungs-Historie (öffentliche Seite)
 
 Route `/validation` – die einzige inhaltliche Seite der App, die **ohne Login** erreichbar ist (kein `getServerSideProps = requireActiveAccess`, folgt stattdessen dem eigenen schlanken Header-Layout von `pages/login.js`). Gedacht als Vertrauensanker für Interessenten vor der Anmeldung: listet **jeden** je getesteten Signal-Faktor auf, mit Datum, Hypothese, Test-Methode (i.d.R. Multi-Coin Walk-Forward über 365/730/850 Tage) und Ergebnis – auch die Fälle, in denen ein Faktor NICHT geholfen oder sogar geschadet hat. Datenquelle ist `lib/validationHistory.js` (ein einfaches Array, kein DB/API-Call) – beim nächsten empirisch getesteten Faktor dort einen neuen Eintrag ergänzen. Verlinkt von `/login`, `/signup` und im `AppHeader`-Nav für eingeloggte Nutzer.
