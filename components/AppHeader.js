@@ -110,6 +110,11 @@ function NavDropdown({ group, active }) {
 export default function AppHeader({ title, subtitle, active, user, access, children }) {
   return (
     <>
+      {active !== "dashboard" && (
+        <Link href="/" className="icon-btn" style={{ marginBottom: "0.75rem", display: "inline-flex" }}>
+          ← Zurück
+        </Link>
+      )}
       <header className="app-header">
         <div className="brand">
           <div className="brand-mark">₿</div>
