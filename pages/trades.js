@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import AppHeader from "../components/AppHeader";
 import { requireActiveAccess } from "../lib/auth/requireActiveAccess";
 import { computeTradeMetrics, summarizeTrades, computeGamification } from "../lib/trades";
+import { useLanguage } from "../lib/i18n";
 
 export const getServerSideProps = requireActiveAccess;
 
@@ -25,6 +26,7 @@ function fmtUSD(n) {
 }
 
 export default function Trades({ user, access }) {
+  const { t } = useLanguage();
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -137,8 +139,8 @@ export default function Trades({ user, access }) {
   return (
     <div className="container">
       <AppHeader
-        title="Trades"
-        subtitle="Dein manuelles Trade-Journal und Trade-Tracking"
+        title={t("trades.title")}
+        subtitle={t("trades.subtitle")}
         active="trades"
         user={user}
         access={access}
@@ -146,137 +148,137 @@ export default function Trades({ user, access }) {
 
       <div className="grid grid-3" style={{ marginBottom: "1.5rem" }}>
         <div className="card">
-          <p className="card-label">Trades</p>
+          <p className="card-label">{t("trades.tradesLabel")}</p>
           <p className="card-value">{stats.tradeCount}</p>
-          <p className="note">{stats.openCount} offen, {stats.closedCount} geschlossen</p>
+          <p className="note">{t("trades.openClosedNote", { open: stats.openCount, closed: stats.closedCount })}</p>
         </div>
         <div className="card">
-          <p className="card-label">Trefferquote / Ø-R-Multiple</p>
+          <p className="card-label">{t("trades.winRateAvgR")}</p>
           <p className="card-value" style={{ fontSize: 18 }}>
             {stats.winRate == null ? "n/a" : `${stats.winRate.toFixed(0)}%`} / {stats.avgRMultiple == null ? "n/a" : `${stats.avgRMultiple >= 0 ? "+" : ""}${stats.avgRMultiple.toFixed(2)}R`}
           </p>
         </div>
         <div className="card">
-          <p className="card-label">Gesamt-PnL</p>
+          <p className="card-label">{t("trades.totalPnl")}</p>
           <p className="card-value" style={{ color: stats.totalPnl >= 0 ? "var(--green-text)" : "var(--red-text)" }}>
             ${fmtUSD(stats.totalPnl)}
           </p>
-          <p className="note">Ø-PnL pro Trade: {stats.avgPnlPct == null ? "n/a" : fmtPct(stats.avgPnlPct)}</p>
+          <p className="note">{t("trades.avgPnlNote", { value: stats.avgPnlPct == null ? "n/a" : fmtPct(stats.avgPnlPct) })}</p>
         </div>
       </div>
 
       {trades.length > 0 && (
         <div className="grid grid-3" style={{ marginBottom: "1.5rem" }}>
           <div className="card">
-            <p className="card-label">Wochen-Streak</p>
+            <p className="card-label">{t("trades.weekStreak")}</p>
             <p className="card-value">🔥 {game.currentStreak}</p>
-            <p className="note">{game.currentStreak === 1 ? "Woche" : "Wochen"} in Folge mit mind. 1 Trade{game.longestStreak > game.currentStreak ? ` (Rekord: ${game.longestStreak})` : ""}</p>
+            <p className="note">{t("trades.streakNote", { unit: game.currentStreak === 1 ? t("trades.weekOne") : t("trades.weekMany") })}{game.longestStreak > game.currentStreak ? t("trades.streakRecord", { record: game.longestStreak }) : ""}</p>
           </div>
           <div className="card" style={{ gridColumn: "span 2" }}>
-            <p className="card-label">Meilensteine{game.currentMilestone ? ` -- zuletzt ${game.currentMilestone} Trades erreicht` : ""}</p>
+            <p className="card-label">{t("trades.milestones")}{game.currentMilestone ? t("trades.milestonesLastReached", { count: game.currentMilestone }) : ""}</p>
             {game.next ? (
               <>
-                <p className="note" style={{ marginBottom: 6 }}>Noch {game.next - stats.tradeCount} bis {game.next} Trades</p>
+                <p className="note" style={{ marginBottom: 6 }}>{t("trades.milestonesToGo", { remaining: game.next - stats.tradeCount, next: game.next })}</p>
                 <div style={{ background: "var(--bg-subtle)", borderRadius: 999, height: 8, overflow: "hidden" }}>
                   <div style={{ width: `${game.progressPct}%`, height: "100%", background: "var(--accent)", borderRadius: 999, transition: "width 0.3s ease" }} />
                 </div>
               </>
             ) : (
-              <p className="note">Alle Meilensteine erreicht 🏆</p>
+              <p className="note">{t("trades.milestonesAllReached")}</p>
             )}
           </div>
         </div>
       )}
 
       <div className="card" style={{ marginBottom: "1.5rem" }}>
-        <p className="section-title">Neuer Trade</p>
+        <p className="section-title">{t("trades.newTrade")}</p>
         <form onSubmit={addTrade} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.85rem" }}>
           <label className="field">
-            Symbol
+            {t("trades.symbol")}
             <input className="input" required value={form.symbol} onChange={(e) => setForm({ ...form, symbol: e.target.value })} placeholder="BTC" />
           </label>
           <label className="field">
-            Richtung
+            {t("trades.direction")}
             <div className="tabs">
-              <button type="button" className={form.direction === "long" ? "active" : ""} onClick={() => setForm({ ...form, direction: "long" })}>Long</button>
-              <button type="button" className={form.direction === "short" ? "active" : ""} onClick={() => setForm({ ...form, direction: "short" })}>Short</button>
+              <button type="button" className={form.direction === "long" ? "active" : ""} onClick={() => setForm({ ...form, direction: "long" })}>{t("trades.long")}</button>
+              <button type="button" className={form.direction === "short" ? "active" : ""} onClick={() => setForm({ ...form, direction: "short" })}>{t("trades.short")}</button>
             </div>
           </label>
           <label className="field">
-            Entry-Preis
+            {t("trades.entryPrice")}
             <input className="input" required type="number" step="any" value={form.entryPrice} onChange={(e) => setForm({ ...form, entryPrice: e.target.value })} />
           </label>
           <label className="field">
-            Stop-Loss (optional)
+            {t("trades.stopLossOptional")}
             <input className="input" type="number" step="any" value={form.stopLoss} onChange={(e) => setForm({ ...form, stopLoss: e.target.value })} />
           </label>
           <label className="field">
-            Take-Profit (optional)
+            {t("trades.takeProfitOptional")}
             <input className="input" type="number" step="any" value={form.takeProfit} onChange={(e) => setForm({ ...form, takeProfit: e.target.value })} />
           </label>
           <label className="field">
-            Positionsgröße (USD)
+            {t("trades.positionSize")}
             <input className="input" required type="number" step="any" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} />
           </label>
           <label className="field">
-            Entry-Datum
+            {t("trades.entryDate")}
             <input className="input" type="datetime-local" value={form.entryAt} onChange={(e) => setForm({ ...form, entryAt: e.target.value })} />
           </label>
           <label className="field" style={{ gridColumn: "1 / -1" }}>
-            Notizen
-            <textarea className="textarea" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Warum bin ich rein? Was war der Plan?" />
+            {t("trades.notes")}
+            <textarea className="textarea" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder={t("trades.notesPlaceholder")} />
           </label>
           <div style={{ gridColumn: "1 / -1" }}>
             <button className="icon-btn primary" type="submit" disabled={saving}>
-              {saving ? "Speichere…" : "+ Trade hinzufügen"}
+              {saving ? t("trades.saving") : t("trades.addTrade")}
             </button>
           </div>
         </form>
       </div>
 
-      {error && <div className="error-box">Fehler: {error}</div>}
+      {error && <div className="error-box">{t("tools.shared.errorPrefix")}{error}</div>}
 
       <div className="card" style={{ marginBottom: "1.5rem" }}>
-        <p className="section-title">KI-Analyse</p>
-        <p className="note">Lässt Claude Muster in deinem Journal suchen (Trefferquote, Risikomanagement, wiederkehrende Fehler). Max. 5 Analysen pro Tag.</p>
+        <p className="section-title">{t("trades.aiAnalysisHeading")}</p>
+        <p className="note">{t("trades.aiAnalysisNote")}</p>
         <button className="ai-btn" onClick={analyzeJournal} disabled={aiLoading || trades.length === 0}>
-          {aiLoading ? "Analysiere…" : "🤖 KI-Analyse meines Journals"}
+          {aiLoading ? t("trades.analyzing") : t("trades.analyzeButton")}
         </button>
-        {aiError && <div className="error-box" style={{ marginTop: 10 }}>Fehler: {aiError}</div>}
+        {aiError && <div className="error-box" style={{ marginTop: 10 }}>{t("tools.shared.errorPrefix")}{aiError}</div>}
         {aiAnalysis && <div className="ai-result">{aiAnalysis}</div>}
       </div>
 
       <div className="card">
-        <p className="section-title">Trade-Historie {loading && "(lädt…)"}</p>
+        <p className="section-title">{t("trades.history")} {loading && t("trades.loadingSuffix")}</p>
         {!loading && trades.length === 0 ? (
-          <p className="note">Noch keine Trades erfasst.</p>
+          <p className="note">{t("trades.noTrades")}</p>
         ) : (
           <div className="table-wrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th>Symbol</th>
-                  <th>Richtung</th>
-                  <th>Entry</th>
-                  <th>Exit</th>
-                  <th>Stop / Target</th>
-                  <th>PnL</th>
-                  <th>R-Multiple</th>
-                  <th>Notizen</th>
+                  <th>{t("trades.symbol")}</th>
+                  <th>{t("trades.direction")}</th>
+                  <th>{t("trades.thEntry")}</th>
+                  <th>{t("trades.thExit")}</th>
+                  <th>{t("trades.thStopTarget")}</th>
+                  <th>{t("trades.thPnl")}</th>
+                  <th>{t("trades.thRMultiple")}</th>
+                  <th>{t("trades.thNotes")}</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
-                {trades.map((t) => {
-                  const m = computeTradeMetrics(t);
+                {trades.map((tr) => {
+                  const m = computeTradeMetrics(tr);
                   return (
-                    <tr key={t.id}>
-                      <td>{t.symbol}</td>
-                      <td><span className={`badge ${t.direction === "short" ? "badge-red" : "badge-green"}`}>{t.direction === "short" ? "Short" : "Long"}</span></td>
-                      <td>{t.entryPrice}</td>
+                    <tr key={tr.id}>
+                      <td>{tr.symbol}</td>
+                      <td><span className={`badge ${tr.direction === "short" ? "badge-red" : "badge-green"}`}>{tr.direction === "short" ? t("trades.short") : t("trades.long")}</span></td>
+                      <td>{tr.entryPrice}</td>
                       <td>
                         {m.status === "closed" ? (
-                          t.exitPrice
+                          tr.exitPrice
                         ) : (
                           <div style={{ display: "flex", gap: 6 }}>
                             <input
@@ -284,19 +286,19 @@ export default function Trades({ user, access }) {
                               style={{ width: 90, padding: "4px 8px" }}
                               type="number"
                               step="any"
-                              placeholder="Exit-Preis"
-                              value={exitDrafts[t.id] || ""}
-                              onChange={(e) => setExitDrafts((prev) => ({ ...prev, [t.id]: e.target.value }))}
+                              placeholder={t("trades.exitPricePlaceholder")}
+                              value={exitDrafts[tr.id] || ""}
+                              onChange={(e) => setExitDrafts((prev) => ({ ...prev, [tr.id]: e.target.value }))}
                             />
-                            <button className="icon-btn" style={{ padding: "4px 8px", fontSize: 12 }} onClick={() => closeTrade(t.id)}>Schließen</button>
+                            <button className="icon-btn" style={{ padding: "4px 8px", fontSize: 12 }} onClick={() => closeTrade(tr.id)}>{t("trades.close")}</button>
                           </div>
                         )}
                       </td>
-                      <td>{t.stopLoss ?? "–"} / {t.takeProfit ?? "–"}</td>
-                      <td>{m.pnlPct == null ? <span className="badge badge-gray">offen</span> : <span className={`badge ${m.pnlPct >= 0 ? "badge-green" : "badge-red"}`}>{fmtPct(m.pnlPct)}</span>}</td>
+                      <td>{tr.stopLoss ?? "–"} / {tr.takeProfit ?? "–"}</td>
+                      <td>{m.pnlPct == null ? <span className="badge badge-gray">{t("trades.open")}</span> : <span className={`badge ${m.pnlPct >= 0 ? "badge-green" : "badge-red"}`}>{fmtPct(m.pnlPct)}</span>}</td>
                       <td>{m.rMultiple == null ? "–" : `${m.rMultiple >= 0 ? "+" : ""}${m.rMultiple.toFixed(2)}R`}</td>
-                      <td style={{ maxWidth: 220, fontSize: 12.5, color: "var(--text-muted)" }}>{t.notes}</td>
-                      <td><button className="icon-btn" style={{ padding: "4px 8px", fontSize: 12 }} onClick={() => deleteTrade(t.id)}>🗑</button></td>
+                      <td style={{ maxWidth: 220, fontSize: 12.5, color: "var(--text-muted)" }}>{tr.notes}</td>
+                      <td><button className="icon-btn" style={{ padding: "4px 8px", fontSize: 12 }} onClick={() => deleteTrade(tr.id)}>🗑</button></td>
                     </tr>
                   );
                 })}
@@ -307,7 +309,7 @@ export default function Trades({ user, access }) {
       </div>
 
       <div className="disclaimer">
-        Rein manuelles Trade-Tracking, keine Anbindung an eine Exchange. Positionsgröße ist der USD-Notionalwert, PnL wird daraus berechnet, nicht gespeichert. Keine Anlageberatung.
+        {t("trades.disclaimer")}
       </div>
     </div>
   );
