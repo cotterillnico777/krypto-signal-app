@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { isStandalone, isIos } from "../lib/deviceMode";
+import { useLanguage } from "../lib/i18n";
 
 export default function InstallPrompt() {
+  const { t } = useLanguage();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [dismissed, setDismissed] = useState(true);
   const [showIosHint, setShowIosHint] = useState(false);
@@ -42,12 +44,12 @@ export default function InstallPrompt() {
     <div className="toast-banner">
       <span className="msg">
         📲 {showIosHint && !deferredPrompt
-          ? 'Zum Startbildschirm hinzufügen: Teilen-Symbol → "Zum Home-Bildschirm"'
-          : "Als App installieren für schnelleren Zugriff"}
+          ? t("installPrompt.iosHint")
+          : t("installPrompt.genericHint")}
       </span>
       <span className="actions">
         {deferredPrompt && (
-          <button className="icon-btn primary" onClick={install}>Installieren</button>
+          <button className="icon-btn primary" onClick={install}>{t("installPrompt.install")}</button>
         )}
         <button className="dismiss" onClick={dismiss}>✕</button>
       </span>

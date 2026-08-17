@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import AppHeader from "../components/AppHeader";
 import { requireActiveAccess } from "../lib/auth/requireActiveAccess";
+import { useLanguage } from "../lib/i18n";
 
 export const getServerSideProps = requireActiveAccess;
 
@@ -11,6 +12,7 @@ function fmtUSD(n) {
 }
 
 export default function Alerts({ user, access }) {
+  const { t } = useLanguage();
   const [alerts, setAlerts] = useState([]);
   const [coins, setCoins] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -74,13 +76,13 @@ export default function Alerts({ user, access }) {
 
   return (
     <div className="container">
-      <AppHeader title="Preis-Alarme" subtitle="Einmalige Benachrichtigung, wenn ein Coin eine Schwelle erreicht" active="alerts" user={user} access={access} />
+      <AppHeader title={t("alerts.title")} subtitle={t("alerts.subtitle")} active="alerts" user={user} access={access} />
 
       <div className="card" style={{ marginBottom: "1.5rem" }}>
-        <p className="section-title">Neuer Alarm</p>
+        <p className="section-title">{t("alerts.newAlert")}</p>
         <form onSubmit={addAlert} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.85rem", alignItems: "end" }}>
           <label className="field">
-            Coin
+            {t("alerts.coin")}
             <select className="input" value={form.coinId} onChange={(e) => setForm({ ...form, coinId: e.target.value })}>
               {coins.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -90,33 +92,33 @@ export default function Alerts({ user, access }) {
             </select>
           </label>
           <label className="field">
-            Richtung
+            {t("alerts.direction")}
             <select className="input" value={form.direction} onChange={(e) => setForm({ ...form, direction: e.target.value })}>
-              <option value="above">über</option>
-              <option value="below">unter</option>
+              <option value="above">{t("alerts.above")}</option>
+              <option value="below">{t("alerts.below")}</option>
             </select>
           </label>
           <label className="field">
-            Zielpreis (USD)
+            {t("alerts.targetPrice")}
             <input className="input" type="number" step="any" min="0" required value={form.targetPrice} onChange={(e) => setForm({ ...form, targetPrice: e.target.value })} />
           </label>
           <button className="icon-btn primary" type="submit" disabled={saving}>
-            {saving ? "…" : "Alarm erstellen"}
+            {saving ? "…" : t("alerts.createAlert")}
           </button>
         </form>
         <p className="note" style={{ marginTop: 10 }}>
-          Wird 1x täglich geprüft (gegen das 24h-Hoch/Tief des jeweiligen Coins, damit ein kurzes Über-/Unterschreiten zwischen zwei Prüfungen nicht verpasst wird) -- keine Echtzeit-Benachrichtigung. Löst einmalig aus und wird danach automatisch entfernt.
+          {t("alerts.note")}
         </p>
       </div>
 
-      {error && <div className="error-box" style={{ marginBottom: "1rem" }}>Fehler: {error}</div>}
+      {error && <div className="error-box" style={{ marginBottom: "1rem" }}>{t("tools.shared.errorPrefix")}{error}</div>}
 
       <div className="card">
-        <p className="section-title">Aktive Alarme</p>
+        <p className="section-title">{t("alerts.activeAlerts")}</p>
         {loading ? (
-          <p className="note">Lade…</p>
+          <p className="note">{t("alerts.loading")}</p>
         ) : alerts.length === 0 ? (
-          <p className="note">Noch keine Alarme angelegt.</p>
+          <p className="note">{t("alerts.noAlerts")}</p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {alerts.map((a) => {
@@ -124,10 +126,10 @@ export default function Alerts({ user, access }) {
               return (
                 <div key={a.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", background: "var(--bg-subtle)", borderRadius: "var(--radius-sm)" }}>
                   <span>
-                    {coin?.symbol ?? a.coinId} {a.direction === "above" ? "▲ über" : "▼ unter"} ${fmtUSD(a.targetPrice)}
-                    {coin && <span className="note" style={{ marginLeft: 8 }}>(aktuell ${fmtUSD(coin.price)})</span>}
+                    {coin?.symbol ?? a.coinId} {a.direction === "above" ? t("alerts.aboveArrow") : t("alerts.belowArrow")} ${fmtUSD(a.targetPrice)}
+                    {coin && <span className="note" style={{ marginLeft: 8 }}>{t("alerts.currentPrice", { price: fmtUSD(coin.price) })}</span>}
                   </span>
-                  <button className="icon-btn" onClick={() => deleteAlert(a.id)} title="Alarm löschen" style={{ padding: "4px 10px" }}>
+                  <button className="icon-btn" onClick={() => deleteAlert(a.id)} title={t("alerts.deleteAlert")} style={{ padding: "4px 10px" }}>
                     🗑
                   </button>
                 </div>
@@ -138,7 +140,7 @@ export default function Alerts({ user, access }) {
       </div>
 
       <div className="disclaimer">
-        Preis-Alarme werden 1x täglich geprüft (Vercel Free-Tier-Limit für Cron-Jobs), nicht in Echtzeit. Keine Anlageberatung.
+        {t("alerts.disclaimer")}
       </div>
     </div>
   );

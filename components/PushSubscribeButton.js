@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { isStandalone, isIos } from "../lib/deviceMode";
+import { useLanguage } from "../lib/i18n";
 
 function urlBase64ToUint8Array(base64String) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -9,6 +10,7 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 export default function PushSubscribeButton() {
+  const { t } = useLanguage();
   const [supported, setSupported] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -39,10 +41,10 @@ export default function PushSubscribeButton() {
     setError(null);
     try {
       const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-      if (!vapidKey) throw new Error("Push ist noch nicht konfiguriert (VAPID Key fehlt).");
+      if (!vapidKey) throw new Error(t("pushButton.notConfigured"));
 
       const permission = await Notification.requestPermission();
-      if (permission !== "granted") throw new Error("Berechtigung wurde nicht erteilt.");
+      if (permission !== "granted") throw new Error(t("pushButton.permissionDenied"));
 
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.subscribe({
@@ -55,7 +57,7 @@ export default function PushSubscribeButton() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(sub),
       });
-      if (!res.ok) throw new Error((await res.json()).error || "Speichern fehlgeschlagen.");
+      if (!res.ok) throw new Error((await res.json()).error || t("pushButton.saveFailed"));
 
       setSubscribed(true);
     } catch (e) {
@@ -94,9 +96,9 @@ export default function PushSubscribeButton() {
       <button
         className="icon-btn"
         disabled
-        title='Auf iPhone/iPad funktionieren Push-Benachrichtigungen nur als installierte App: Teilen-Symbol → "Zum Home-Bildschirm hinzufügen", dann von dort öffnen.'
+        title={t("pushButton.iosTooltip")}
       >
-        🔔 Push (App-Installation nötig)
+        {t("pushButton.iosButton")}
       </button>
     );
   }
@@ -106,9 +108,9 @@ export default function PushSubscribeButton() {
       className={`icon-btn${subscribed ? "" : " primary"}`}
       onClick={subscribed ? unsubscribe : subscribe}
       disabled={busy}
-      title={error || (subscribed ? "Push-Benachrichtigungen deaktivieren" : "Bei Kaufsignalen benachrichtigen lassen")}
+      title={error || (subscribed ? t("pushButton.disableTooltip") : t("pushButton.enableTooltip"))}
     >
-      {busy ? "…" : subscribed ? "🔔 Push aktiv" : "🔔 Push aktivieren"}
+      {busy ? "…" : subscribed ? t("pushButton.active") : t("pushButton.enable")}
     </button>
   );
 }
