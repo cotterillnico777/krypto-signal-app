@@ -26,6 +26,7 @@ import OnboardingTour from "../components/OnboardingTour";
 import ReferralCard from "../components/ReferralCard";
 import AppHeader from "../components/AppHeader";
 import { requireActiveAccess } from "../lib/auth/requireActiveAccess";
+import { useLanguage, translateSignalLabel } from "../lib/i18n";
 
 export const getServerSideProps = requireActiveAccess;
 
@@ -66,12 +67,6 @@ function Sparkline({ prices }) {
   return <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h}><polyline points={points} fill="none" stroke={isUp?"#16a34a":"#dc2626"} strokeWidth="2"/></svg>;
 }
 
-const TIMEFRAMES = [
-  { key: "4H", label: "4 Stunden" },
-  { key: "1D", label: "Täglich" },
-  { key: "1W", label: "Wöchentlich" },
-];
-
 function signalAccent(cls) {
   if (cls === "badge-green") return "var(--green-text)";
   if (cls === "badge-red") return "var(--red-text)";
@@ -80,6 +75,12 @@ function signalAccent(cls) {
 }
 
 export default function Home({ user, access }) {
+  const { t, lang } = useLanguage();
+  const TIMEFRAMES = [
+    { key: "4H", label: t("dashboard.tf4h") },
+    { key: "1D", label: t("dashboard.tf1d") },
+    { key: "1W", label: t("dashboard.tf1w") },
+  ];
   const [crypto,setCrypto]=useState(null);
   const [macroRaw,setMacroRaw]=useState(null);
   const [fg,setFg]=useState(null);
@@ -149,7 +150,7 @@ export default function Home({ user, access }) {
       const data = await res.json();
       setAiAnalysis(prev => ({ ...prev, [coin.id]: data.analysis || data.error }));
     } catch(e) {
-      setAiAnalysis(prev => ({ ...prev, [coin.id]: "Fehler beim Laden der KI-Analyse." }));
+      setAiAnalysis(prev => ({ ...prev, [coin.id]: t("dashboard.errorAnalysis") }));
     } finally {
       setAiLoading(prev => ({ ...prev, [coin.id]: false }));
     }
@@ -160,25 +161,25 @@ export default function Home({ user, access }) {
 
   const macro=macroRaw?computeMacroRegime(macroRaw.m2,macroRaw.fedfunds,macroRaw.dxy,macroRaw.yield10y,macroRaw.vix,macroRaw.sp500,macroRaw.nasdaq):null;
   const activeCoin=crypto?.find((c)=>c.id===active);
-  const tfLabel=TIMEFRAMES.find(t=>t.key===tf)?.label||tf;
+  const tfLabel=TIMEFRAMES.find(tfItem=>tfItem.key===tf)?.label||tf;
 
   return (
     <div className="container">
       <AppHeader
-        title="Krypto Signal Dashboard"
-        subtitle="Krypto-Signale mit Makro-Kontext und KI-Analyse"
+        title={t("dashboard.title")}
+        subtitle={t("dashboard.subtitle")}
         active="dashboard"
         user={user}
         access={access}
       >
         <PushSubscribeButton />
-        <button className="icon-btn" onClick={()=>loadData(tf)} title="Aktualisieren">↻ Aktualisieren</button>
+        <button className="icon-btn" onClick={()=>loadData(tf)} title={t("dashboard.refresh")}>↻ {t("dashboard.refresh")}</button>
         <button
           className={`icon-btn${beginnerMode?" primary":""}`}
           onClick={toggleBeginnerMode}
-          title="Vereinfachte Ansicht: zeigt nur Preis, Einschätzung und die Warum-Erklärung, technische Details ausklappbar statt immer sichtbar"
+          title={t("dashboard.beginnerModeTooltip")}
         >
-          🎓 Einsteiger-Modus{beginnerMode?" an":""}
+          {t("dashboard.beginnerMode")}{beginnerMode?t("dashboard.beginnerModeOn"):""}
         </button>
       </AppHeader>
 
@@ -186,10 +187,10 @@ export default function Home({ user, access }) {
       <InstallPrompt />
       <ReferralCard />
 
-      {error&&<div className="error-box">Fehler: {error}<div style={{marginTop:8}}><button onClick={()=>loadData(tf)}>Erneut versuchen</button></div></div>}
+      {error&&<div className="error-box">{t("dashboard.errorPrefix")}{error}<div style={{marginTop:8}}><button onClick={()=>loadData(tf)}>{t("dashboard.retry")}</button></div></div>}
       {loading&&!error&&(
         <>
-          <div className="loading-state"><span className="spinner" />Lade aktuelle Daten…</div>
+          <div className="loading-state"><span className="spinner" />{t("dashboard.loadingData")}</div>
           <div className="skeleton-grid" style={{marginBottom:"1rem"}}>
             <div className="skeleton-card" /><div className="skeleton-card" /><div className="skeleton-card" />
           </div>
@@ -198,28 +199,28 @@ export default function Home({ user, access }) {
 
       {!loading&&!error&&macro&&(<>
         <div className="grid grid-3" style={{marginBottom:"1rem"}}>
-          <div className="card"><p className="card-label">M2-Geldmenge (YoY)</p><p className="card-value">{macro.m2Growth?.toFixed(1)??"n/a"}%</p></div>
-          <div className="card"><p className="card-label">Leitzins (aktuell)</p><p className="card-value">{macro.rateNow?.toFixed(2)??"n/a"}%</p></div>
+          <div className="card"><p className="card-label">{t("dashboard.m2Label")}</p><p className="card-value">{macro.m2Growth?.toFixed(1)??"n/a"}%</p></div>
+          <div className="card"><p className="card-label">{t("dashboard.rateLabel")}</p><p className="card-value">{macro.rateNow?.toFixed(2)??"n/a"}%</p></div>
           <div className="card" style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
-            <p className="card-label" style={{alignSelf:"flex-start"}}>Fear &amp; Greed Index</p>
-            {fg?<FearGreedGauge value={fg.value} label={fg.label}/>:<p>n/a</p>}
+            <p className="card-label" style={{alignSelf:"flex-start"}}>{t("dashboard.fgLabel")}</p>
+            {fg?<FearGreedGauge value={fg.value} label={translateSignalLabel(fg.label,lang)}/>:<p>n/a</p>}
           </div>
         </div>
 
         <div className="grid grid-3" style={{marginBottom:"1rem"}}>
-          <div className="card"><p className="card-label">Dollar-Index (3M-Trend)</p><p className="card-value">{macro.dxyTrend!=null?`${macro.dxyTrend>=0?"+":""}${macro.dxyTrend.toFixed(1)}%`:"n/a"}</p></div>
-          <div className="card"><p className="card-label">10J-Rendite (3M-Trend)</p><p className="card-value">{macro.yieldTrend!=null?`${macro.yieldTrend>=0?"+":""}${macro.yieldTrend.toFixed(2)}pp`:"n/a"}</p></div>
-          <div className="card"><p className="card-label">VIX (aktuell)</p><p className="card-value">{macro.vixLevel?.toFixed(1)??"n/a"}</p></div>
+          <div className="card"><p className="card-label">{t("dashboard.dxyLabel")}</p><p className="card-value">{macro.dxyTrend!=null?`${macro.dxyTrend>=0?"+":""}${macro.dxyTrend.toFixed(1)}%`:"n/a"}</p></div>
+          <div className="card"><p className="card-label">{t("dashboard.yieldLabel")}</p><p className="card-value">{macro.yieldTrend!=null?`${macro.yieldTrend>=0?"+":""}${macro.yieldTrend.toFixed(2)}pp`:"n/a"}</p></div>
+          <div className="card"><p className="card-label">{t("dashboard.vixLabel")}</p><p className="card-value">{macro.vixLevel?.toFixed(1)??"n/a"}</p></div>
         </div>
 
         <div className="grid grid-3" style={{marginBottom:"1rem"}}>
-          <div className="card" style={{opacity:0.65}} title="Fließt nicht ins Makro-Regime ein -- Multi-Coin Walk-Forward (16.08.2026, 365/730/850 Tage) bestätigte erneut keinen robusten Vorteil, im 850-Tage-Fenster sogar schädlich (-5,9% ggü. Baseline). Details: /validation"><p className="card-label">Nasdaq (90T-Trend)</p><p className="card-value">{macro.nasdaqTrend!=null?`${macro.nasdaqTrend>=0?"+":""}${macro.nasdaqTrend.toFixed(1)}%`:"n/a"}</p></div>
-          <div className="card" style={{opacity:0.65}} title="Fließt nicht ins Makro-Regime ein -- Multi-Coin Walk-Forward (16.08.2026, 365/730/850 Tage) zeigte im wichtigsten 850-Tage-Fenster einen klar schädlichen Effekt (-8,8% ggü. Baseline). Details: /validation"><p className="card-label">S&amp;P 500 (3M-Trend)</p><p className="card-value">{macro.sp500Trend!=null?`${macro.sp500Trend>=0?"+":""}${macro.sp500Trend.toFixed(1)}%`:"n/a"}</p></div>
+          <div className="card" style={{opacity:0.65}} title={t("dashboard.nasdaqTooltip")}><p className="card-label">{t("dashboard.nasdaqLabel")}</p><p className="card-value">{macro.nasdaqTrend!=null?`${macro.nasdaqTrend>=0?"+":""}${macro.nasdaqTrend.toFixed(1)}%`:"n/a"}</p></div>
+          <div className="card" style={{opacity:0.65}} title={t("dashboard.sp500Tooltip")}><p className="card-label">{t("dashboard.sp500Label")}</p><p className="card-value">{macro.sp500Trend!=null?`${macro.sp500Trend>=0?"+":""}${macro.sp500Trend.toFixed(1)}%`:"n/a"}</p></div>
         </div>
 
         <div className={`card macro-banner ${macro.cls}`}>
-          <span className="label">Makro-Regime: {macro.label}</span>
-          <span className="hint">M2 · Zins-Trend · Dollar · 10J-Rendite · VIX</span>
+          <span className="label">{t("dashboard.macroRegimeLabel")}{translateSignalLabel(macro.label,lang)}</span>
+          <span className="hint">{t("dashboard.macroRegimeHint")}</span>
         </div>
 
         <div className="ticker-strip">
@@ -237,8 +238,8 @@ export default function Home({ user, access }) {
 
         <div className="toolbar">
           <div className="timeframe-group" style={{marginLeft:0}}>
-            {TIMEFRAMES.map((t)=>(
-              <button key={t.key} className={tf===t.key?"active":""} onClick={()=>switchTf(t.key)} style={{padding:"5px 10px",fontSize:12}}>{t.key}</button>
+            {TIMEFRAMES.map((tfItem)=>(
+              <button key={tfItem.key} className={tf===tfItem.key?"active":""} onClick={()=>switchTf(tfItem.key)} style={{padding:"5px 10px",fontSize:12}}>{tfItem.key}</button>
             ))}
           </div>
         </div>
@@ -258,7 +259,8 @@ export default function Home({ user, access }) {
             const candleSig=c.highs&&c.lows?strongCandleSignal(c.highs,c.lows,c.prices):{label:"n/a",dir:0};
             const marubozuSig=c.opens&&c.highs&&c.lows?marubozuSignal(c.opens,c.highs,c.lows,c.prices):{label:"n/a",dir:0};
             const combined=combineSignal(smaSig,rsi,macro,fg?.value??null,macdSig,volSig,{whaleSig});
-            const why=explainSignal({label:combined.label,smaSig,rsi,macdSig,volSig,macro,fg:fg?.value??null,whaleSig});
+            const why=explainSignal({label:combined.label,smaSig,rsi,macdSig,volSig,macro,fg:fg?.value??null,whaleSig,lang});
+            const tip=PARAM_TIPS[c.id];
             const isUp = c.change24h>=0;
             return(
               <div className={`card coin-card${active===c.id?" selected":""}`} key={c.id} onClick={()=>setActive(c.id)} style={{borderLeftColor:signalAccent(combined.cls)}}>
@@ -267,42 +269,42 @@ export default function Home({ user, access }) {
                   <span className={`change-pill ${isUp?"up":"down"}`}>{isUp?"+":""}{c.change24h.toFixed(1)}%</span>
                 </div>
                 <p className="card-value">${fmtUSD(c.price)}</p>
-                <span className={`badge ${combined.cls}`} style={{marginBottom:4,fontSize:13}}>{combined.label}</span>
+                <span className={`badge ${combined.cls}`} style={{marginBottom:4,fontSize:13}}>{translateSignalLabel(combined.label,lang)}</span>
                 <p className="note" style={{marginTop:0,marginBottom:8,fontStyle:"italic"}}>{why}</p>
-                {PARAM_TIPS[c.id]&&(
+                {tip&&(
                   <p
                     className="note"
                     style={{background:"var(--bg-subtle)",borderRadius:6,padding:"6px 8px",marginTop:0,marginBottom:8}}
-                    title={`Aus dem Backtest ermittelt (Multi-Fold Walk-Forward, 730+850 Tage): ${PARAM_TIPS[c.id].evidence} Keine Anlageberatung -- historische Auswertung, keine Garantie für die Zukunft.`}
+                    title={t("dashboard.tipTooltip",{evidence:tip.evidence[lang]})}
                   >
-                    <span className="note-label">💡 Tipp</span>
-                    <span className={`badge ${PARAM_TIPS[c.id].isDefault?"badge-gray":"badge-green"}`} style={{fontSize:11,padding:"1px 6px"}}>{PARAM_TIPS[c.id].label}</span>
+                    <span className="note-label">{t("dashboard.tipBadge")}</span>
+                    <span className={`badge ${tip.isDefault?"badge-gray":"badge-green"}`} style={{fontSize:11,padding:"1px 6px"}}>{tip.label[lang]}</span>
                   </p>
                 )}
                 {(() => {
                   const primaryRows = (
                     <>
-                      <p className="note"><span className="note-label" title="Relative Strength Index: misst, ob eine Coin gerade überkauft ist (über 70, evtl. bald fallend) oder überverkauft (unter 30, evtl. bald steigend).">RSI ⓘ</span><span className={`badge ${rsiInfo.cls}`} style={{fontSize:11,padding:"1px 6px"}}>{rsiInfo.text}</span></p>
-                      <p className="note"><span className="note-label" title="Moving Average Convergence/Divergence: vergleicht zwei gleitende Durchschnitte, um einen Wechsel im Kurs-Momentum früh zu erkennen.">MACD ⓘ</span>{macdSig.label}</p>
-                      <p className="note"><span className="note-label" title="Gleitender Durchschnitt (Simple Moving Average): zeigt, ob der aktuelle Kurstrend über oder unter seinem längerfristigen Durchschnitt liegt.">SMA ⓘ</span>{smaSig.label}</p>
-                      <p className="note"><span className="note-label" title="Heutiges Handelsvolumen im Vergleich zum Schnitt der letzten Tage -- ungewöhnlich hohes Volumen bestätigt eine Kursbewegung stärker.">Volumen ⓘ</span>{volSig.label}</p>
-                      {whaleSig&&<p className="note"><span className="note-label" title="Positionierung der 'Top-Trader' (größte Positionen) auf Binance Futures im Vergleich zu ihrem eigenen 7-Tage-Schnitt -- ein Näherungswert für 'was machen die Großen gerade'.">🐋 Whale ⓘ</span>{whaleSig.label}</p>}
+                      <p className="note"><span className="note-label" title={t("dashboard.rsiTooltip")}>{t("dashboard.rsiLabel")}</span><span className={`badge ${rsiInfo.cls}`} style={{fontSize:11,padding:"1px 6px"}}>{translateSignalLabel(rsiInfo.text,lang)}</span></p>
+                      <p className="note"><span className="note-label" title={t("dashboard.macdTooltip")}>{t("dashboard.macdLabel")}</span>{translateSignalLabel(macdSig.label,lang)}</p>
+                      <p className="note"><span className="note-label" title={t("dashboard.smaTooltip")}>{t("dashboard.smaLabel")}</span>{translateSignalLabel(smaSig.label,lang)}</p>
+                      <p className="note"><span className="note-label" title={t("dashboard.volumeTooltip")}>{t("dashboard.volumeLabel")}</span>{translateSignalLabel(volSig.label,lang)}</p>
+                      {whaleSig&&<p className="note"><span className="note-label" title={t("dashboard.whaleTooltip")}>{t("dashboard.whaleLabel")}</span>{translateSignalLabel(whaleSig.label,lang)}</p>}
                       {liquidity?.[c.id]&&(()=>{const liq=liquidityLabel(liquidity[c.id].spreadPct);return(
-                        <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein -- reiner Marktkontext, keine Historie verfügbar (nur Live-Momentaufnahme)">
-                          <span className="note-label">💧 Liquidität</span>
-                          <span className={`badge ${liq.cls}`} style={{fontSize:11,padding:"1px 6px"}}>{liq.text}</span>
-                          <span style={{marginLeft:6}}>${(liquidity[c.id].depthUsd/1000).toFixed(0)}k Tiefe (±1%)</span>
+                        <p className="note" style={{opacity:0.65}} title={t("dashboard.liquidityTooltip")}>
+                          <span className="note-label">{t("dashboard.liquidityLabel")}</span>
+                          <span className={`badge ${liq.cls}`} style={{fontSize:11,padding:"1px 6px"}}>{translateSignalLabel(liq.text,lang)}</span>
+                          <span style={{marginLeft:6}}>{t("dashboard.liquidityDepth",{value:(liquidity[c.id].depthUsd/1000).toFixed(0)})}</span>
                         </p>
                       );})()}
                     </>
                   );
                   const secondaryRows = (
                     <>
-                      <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">Bollinger</span>{bollSig.label}</p>
-                      <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">StochRSI</span>{stochRsiSig.label}</p>
-                      <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (siehe Walk-Forward-Vergleich)"><span className="note-label">OBV</span>{obvSig.label}</p>
-                      <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (noch nicht validiert)"><span className="note-label">Starke Kerze</span>{candleSig.label}</p>
-                      <p className="note" style={{opacity:0.65}} title="Fließt nicht ins Kaufen/Verkaufen-Signal ein (noch nicht validiert)"><span className="note-label">Marubozu</span>{marubozuSig.label}</p>
+                      <p className="note" style={{opacity:0.65}} title={t("dashboard.secondaryTooltipValidated")}><span className="note-label">{t("dashboard.bollingerLabel")}</span>{translateSignalLabel(bollSig.label,lang)}</p>
+                      <p className="note" style={{opacity:0.65}} title={t("dashboard.secondaryTooltipValidated")}><span className="note-label">{t("dashboard.stochRsiLabel")}</span>{translateSignalLabel(stochRsiSig.label,lang)}</p>
+                      <p className="note" style={{opacity:0.65}} title={t("dashboard.secondaryTooltipValidated")}><span className="note-label">{t("dashboard.obvLabel")}</span>{translateSignalLabel(obvSig.label,lang)}</p>
+                      <p className="note" style={{opacity:0.65}} title={t("dashboard.secondaryTooltipUnvalidated")}><span className="note-label">{t("dashboard.strongCandleLabel")}</span>{translateSignalLabel(candleSig.label,lang)}</p>
+                      <p className="note" style={{opacity:0.65}} title={t("dashboard.secondaryTooltipUnvalidated")}><span className="note-label">{t("dashboard.marubozuLabel")}</span>{translateSignalLabel(marubozuSig.label,lang)}</p>
                     </>
                   );
                   return (
@@ -312,7 +314,7 @@ export default function Home({ user, access }) {
                         className="details-toggle"
                         onClick={(e)=>{e.stopPropagation();setDetailsOpen(prev=>({...prev,[c.id]:!prev[c.id]}));}}
                       >
-                        {detailsOpen[c.id]?"Weniger Details ▴":(beginnerMode?"Details anzeigen ▾":"Weitere Indikatoren ▾")}
+                        {detailsOpen[c.id]?t("dashboard.lessDetails"):(beginnerMode?t("dashboard.showDetails"):t("dashboard.moreIndicators"))}
                       </button>
                       {detailsOpen[c.id]&&(<>{beginnerMode && primaryRows}{secondaryRows}</>)}
                     </>
@@ -323,7 +325,7 @@ export default function Home({ user, access }) {
                   onClick={(e)=>{e.stopPropagation();getAiAnalysis(c,rsi,macdSig,smaSig,volSig,macro,c.price,c.change24h,whaleSig,bollSig,stochRsiSig,obvSig,candleSig,marubozuSig);}}
                   disabled={aiLoading[c.id]}
                 >
-                  {aiLoading[c.id]?"KI analysiert…":"🤖 KI-Analyse"}
+                  {aiLoading[c.id]?t("dashboard.aiAnalyzing"):t("dashboard.aiButton")}
                 </button>
                 {aiAnalysis[c.id]&&(
                   <div className="ai-result">{aiAnalysis[c.id]}</div>
@@ -335,13 +337,13 @@ export default function Home({ user, access }) {
 
         {activeCoin&&(
           <div className="card">
-            <p className="section-title">{activeCoin.name} — Kursverlauf ({tfLabel})</p>
+            <p className="section-title">{t("dashboard.priceHistory",{name:activeCoin.name,tf:tfLabel})}</p>
             <Sparkline prices={activeCoin.prices}/>
           </div>
         )}
       </>)}
 
-      <div className="disclaimer">Keine Anlageberatung. Kryptowährungen sind hoch volatil – Investitionen können zum Totalverlust führen.</div>
+      <div className="disclaimer">{t("dashboard.disclaimer")}</div>
     </div>
   );
 }

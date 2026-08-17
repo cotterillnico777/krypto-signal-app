@@ -3,50 +3,55 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import TrialBanner from "./TrialBanner";
 import LogoutButton from "./LogoutButton";
+import LanguageToggle from "./LanguageToggle";
+import { useLanguage } from "../lib/i18n";
 
 // Reiter sind nach Themen gruppiert statt einer einzigen langen Liste --
 // bei mittlerweile 10 Zielen wurde die flache Reiter-Leiste unübersichtlich.
 // Dashboard bleibt eigenständig (Startpunkt), die übrigen 9 sind in 3
 // thematische Gruppen aufgeteilt, die beim Klick eine Dropdown-Liste ihrer
-// Unterpunkte aufklappen (bauen sich untereinander/vertikal auf).
+// Unterpunkte aufklappen (bauen sich untereinander/vertikal auf). labelKey
+// referenziert lib/i18n.js ("nav.*") statt eines fest verdrahteten deutschen
+// Strings, damit der Sprachumschalter greift.
 const NAV_GROUPS = [
-  { key: "dashboard", href: "/", icon: "🏠", label: "Dashboard" },
+  { key: "dashboard", href: "/", icon: "🏠", labelKey: "nav.dashboard" },
   {
     key: "analyse",
     icon: "📊",
-    label: "Analyse",
+    labelKey: "nav.analyse",
     items: [
-      { key: "backtest", href: "/backtest", icon: "📊", label: "Backtest" },
-      { key: "optimize", href: "/optimize", icon: "🔬", label: "Optimierung" },
-      { key: "walkforward", href: "/walkforward", icon: "📈", label: "Walk-Forward" },
-      { key: "portfolio", href: "/portfolio", icon: "💼", label: "Portfolio" },
-      { key: "chart-analysis", href: "/chart-analysis", icon: "🔍", label: "Chart-Analyse" },
+      { key: "backtest", href: "/backtest", icon: "📊", labelKey: "nav.backtest" },
+      { key: "optimize", href: "/optimize", icon: "🔬", labelKey: "nav.optimize" },
+      { key: "walkforward", href: "/walkforward", icon: "📈", labelKey: "nav.walkforward" },
+      { key: "portfolio", href: "/portfolio", icon: "💼", labelKey: "nav.portfolio" },
+      { key: "chart-analysis", href: "/chart-analysis", icon: "🔍", labelKey: "nav.chartAnalysis" },
     ],
   },
   {
     key: "journal",
     icon: "📓",
-    label: "Journal",
+    labelKey: "nav.journal",
     items: [
-      { key: "holdings", href: "/holdings", icon: "💰", label: "Mein Portfolio" },
-      { key: "trades", href: "/trades", icon: "📓", label: "Trades" },
-      { key: "risk-reward", href: "/risk-reward", icon: "⚖️", label: "R:R-Rechner" },
-      { key: "alerts", href: "/alerts", icon: "🔔", label: "Preis-Alarme" },
+      { key: "holdings", href: "/holdings", icon: "💰", labelKey: "nav.holdings" },
+      { key: "trades", href: "/trades", icon: "📓", labelKey: "nav.trades" },
+      { key: "risk-reward", href: "/risk-reward", icon: "⚖️", labelKey: "nav.riskReward" },
+      { key: "alerts", href: "/alerts", icon: "🔔", labelKey: "nav.alerts" },
     ],
   },
   {
     key: "info",
     icon: "ℹ️",
-    label: "Info",
+    labelKey: "nav.info",
     items: [
-      { key: "track-record", href: "/track-record", icon: "📈", label: "Track-Record" },
-      { key: "validation", href: "/validation", icon: "✅", label: "Validierung" },
-      { key: "glossar", href: "/glossar", icon: "📖", label: "Glossar" },
+      { key: "track-record", href: "/track-record", icon: "📈", labelKey: "nav.trackRecord" },
+      { key: "validation", href: "/validation", icon: "✅", labelKey: "nav.validation" },
+      { key: "glossar", href: "/glossar", icon: "📖", labelKey: "nav.glossar" },
     ],
   },
 ];
 
 function NavDropdown({ group, active }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState(null);
   const btnRef = useRef(null);
@@ -80,7 +85,7 @@ function NavDropdown({ group, active }) {
   return (
     <div className="nav-group">
       <button type="button" ref={btnRef} className={`nav-tab${isActiveGroup ? " active" : ""}`} onClick={toggleOpen}>
-        {group.icon} {group.label} <span className="nav-caret">{open ? "▴" : "▾"}</span>
+        {group.icon} {t(group.labelKey)} <span className="nav-caret">{open ? "▴" : "▾"}</span>
       </button>
       {open && coords && typeof document !== "undefined" && createPortal(
         <div className="nav-dropdown" ref={dropdownRef} style={{ top: coords.top, left: coords.left }}>
@@ -91,7 +96,7 @@ function NavDropdown({ group, active }) {
               className={`nav-dropdown-item${item.key === active ? " active" : ""}`}
               onClick={() => setOpen(false)}
             >
-              {item.icon} {item.label}
+              {item.icon} {t(item.labelKey)}
             </Link>
           ))}
         </div>,
@@ -108,11 +113,12 @@ function NavDropdown({ group, active }) {
 // Slot für seitenspezifische Extra-Aktionen (z.B. PushSubscribeButton +
 // Aktualisieren-Button nur im Dashboard).
 export default function AppHeader({ title, subtitle, active, user, access, children }) {
+  const { t } = useLanguage();
   return (
     <>
       {active !== "dashboard" && (
         <Link href="/" className="icon-btn" style={{ marginBottom: "0.75rem", display: "inline-flex" }}>
-          ← Zurück
+          {t("nav.back")}
         </Link>
       )}
       <header className="app-header">
@@ -125,12 +131,13 @@ export default function AppHeader({ title, subtitle, active, user, access, child
         </div>
         <div className="header-actions">
           {children}
+          <LanguageToggle />
           {user && (
             <span className="user-email" title={user.email}>
               {user.email}
             </span>
           )}
-          <LogoutButton />
+          <LogoutButton label={t("common.logout")} />
         </div>
       </header>
       <nav className="nav-tabs">
@@ -139,7 +146,7 @@ export default function AppHeader({ title, subtitle, active, user, access, child
             <NavDropdown key={g.key} group={g} active={active} />
           ) : (
             <Link key={g.key} href={g.href} className={`nav-tab${g.key === active ? " active" : ""}`}>
-              {g.icon} {g.label}
+              {g.icon} {t(g.labelKey)}
             </Link>
           )
         )}

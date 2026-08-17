@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useLanguage } from "../lib/i18n";
 
 // Kurzer Willkommens-Walkthrough für Neulinge -- Pull-Faktor #1 aus der
 // Retail-/Neuling-Roadmap. Zeigt in wenigen Sätzen, was die App tut, wie die
@@ -7,32 +8,17 @@ import Link from "next/link";
 // sind, und verweist auf /validation als Vertrauensanker -- bevor der Nutzer
 // mit einer dichten Dashboard-Ansicht allein gelassen wird. Einmal pro
 // Browser via localStorage-Flag, gleiches Muster wie InstallPrompt.js'
-// "installBannerDismissed".
-const STEPS = [
-  {
-    title: "Willkommen beim Krypto Signal Dashboard 👋",
-    body: "Diese App kombiniert technische Indikatoren, das gesamtwirtschaftliche Umfeld und Markt-Sentiment zu einer Kaufen/Verkaufen/Halten-Einschätzung pro Coin -- kurz erklärt statt als Blackbox.",
-  },
-  {
-    title: "Jedes Signal wird erklärt",
-    body: "Unter jedem Badge steht ein Satz, WARUM die App gerade diese Einschätzung zeigt. Fachbegriffe wie RSI oder MACD haben zusätzlich ein ⓘ-Symbol mit einer kurzen Erklärung -- einfach mit der Maus draufhalten.",
-  },
-  {
-    title: "Nichts wird einfach behauptet",
-    body: (
-      <>
-        Jeder Faktor, der in die Signale einfließt, wurde vorher empirisch getestet -- auch die Fälle, in denen etwas NICHT geholfen hat, werden gezeigt. Alles nachvollziehbar auf der{" "}
-        <Link href="/validation">Validierungs-Historie</Link>-Seite.
-      </>
-    ),
-  },
-  {
-    title: "Ein Werkzeug, kein Anlageberater",
-    body: "Die App ersetzt keine eigene Recherche und ist keine Anlageberatung. Der Backtest lässt dich Strategien selbst prüfen, bevor du dich auf ein Signal verlässt.",
-  },
+// "installBannerDismissed". Texte kommen aus lib/i18n.js ("onboarding.*")
+// statt fest verdrahtetem Deutsch, damit der Sprachumschalter greift.
+const STEP_KEYS = [
+  { titleKey: "onboarding.step1Title", bodyKey: "onboarding.step1Body" },
+  { titleKey: "onboarding.step2Title", bodyKey: "onboarding.step2Body" },
+  { titleKey: "onboarding.step3Title", link: true },
+  { titleKey: "onboarding.step4Title", bodyKey: "onboarding.step4Body" },
 ];
 
 export default function OnboardingTour() {
+  const { t } = useLanguage();
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
 
@@ -49,21 +35,31 @@ export default function OnboardingTour() {
 
   if (!visible) return null;
 
-  const isLast = step === STEPS.length - 1;
-  const current = STEPS[step];
+  const isLast = step === STEP_KEYS.length - 1;
+  const current = STEP_KEYS[step];
 
   return (
     <div className="onboarding-overlay" role="dialog" aria-modal="true">
       <div className="onboarding-card card">
-        <p className="onboarding-progress">{step + 1} / {STEPS.length}</p>
-        <h2 className="onboarding-title">{current.title}</h2>
-        <p className="onboarding-body">{current.body}</p>
+        <p className="onboarding-progress">{t("onboarding.progress", { current: step + 1, total: STEP_KEYS.length })}</p>
+        <h2 className="onboarding-title">{t(current.titleKey)}</h2>
+        <p className="onboarding-body">
+          {current.link ? (
+            <>
+              {t("onboarding.step3BodyPre")}
+              <Link href="/validation">{t("onboarding.step3BodyLink")}</Link>
+              {t("onboarding.step3BodyPost")}
+            </>
+          ) : (
+            t(current.bodyKey)
+          )}
+        </p>
         <div className="onboarding-actions">
-          <button className="icon-btn" onClick={finish}>Überspringen</button>
+          <button className="icon-btn" onClick={finish}>{t("onboarding.skip")}</button>
           <div style={{ display: "flex", gap: 8 }}>
-            {step > 0 && <button className="icon-btn" onClick={() => setStep((s) => s - 1)}>Zurück</button>}
-            {!isLast && <button className="icon-btn primary" onClick={() => setStep((s) => s + 1)}>Weiter</button>}
-            {isLast && <button className="icon-btn primary" onClick={finish}>Los geht's</button>}
+            {step > 0 && <button className="icon-btn" onClick={() => setStep((s) => s - 1)}>{t("onboarding.back")}</button>}
+            {!isLast && <button className="icon-btn primary" onClick={() => setStep((s) => s + 1)}>{t("onboarding.next")}</button>}
+            {isLast && <button className="icon-btn primary" onClick={finish}>{t("onboarding.finish")}</button>}
           </div>
         </div>
       </div>

@@ -156,10 +156,10 @@ export default function Backtest({ user, access }) {
           </p>
           <p style={{ margin: "0 0 6px" }}>
             <span className={`badge ${PARAM_TIPS[coinId].isDefault ? "badge-gray" : "badge-green"}`} style={{ fontSize: 12.5 }}>
-              {PARAM_TIPS[coinId].label}
+              {PARAM_TIPS[coinId].label.de}
             </span>
           </p>
-          <p className="note" style={{ marginTop: 0, marginBottom: 8 }}>{PARAM_TIPS[coinId].evidence}</p>
+          <p className="note" style={{ marginTop: 0, marginBottom: 8 }}>{PARAM_TIPS[coinId].evidence.de}</p>
           <button
             className="icon-btn"
             onClick={() => {

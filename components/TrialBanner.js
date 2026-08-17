@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { useLanguage } from "../lib/i18n";
 
 // access kommt aus getProfileAccess() (per getServerSideProps als Prop
 // durchgereicht) -- zeigt nichts an, solange ein echtes Abo aktiv ist.
 export default function TrialBanner({ access }) {
+  const { t } = useLanguage();
   if (!access || !access.trialing) return null;
 
   const expiringSoon = access.trialDaysLeft <= 3;
@@ -10,10 +12,10 @@ export default function TrialBanner({ access }) {
   return (
     <div className={`trial-banner${expiringSoon ? " expiring" : ""}`}>
       {access.trialDaysLeft > 0
-        ? `${access.trialDaysLeft} ${access.trialDaysLeft === 1 ? "Tag" : "Tage"} in der Testphase übrig`
-        : "Testphase läuft heute ab"}
+        ? t(access.trialDaysLeft === 1 ? "trialBanner.remainingOne" : "trialBanner.remainingMany", { days: access.trialDaysLeft })
+        : t("trialBanner.today")}
       {" · "}
-      <Link href="/upgrade">Details</Link>
+      <Link href="/upgrade">{t("trialBanner.details")}</Link>
     </div>
   );
 }
