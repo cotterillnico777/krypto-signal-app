@@ -3,37 +3,9 @@ import { COINS } from "../lib/marketData";
 import { PARAM_TIPS } from "../lib/paramTips";
 import AppHeader from "../components/AppHeader";
 import { requireActiveAccess } from "../lib/auth/requireActiveAccess";
+import { useLanguage } from "../lib/i18n";
 
 export const getServerSideProps = requireActiveAccess;
-
-const PERIODS = [
-  { key: 90, label: "90 Tage" },
-  { key: 365, label: "1 Jahr" },
-  { key: 730, label: "2 Jahre" },
-  { key: 1460, label: "4 Jahre" },
-  { key: 2920, label: "8 Jahre" },
-];
-
-const STOP_LOSSES = [
-  { key: null, label: "Kein Stop" },
-  { key: 10, label: "-10%" },
-  { key: 15, label: "-15%" },
-  { key: 20, label: "-20%" },
-];
-
-const LEVERAGES = [
-  { key: 1, label: "1x (kein Hebel)" },
-  { key: 2, label: "2x" },
-  { key: 3, label: "3x" },
-  { key: 5, label: "5x" },
-  { key: 10, label: "10x" },
-];
-
-const COSTS = [
-  { key: 0, label: "0% (unrealistisch)" },
-  { key: 0.15, label: "0,15% (Standard)" },
-  { key: 0.3, label: "0,3% (konservativ)" },
-];
 
 // ADX-Trendfilter: schwächt Kaufen/Verkaufen-Crossover-Signale zu Halten ab,
 // wenn der Trend laut ADX zu schwach ist (siehe combineSignal/adxThreshold).
@@ -42,12 +14,7 @@ const COSTS = [
 // half BTC/ETH/XRP teils deutlich, schadete Solana/Bittensor teils deutlich
 // (bis -73% im 850-Tage-Fenster) -- kein globaler Default, aber je nach Coin/
 // Setup einen Blick wert, deshalb als Regler verfügbar statt nur per API.
-const TRENDFILTERS = [
-  { key: null, label: "Kein Filter" },
-  { key: 15, label: "ADX 15" },
-  { key: 20, label: "ADX 20" },
-  { key: 25, label: "ADX 25" },
-];
+const TRENDFILTER_KEYS = [null, 15, 20, 25];
 
 function fmtUSD(n) {
   return n.toLocaleString("de-DE", { maximumFractionDigits: n < 10 ? 3 : 0 });
@@ -57,7 +24,7 @@ function fmtPct(n) {
   return `${n >= 0 ? "+" : ""}${n.toFixed(1)}%`;
 }
 
-function EquityChart({ equityCurve }) {
+function EquityChart({ equityCurve, t }) {
   if (!equityCurve || equityCurve.length < 2) return null;
   const w = 700,
     h = 220,
@@ -78,7 +45,7 @@ function EquityChart({ equityCurve }) {
   return (
     <div>
       <div className="chart-legend">
-        <span className="legend-item"><span className="dot dot-accent" />Strategie</span>
+        <span className="legend-item"><span className="dot dot-accent" />{t("tools.backtest.title")}</span>
         <span className="legend-item"><span className="dot dot-muted" />Buy &amp; Hold</span>
       </div>
       <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h}>
@@ -90,6 +57,34 @@ function EquityChart({ equityCurve }) {
 }
 
 export default function Backtest({ user, access }) {
+  const { t, lang } = useLanguage();
+  const PERIODS = [
+    { key: 90, label: t("tools.shared.p90") },
+    { key: 365, label: t("tools.shared.p365") },
+    { key: 730, label: t("tools.shared.p730") },
+    { key: 1460, label: t("tools.shared.p1460") },
+    { key: 2920, label: t("tools.shared.p2920") },
+  ];
+  const STOP_LOSSES = [
+    { key: null, label: t("tools.shared.stopLossNone") },
+    { key: 10, label: "-10%" },
+    { key: 15, label: "-15%" },
+    { key: 20, label: "-20%" },
+  ];
+  const LEVERAGES = [
+    { key: 1, label: t("tools.shared.leverageNone") },
+    { key: 2, label: "2x" },
+    { key: 3, label: "3x" },
+    { key: 5, label: "5x" },
+    { key: 10, label: "10x" },
+  ];
+  const COSTS = [
+    { key: 0, label: t("tools.shared.cost0") },
+    { key: 0.15, label: t("tools.shared.cost15") },
+    { key: 0.3, label: t("tools.shared.cost30") },
+  ];
+  const TRENDFILTERS = TRENDFILTER_KEYS.map((key) => ({ key, label: key === null ? t("tools.shared.trendfilterNone") : `ADX ${key}` }));
+
   const [coinId, setCoinId] = useState("bitcoin");
   const [days, setDays] = useState(365);
   const [stopLoss, setStopLoss] = useState(null);
@@ -125,8 +120,8 @@ export default function Backtest({ user, access }) {
   return (
     <div className="container">
       <AppHeader
-        title="Backtest"
-        subtitle="Wie hätte die Signal-Strategie historisch performt?"
+        title={t("tools.backtest.title")}
+        subtitle={t("tools.backtest.subtitle")}
         active="backtest"
         user={user}
         access={access}
@@ -152,14 +147,14 @@ export default function Backtest({ user, access }) {
       {PARAM_TIPS[coinId] && (
         <div className="card" style={{ marginBottom: "1rem", background: "var(--bg-subtle)" }}>
           <p className="note-label" style={{ fontSize: 12.5, marginBottom: 6 }}>
-            💡 Tipp für {COINS.find((c) => c.id === coinId)?.symbol} (aus Multi-Fold Walk-Forward, 730+850 Tage)
+            {t("tools.shared.tipForCoin", { symbol: COINS.find((c) => c.id === coinId)?.symbol })}
           </p>
           <p style={{ margin: "0 0 6px" }}>
             <span className={`badge ${PARAM_TIPS[coinId].isDefault ? "badge-gray" : "badge-green"}`} style={{ fontSize: 12.5 }}>
-              {PARAM_TIPS[coinId].label.de}
+              {PARAM_TIPS[coinId].label[lang]}
             </span>
           </p>
-          <p className="note" style={{ marginTop: 0, marginBottom: 8 }}>{PARAM_TIPS[coinId].evidence.de}</p>
+          <p className="note" style={{ marginTop: 0, marginBottom: 8 }}>{PARAM_TIPS[coinId].evidence[lang]}</p>
           <button
             className="icon-btn"
             onClick={() => {
@@ -168,13 +163,13 @@ export default function Backtest({ user, access }) {
               setLeverage(PARAM_TIPS[coinId].leverage);
             }}
           >
-            Tipp übernehmen
+            {t("tools.shared.applyTip")}
           </button>
         </div>
       )}
 
       <div className="toolbar">
-        <span className="note-label" style={{ fontSize: 12.5 }}>Stop-Loss</span>
+        <span className="note-label" style={{ fontSize: 12.5 }}>{t("tools.shared.stopLossLabel")}</span>
         <div className="tabs">
           {STOP_LOSSES.map((s) => (
             <button key={s.label} className={stopLoss === s.key ? "active" : ""} onClick={() => setStopLoss(s.key)} style={{ padding: "5px 10px", fontSize: 12 }}>
@@ -185,26 +180,26 @@ export default function Backtest({ user, access }) {
       </div>
 
       <div className="toolbar">
-        <span className="note-label" style={{ fontSize: 12.5 }} title="Schwächt Kaufen/Verkaufen-Crossover-Signale zu Halten ab, wenn der Trend laut ADX zu schwach ist. Gemischte Ergebnisse je Coin (siehe Tooltip auf den Reglern) -- kein Standardverhalten, gezielt zum Ausprobieren.">Trendfilter (ADX)</span>
+        <span className="note-label" style={{ fontSize: 12.5 }} title={t("tools.backtest.trendfilterTooltip")}>{t("tools.shared.trendfilterLabel")}</span>
         <div className="tabs">
-          {TRENDFILTERS.map((t) => (
-            <button key={t.label} className={adxThreshold === t.key ? "active" : ""} onClick={() => setAdxThreshold(t.key)} style={{ padding: "5px 10px", fontSize: 12 }}>
-              {t.label}
+          {TRENDFILTERS.map((tf) => (
+            <button key={tf.label} className={adxThreshold === tf.key ? "active" : ""} onClick={() => setAdxThreshold(tf.key)} style={{ padding: "5px 10px", fontSize: 12 }}>
+              {tf.label}
             </button>
           ))}
         </div>
       </div>
 
       <div className="toolbar">
-        <span className="note-label" style={{ fontSize: 12.5 }}>Richtung</span>
+        <span className="note-label" style={{ fontSize: 12.5 }}>{t("tools.shared.direction")}</span>
         <div className="tabs">
-          <button className={!allowShort ? "active" : ""} onClick={() => setAllowShort(false)} style={{ padding: "5px 10px", fontSize: 12 }}>Nur Long</button>
-          <button className={allowShort ? "active" : ""} onClick={() => setAllowShort(true)} style={{ padding: "5px 10px", fontSize: 12 }}>Long + Short</button>
+          <button className={!allowShort ? "active" : ""} onClick={() => setAllowShort(false)} style={{ padding: "5px 10px", fontSize: 12 }}>{t("tools.shared.longOnly")}</button>
+          <button className={allowShort ? "active" : ""} onClick={() => setAllowShort(true)} style={{ padding: "5px 10px", fontSize: 12 }}>{t("tools.shared.longShort")}</button>
         </div>
       </div>
 
       <div className="toolbar">
-        <span className="note-label" style={{ fontSize: 12.5 }}>Hebel</span>
+        <span className="note-label" style={{ fontSize: 12.5 }}>{t("tools.shared.leverage")}</span>
         <div className="tabs">
           {LEVERAGES.map((l) => (
             <button key={l.key} className={leverage === l.key ? "active" : ""} onClick={() => setLeverage(l.key)} style={{ padding: "5px 10px", fontSize: 12 }}>
@@ -215,7 +210,7 @@ export default function Backtest({ user, access }) {
       </div>
 
       <div className="toolbar">
-        <span className="note-label" style={{ fontSize: 12.5 }}>Handelskosten</span>
+        <span className="note-label" style={{ fontSize: 12.5 }}>{t("tools.shared.costsLabel")}</span>
         <div className="tabs">
           {COSTS.map((c) => (
             <button key={c.key} className={costPct === c.key ? "active" : ""} onClick={() => setCostPct(c.key)} style={{ padding: "5px 10px", fontSize: 12 }}>
@@ -227,94 +222,94 @@ export default function Backtest({ user, access }) {
 
       {leverage > 1 && (
         <div className="toast-banner" style={{ marginBottom: "1rem" }}>
-          <span className="msg">⚠️ Bei Hebel {leverage}x wird die Position liquidiert (Totalverlust der Margin), wenn sich der Kurs um {(100 / leverage).toFixed(1)}% gegen dich bewegt. Funding-Kosten (echte historische Binance-Perpetual-Rates) fließen mit ein.</span>
+          <span className="msg">{t("tools.backtest.liquidationWarning", { leverage, pct: (100 / leverage).toFixed(1) })}</span>
         </div>
       )}
 
       <button className="icon-btn primary" onClick={runBacktest} disabled={loading} style={{ marginBottom: "1.5rem" }}>
-        {loading ? "Simuliere…" : "▶ Backtest starten"}
+        {loading ? t("tools.shared.simulating") : t("tools.backtest.start")}
       </button>
 
-      {error && <div className="error-box">Fehler: {error}</div>}
+      {error && <div className="error-box">{t("tools.shared.errorPrefix")}{error}</div>}
 
       {result && (
         <>
           <div className="grid grid-3" style={{ marginBottom: "1rem" }}>
             <div className="card">
-              <p className="card-label">Strategie-Rendite</p>
+              <p className="card-label">{t("tools.shared.strategyReturn")}</p>
               <p className="card-value" style={{ color: result.totalReturnPct >= 0 ? "var(--green-text)" : "var(--red-text)" }}>
                 {fmtPct(result.totalReturnPct)}
               </p>
-              <p className="note">Endkapital: ${fmtUSD(result.finalEquity)} (Start: ${fmtUSD(result.startingCash)})</p>
+              <p className="note">{t("tools.shared.finalCapital", { final: fmtUSD(result.finalEquity), start: fmtUSD(result.startingCash) })}</p>
             </div>
             <div className="card">
-              <p className="card-label">Buy &amp; Hold Rendite</p>
+              <p className="card-label">{t("tools.shared.buyHoldReturn")}</p>
               <p className="card-value" style={{ color: result.buyHoldReturnPct >= 0 ? "var(--green-text)" : "var(--red-text)" }}>
                 {fmtPct(result.buyHoldReturnPct)}
               </p>
-              <p className="note">Einfach kaufen &amp; halten, zum Vergleich</p>
+              <p className="note">{t("tools.shared.buyHoldNote")}</p>
             </div>
             <div className="card">
-              <p className="card-label">Max Drawdown</p>
+              <p className="card-label">{t("tools.shared.maxDrawdown")}</p>
               <p className="card-value">{result.maxDrawdown.toFixed(1)}%</p>
-              <p className="note">Größter Rückgang vom Höchststand</p>
+              <p className="note">{t("tools.shared.maxDrawdownNote")}</p>
             </div>
           </div>
 
           <div className="grid grid-3" style={{ marginBottom: "1.5rem" }}>
             <div className="card">
-              <p className="card-label">Anzahl Trades</p>
+              <p className="card-label">{t("tools.shared.tradeCount")}</p>
               <p className="card-value">{result.tradeCount}</p>
-              {result.liquidationCount > 0 && <p className="note">davon {result.liquidationCount} liquidiert</p>}
+              {result.liquidationCount > 0 && <p className="note">{t("tools.shared.liquidatedNote", { count: result.liquidationCount })}</p>}
             </div>
             <div className="card">
-              <p className="card-label">Trefferquote</p>
+              <p className="card-label">{t("tools.shared.winRate")}</p>
               <p className="card-value">{result.winRate === null ? "n/a" : `${result.winRate.toFixed(0)}%`}</p>
             </div>
             <div className="card">
-              <p className="card-label">Sharpe / Sortino</p>
+              <p className="card-label">{t("tools.shared.sharpeSortino")}</p>
               <p className="card-value" style={{ fontSize: 18 }}>{result.sharpe === null ? "n/a" : result.sharpe.toFixed(2)} / {result.sortino === null ? "n/a" : result.sortino.toFixed(2)}</p>
-              <p className="note">Rendite pro Risikoeinheit (annualisiert)</p>
+              <p className="note">{t("tools.shared.sharpeSortinoNote")}</p>
             </div>
           </div>
 
           <div className="card" style={{ marginBottom: "1.5rem" }}>
-            <p className="card-label">Coin / Zeitraum / Stop / Trendfilter / Hebel / Kosten</p>
-            <p className="card-value" style={{ fontSize: 16 }}>{result.coin.symbol} · {result.days}T · {result.stopLossPct ? `-${result.stopLossPct}%` : "kein Stop"} · {result.adxThreshold ? `ADX ${result.adxThreshold}` : "kein Filter"} · {result.leverage}x{result.allowShort ? " · Short erlaubt" : ""} · {result.costPct}% Kosten/Seite</p>
+            <p className="card-label">{t("tools.backtest.metaLabel")}</p>
+            <p className="card-value" style={{ fontSize: 16 }}>{result.coin.symbol} · {result.days}T · {result.stopLossPct ? `-${result.stopLossPct}%` : t("tools.shared.noStopShort")} · {result.adxThreshold ? `ADX ${result.adxThreshold}` : t("tools.shared.noFilterShort")} · {result.leverage}x{result.allowShort ? t("tools.shared.shortAllowed") : ""} · {result.costPct}{t("tools.shared.costsPerSide")}</p>
           </div>
 
           <div className="card" style={{ marginBottom: "1.5rem" }}>
-            <p className="section-title">Equity-Kurve</p>
-            <EquityChart equityCurve={result.equityCurve} />
+            <p className="section-title">{t("tools.shared.equityCurve")}</p>
+            <EquityChart equityCurve={result.equityCurve} t={t} />
           </div>
 
           <div className="card">
-            <p className="section-title">Trades ({result.tradeCount})</p>
+            <p className="section-title">{t("tools.shared.tradesHeading", { count: result.tradeCount })}</p>
             {result.tradeCount === 0 ? (
-              <p className="note">Keine Kaufsignale im gewählten Zeitraum ausgelöst.</p>
+              <p className="note">{t("tools.shared.noTrades")}</p>
             ) : (
               <div className="table-wrap">
                 <table className="table">
                   <thead>
                     <tr>
-                      <th>Richtung</th>
-                      <th>Einstieg</th>
-                      <th>Einstiegs-Preis</th>
-                      <th>Ausstieg</th>
-                      <th>Ausstiegs-Preis</th>
-                      <th>Rendite</th>
+                      <th>{t("tools.shared.thDirection")}</th>
+                      <th>{t("tools.shared.thEntry")}</th>
+                      <th>{t("tools.shared.thEntryPrice")}</th>
+                      <th>{t("tools.shared.thExit")}</th>
+                      <th>{t("tools.shared.thExitPrice")}</th>
+                      <th>{t("tools.shared.thReturn")}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {result.trades.map((t, i) => (
+                    {result.trades.map((tr, i) => (
                       <tr key={i}>
-                        <td><span className={`badge ${t.direction === "short" ? "badge-red" : "badge-green"}`}>{t.direction === "short" ? "Short" : "Long"}</span></td>
-                        <td>{t.entryDate}</td>
-                        <td>${fmtUSD(t.entryPrice)}</td>
-                        <td>{t.exitDate}{t.openAtEnd ? " (offen)" : ""}{t.stoppedOut ? " (Stop)" : ""}{t.liquidated ? " (liquidiert)" : ""}{t.tookProfit ? " (Target)" : ""}</td>
-                        <td>${fmtUSD(t.exitPrice)}</td>
+                        <td><span className={`badge ${tr.direction === "short" ? "badge-red" : "badge-green"}`}>{tr.direction === "short" ? t("tools.shared.short") : t("tools.shared.long")}</span></td>
+                        <td>{tr.entryDate}</td>
+                        <td>${fmtUSD(tr.entryPrice)}</td>
+                        <td>{tr.exitDate}{tr.openAtEnd ? t("tools.shared.openSuffix") : ""}{tr.stoppedOut ? t("tools.shared.stopSuffix") : ""}{tr.liquidated ? t("tools.shared.liquidatedSuffix") : ""}{tr.tookProfit ? t("tools.shared.targetSuffix") : ""}</td>
+                        <td>${fmtUSD(tr.exitPrice)}</td>
                         <td>
-                          <span className={`badge ${t.returnPct >= 0 ? "badge-green" : "badge-red"}`}>{fmtPct(t.returnPct)}</span>
+                          <span className={`badge ${tr.returnPct >= 0 ? "badge-green" : "badge-red"}`}>{fmtPct(tr.returnPct)}</span>
                         </td>
                       </tr>
                     ))}
@@ -326,11 +321,7 @@ export default function Backtest({ user, access }) {
         </>
       )}
 
-      <div className="disclaimer">
-        Historische Simulation der Dashboard-Signale (SMA + RSI + MACD + Volumen + Makro + Fear &amp; Greed), Start-Kapital $10.000. Handelskosten (Fee + Slippage) werden standardmäßig mit 0,15% je Seite einkalkuliert, auch beim Buy&amp;Hold-Vergleich – "0%" zeigt die unrealistische Kosten-freie Variante zum Vergleich.
-        Bei Hebel &gt;1x oder Short-Positionen werden echte historische Funding-Rates von Binance-Perpetuals einbezogen und eine Liquidierungsschwelle simuliert – trotzdem eine vereinfachte Annahme, echter Hebelhandel ist riskanter als hier abgebildet.
-        Vergangene Wertentwicklung ist keine Garantie für zukünftige Ergebnisse. Keine Anlageberatung.
-      </div>
+      <div className="disclaimer">{t("tools.backtest.disclaimer")}</div>
     </div>
   );
 }
