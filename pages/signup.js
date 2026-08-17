@@ -2,9 +2,12 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "../lib/supabase/client";
+import { useLanguage } from "../lib/i18n";
+import LanguageToggle from "../components/LanguageToggle";
 
 export default function Signup() {
   const router = useRouter();
+  const { t } = useLanguage();
   const refCode = typeof router.query.ref === "string" ? router.query.ref : null;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,7 +37,7 @@ export default function Signup() {
       if (error) throw error;
       setDone(true);
     } catch (err) {
-      setError(err.message || "Registrierung fehlgeschlagen.");
+      setError(err.message || t("signup.errorGeneric"));
     } finally {
       setBusy(false);
     }
@@ -43,55 +46,64 @@ export default function Signup() {
   return (
     <div className="container auth-page">
       <div className="auth-card card">
-        <div className="brand" style={{ marginBottom: "1.5rem" }}>
-          <div className="brand-mark">₿</div>
-          <div>
-            <h1>Account erstellen</h1>
-            <p className="subtitle">14 Tage kostenlos testen</p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: "1.5rem" }}>
+          <div className="brand" style={{ marginBottom: 0 }}>
+            <div className="brand-mark">₿</div>
+            <div>
+              <h1>{t("signup.title")}</h1>
+              <p className="subtitle">{t("common.trialFree")}</p>
+            </div>
           </div>
+          <LanguageToggle />
         </div>
 
         {refCode && (
           <div className="note" style={{ background: "var(--bg-subtle)", borderRadius: 6, padding: "8px 10px", marginBottom: "1rem" }}>
-            🎁 Du wurdest eingeladen -- du bekommst 7 Tage extra Trial (21 statt 14 Tage)!
+            {t("signup.refBonus")}
           </div>
         )}
 
         <ul style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.7, margin: "0 0 1.5rem", paddingLeft: 18 }}>
-          <li>Jedes Signal kommt mit einer Klartext-Begründung statt einer Blackbox-Empfehlung</li>
-          <li>Keine Vorkenntnisse nötig -- Fachbegriffe wie RSI oder MACD werden direkt erklärt, <Link href="/glossar">ausführliches Glossar</Link> inklusive</li>
-          <li>Volle Transparenz: <Link href="/validation">wie wir unsere Signale entwickeln →</Link></li>
+          <li>{t("signup.bullet1")}</li>
+          <li>
+            {t("signup.bullet2Pre")}
+            <Link href="/glossar">{t("signup.bullet2Link")}</Link>
+            {t("signup.bullet2Post")}
+          </li>
+          <li>
+            {t("signup.bullet3Pre")}
+            <Link href="/validation">{t("common.validationLink")}</Link>
+          </li>
         </ul>
 
         {done ? (
-          <p>
-            Fast geschafft — wir haben eine Bestätigungs-E-Mail an <strong>{email}</strong> geschickt. Bitte den Link darin anklicken, um deine Testphase zu starten.
-          </p>
+          <p>{t("signup.done", { email })}</p>
         ) : (
           <form className="auth-form" onSubmit={handleSignup}>
             <label>
-              E-Mail
+              {t("login.emailLabel")}
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
             </label>
             <label>
-              Passwort
+              {t("login.passwordLabel")}
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} autoComplete="new-password" />
             </label>
             {error && <div className="error-box">{error}</div>}
             <button className="icon-btn primary" type="submit" disabled={busy}>
-              {busy ? "…" : "Kostenlos registrieren"}
+              {busy ? "…" : t("signup.submit")}
             </button>
           </form>
         )}
 
         <p style={{ marginTop: "1.5rem", fontSize: 13 }}>
-          Schon registriert? <Link href="/login">Anmelden</Link>
+          {t("signup.alreadyRegistered")}
+          <Link href="/login">{t("common.login")}</Link>
         </p>
         <p style={{ marginTop: "0.5rem", fontSize: 13 }}>
-          <Link href="/track-record">Live-Track-Record: echte Backtest-Zahlen →</Link>
+          <Link href="/track-record">{t("common.trackRecordLink")}</Link>
         </p>
         <p style={{ marginTop: "0.5rem", fontSize: 13 }}>
-          <Link href="/validation">Wie wir unsere Signale entwickeln →</Link>
+          <Link href="/validation">{t("common.validationLink")}</Link>
         </p>
       </div>
     </div>

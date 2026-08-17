@@ -2,9 +2,12 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "../lib/supabase/client";
+import { useLanguage } from "../lib/i18n";
+import LanguageToggle from "../components/LanguageToggle";
 
 export default function Login() {
   const router = useRouter();
+  const { t } = useLanguage();
   const redirect = typeof router.query.redirect === "string" ? router.query.redirect : "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +30,7 @@ export default function Login() {
       if (error) throw error;
       router.push(redirect);
     } catch (err) {
-      setError(err.message || "Anmeldung fehlgeschlagen.");
+      setError(err.message || t("login.errorGeneric"));
     } finally {
       setBusy(false);
     }
@@ -35,7 +38,7 @@ export default function Login() {
 
   async function handleMagicLink() {
     if (!email) {
-      setError("Bitte E-Mail-Adresse eingeben.");
+      setError(t("login.errorEmailRequired"));
       return;
     }
     setBusy(true);
@@ -46,7 +49,7 @@ export default function Login() {
       if (error) throw error;
       setMagicSent(true);
     } catch (err) {
-      setError(err.message || "Magic Link konnte nicht gesendet werden.");
+      setError(err.message || t("login.errorMagicFailed"));
     } finally {
       setBusy(false);
     }
@@ -60,7 +63,7 @@ export default function Login() {
       const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: callbackUrl() } });
       if (error) throw error;
     } catch (err) {
-      setError(err.message || "Google-Anmeldung fehlgeschlagen.");
+      setError(err.message || t("login.errorGoogleFailed"));
       setBusy(false);
     }
   }
@@ -68,54 +71,57 @@ export default function Login() {
   return (
     <div className="container auth-page">
       <div className="auth-card card">
-        <div className="brand" style={{ marginBottom: "1.5rem" }}>
-          <div className="brand-mark">₿</div>
-          <div>
-            <h1>Anmelden</h1>
-            <p className="subtitle">Krypto Signal Dashboard</p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: "1.5rem" }}>
+          <div className="brand" style={{ marginBottom: 0 }}>
+            <div className="brand-mark">₿</div>
+            <div>
+              <h1>{t("login.title")}</h1>
+              <p className="subtitle">{t("common.appName")}</p>
+            </div>
           </div>
+          <LanguageToggle />
         </div>
 
         {magicSent ? (
-          <p>
-            Wir haben dir einen Anmelde-Link an <strong>{email}</strong> geschickt. Bitte E-Mail-Postfach prüfen.
-          </p>
+          <p>{t("login.magicSent", { email })}</p>
         ) : (
           <>
             <form className="auth-form" onSubmit={handlePasswordLogin}>
               <label>
-                E-Mail
+                {t("login.emailLabel")}
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
               </label>
               <label>
-                Passwort
+                {t("login.passwordLabel")}
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
               </label>
               {error && <div className="error-box">{error}</div>}
               <button className="icon-btn primary" type="submit" disabled={busy}>
-                {busy ? "…" : "Anmelden"}
+                {busy ? "…" : t("login.submit")}
               </button>
             </form>
             <button className="icon-btn" onClick={handleMagicLink} disabled={busy} style={{ marginTop: "0.75rem", width: "100%" }}>
-              ✉️ Magic Link stattdessen senden
+              {t("login.magicLinkBtn")}
             </button>
             <button className="icon-btn" onClick={handleGoogle} disabled={busy} style={{ marginTop: "0.5rem", width: "100%" }}>
-              Mit Google anmelden
+              {t("login.googleBtn")}
             </button>
           </>
         )}
 
         <p style={{ marginTop: "1.5rem", fontSize: 13 }}>
-          Noch keinen Account? <Link href="/signup">Jetzt registrieren</Link> (14 Tage kostenlos testen, keine Kreditkarte nötig)
+          {t("login.noAccount")}
+          <Link href="/signup">{t("common.signupCta")}</Link>
+          {t("login.noAccountSuffix")}
         </p>
         <p style={{ marginTop: "0.5rem", fontSize: 13 }}>
-          <Link href="/track-record">Live-Track-Record: echte Backtest-Zahlen →</Link>
+          <Link href="/track-record">{t("common.trackRecordLink")}</Link>
         </p>
         <p style={{ marginTop: "0.5rem", fontSize: 13 }}>
-          <Link href="/validation">Wie wir unsere Signale entwickeln →</Link>
+          <Link href="/validation">{t("common.validationLink")}</Link>
         </p>
         <p style={{ marginTop: "0.5rem", fontSize: 13 }}>
-          <Link href="/glossar">Glossar: RSI, MACD & Co. erklärt →</Link>
+          <Link href="/glossar">{t("common.glossaryLink")}</Link>
         </p>
       </div>
     </div>

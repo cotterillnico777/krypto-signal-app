@@ -200,6 +200,12 @@ Route `/glossar` – zweite öffentliche Seite (gleiches Muster wie `/validation
 
 ---
 
+## Sprachumschalter Deutsch/Englisch (öffentliche Seiten)
+
+Die 6 öffentlichen Seiten (`/login`, `/signup`, `/track-record`, `/validation`, `/glossar`, `/upgrade`) haben oben rechts einen DE/EN-Umschalter. Beim ersten Besuch wird die Sprache aus der Browser-Einstellung (`navigator.language`) erkannt, danach wird die manuelle Wahl in `localStorage` gemerkt. Umgesetzt über einen leichtgewichtigen eigenen React-Context statt einer i18n-Bibliothek (`lib/i18n.js`: `LanguageProvider` + `useLanguage()`-Hook mit `t(key, vars)`, in `pages/_app.js` global eingebunden), da aktuell nur diese 6 Seiten übersetzt sind – die gegateten Dashboard-Seiten bleiben vorerst Deutsch. Übersetzungstexte liegen als `{de, en}`-Paare direkt in `lib/i18n.js` (UI-Strings) bzw. in `lib/glossary.js`/`lib/validationHistory.js` (Inhaltsdaten dieser beiden Seiten). Toggle-Komponente: `components/LanguageToggle.js`.
+
+---
+
 ## Push-Benachrichtigungen einrichten
 
 Die App schickt eine Push-Benachrichtigung, sobald ein Coin **neu** auf "Kaufen" wechselt. Dafür braucht es zwei Dinge: VAPID-Keys (bereits erledigt) und einen Cloud-Speicher für die Abo-Daten.
