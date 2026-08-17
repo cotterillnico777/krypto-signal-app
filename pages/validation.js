@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { VALIDATION_HISTORY } from "../lib/validationHistory";
+import { useLanguage } from "../lib/i18n";
+import LanguageToggle from "../components/LanguageToggle";
 
 // Bewusst KEIN getServerSideProps = requireActiveAccess -- diese Seite ist
 // die einzige inhaltliche öffentliche Seite der App (neben login.js/signup.js/
@@ -9,38 +11,40 @@ import { VALIDATION_HISTORY } from "../lib/validationHistory";
 // Button, da Besucher hier meist nicht eingeloggt sind).
 
 const OUTCOME = {
-  adopted: { cls: "badge-green", label: "Übernommen" },
-  confirmed: { cls: "badge-green", label: "Bleibt aktiv" },
-  rejected: { cls: "badge-gray", label: "Kein Effekt gefunden" },
-  harmful: { cls: "badge-red", label: "Schadet mehr als es hilft" },
-  optional: { cls: "badge-amber", label: "Gemischt — optional verfügbar" },
+  adopted: { cls: "badge-green", label: { de: "Übernommen", en: "Adopted" } },
+  confirmed: { cls: "badge-green", label: { de: "Bleibt aktiv", en: "Stays active" } },
+  rejected: { cls: "badge-gray", label: { de: "Kein Effekt gefunden", en: "No effect found" } },
+  harmful: { cls: "badge-red", label: { de: "Schadet mehr als es hilft", en: "Hurts more than it helps" } },
+  optional: { cls: "badge-amber", label: { de: "Gemischt — optional verfügbar", en: "Mixed — available as opt-in" } },
 };
 
-function fmtDate(iso) {
-  const [y, m, d] = iso.split("-");
-  return `${d}.${m}.${y}`;
+function fmtDate(iso, lang) {
+  const d = new Date(`${iso}T00:00:00`);
+  return d.toLocaleDateString(lang === "de" ? "de-DE" : "en-GB");
 }
 
 export default function Validation() {
+  const { t, lang } = useLanguage();
+
   return (
     <div className="container">
-      <div className="brand" style={{ marginBottom: "0.75rem" }}>
-        <div className="brand-mark">₿</div>
-        <div>
-          <h1>Wie wir unsere Signale entwickeln</h1>
-          <p className="subtitle">Jeder neue Faktor wird empirisch getestet, bevor er live einfließt — auch wenn das Ergebnis "hilft nicht" lautet.</p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: "0.75rem" }}>
+        <div className="brand" style={{ marginBottom: 0 }}>
+          <div className="brand-mark">₿</div>
+          <div>
+            <h1>{t("validation.h1")}</h1>
+            <p className="subtitle">{t("validation.subtitle")}</p>
+          </div>
         </div>
+        <LanguageToggle />
       </div>
 
       <div className="card" style={{ marginBottom: "1.5rem" }}>
-        <p>
-          Bevor ein neuer Faktor (ein Indikator, eine Makro-Kennzahl, eine Gewichtung) die Kaufen/Verkaufen-Entscheidung im Dashboard beeinflusst, testen wir ihn per <strong>Multi-Coin Walk-Forward-Validierung</strong>: die Strategie wird über mehrere unabhängige Zeitfenster (in der Regel 365, 730 und 850 Tage, über alle fünf gehandelten Coins) auf Daten getestet, die sie beim Training nie gesehen hat. Nur wenn sich ein robuster Vorteil über mehrere Fenster hinweg zeigt, wird ein Faktor standardmäßig aktiviert.
-        </p>
-        <p className="note" style={{ marginTop: 10 }}>
-          Die Liste unten zeigt <strong>alle</strong> bisher getesteten Faktoren — auch die, die nicht geholfen oder sogar geschadet haben. Kein Cherry-Picking.
-        </p>
+        <p>{t("validation.intro")}</p>
+        <p className="note" style={{ marginTop: 10 }}>{t("validation.introNotePre")}</p>
         <p className="note" style={{ marginTop: 6 }}>
-          Fachbegriffe unbekannt? <Link href="/glossar">Glossar mit allen Begriffen →</Link>
+          {t("validation.introGlossaryPre")}
+          <Link href="/glossar">{t("validation.introGlossaryLink")}</Link>
         </p>
       </div>
 
@@ -49,23 +53,24 @@ export default function Validation() {
         return (
           <div className="card" key={entry.id} style={{ marginBottom: "1rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8, marginBottom: 6 }}>
-              <p className="section-title" style={{ margin: 0, fontSize: 15 }}>{entry.factor}</p>
-              <span className={`badge ${outcome.cls}`}>{outcome.label}</span>
+              <p className="section-title" style={{ margin: 0, fontSize: 15 }}>{entry.factor[lang]}</p>
+              <span className={`badge ${outcome.cls}`}>{outcome.label[lang]}</span>
             </div>
-            <p className="note" style={{ marginBottom: 8 }}>{fmtDate(entry.date)}</p>
-            <p style={{ fontSize: 13.5, color: "var(--text-muted)", marginBottom: 6 }}><strong style={{ color: "var(--text)" }}>Hypothese:</strong> {entry.hypothesis}</p>
-            <p style={{ fontSize: 13.5, color: "var(--text-muted)", marginBottom: 6 }}><strong style={{ color: "var(--text)" }}>Methode:</strong> {entry.method}</p>
-            <p style={{ fontSize: 13.5, color: "var(--text-muted)" }}><strong style={{ color: "var(--text)" }}>Ergebnis:</strong> {entry.result}</p>
+            <p className="note" style={{ marginBottom: 8 }}>{fmtDate(entry.date, lang)}</p>
+            <p style={{ fontSize: 13.5, color: "var(--text-muted)", marginBottom: 6 }}><strong style={{ color: "var(--text)" }}>{t("validation.hypothesisLabel")}</strong> {entry.hypothesis[lang]}</p>
+            <p style={{ fontSize: 13.5, color: "var(--text-muted)", marginBottom: 6 }}><strong style={{ color: "var(--text)" }}>{t("validation.methodLabel")}</strong> {entry.method[lang]}</p>
+            <p style={{ fontSize: 13.5, color: "var(--text-muted)" }}><strong style={{ color: "var(--text)" }}>{t("validation.resultLabel")}</strong> {entry.result[lang]}</p>
           </div>
         );
       })}
 
       <div className="card" style={{ textAlign: "center", padding: "1.75rem" }}>
-        <p className="section-title" style={{ fontSize: 16 }}>Selbst ausprobieren?</p>
-        <p className="note" style={{ justifyContent: "center", marginBottom: 14 }}>14 Tage kostenlos testen, keine Kreditkarte nötig.</p>
-        <Link href="/signup" className="icon-btn primary">Jetzt registrieren</Link>
+        <p className="section-title" style={{ fontSize: 16 }}>{t("validation.tryYourself")}</p>
+        <p className="note" style={{ justifyContent: "center", marginBottom: 14 }}>{t("common.trialFreeNoCard")}</p>
+        <Link href="/signup" className="icon-btn primary">{t("common.signupCta")}</Link>
         <p style={{ marginTop: 12, fontSize: 13 }}>
-          Schon einen Account? <Link href="/login">Anmelden</Link>
+          {t("common.alreadyAccount")}
+          <Link href="/login">{t("common.login")}</Link>
         </p>
       </div>
     </div>

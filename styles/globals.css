@@ -256,6 +256,30 @@ h1 {
 .icon-btn:hover { background: var(--bg-subtle); }
 .icon-btn:active { transform: translateY(1px); }
 
+.lang-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.lang-toggle button {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 5px 11px;
+  cursor: pointer;
+}
+
+.lang-toggle button.active {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
 .icon-btn.primary {
   background: var(--accent);
   border-color: var(--accent);

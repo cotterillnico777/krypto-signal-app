@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import "../styles/globals.css";
 import { applyAppModeAttribute } from "../lib/deviceMode";
+import { LanguageProvider } from "../lib/i18n";
 
 export default function App({ Component, pageProps }) {
   useEffect(() => {
@@ -19,5 +20,9 @@ export default function App({ Component, pageProps }) {
     return () => mq.removeEventListener?.("change", applyAppModeAttribute);
   }, []);
 
-  return <Component {...pageProps} />;
+  return (
+    <LanguageProvider>
+      <Component {...pageProps} />
+    </LanguageProvider>
+  );
 }

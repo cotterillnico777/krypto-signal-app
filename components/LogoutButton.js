@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import { getSupabaseBrowserClient } from "../lib/supabase/client";
 
-export default function LogoutButton() {
+export default function LogoutButton({ label = "Abmelden" }) {
   const router = useRouter();
 
   async function handleLogout() {
@@ -12,7 +12,7 @@ export default function LogoutButton() {
 
   return (
     <button className="icon-btn" onClick={handleLogout}>
-      Abmelden
+      {label}
     </button>
   );
 }
