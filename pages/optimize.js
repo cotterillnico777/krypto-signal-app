@@ -2,21 +2,9 @@ import { useState } from "react";
 import { COINS } from "../lib/marketData";
 import AppHeader from "../components/AppHeader";
 import { requireActiveAccess } from "../lib/auth/requireActiveAccess";
+import { useLanguage } from "../lib/i18n";
 
 export const getServerSideProps = requireActiveAccess;
-
-const PERIODS = [
-  { key: 365, label: "1 Jahr" },
-  { key: 730, label: "2 Jahre" },
-  { key: 1460, label: "4 Jahre" },
-  { key: 2920, label: "8 Jahre" },
-];
-
-const COSTS = [
-  { key: 0, label: "0% (unrealistisch)" },
-  { key: 0.15, label: "0,15% (Standard)" },
-  { key: 0.3, label: "0,3% (konservativ)" },
-];
 
 function fmtPct(n) {
   if (n == null) return "n/a";
@@ -27,8 +15,8 @@ function fmtRatio(n) {
   return n == null ? "n/a" : n.toFixed(2);
 }
 
-function paramsLabel(p) {
-  return `SMA ${p.smaFast}/${p.smaSlow} · RSI ${p.rsiBuyThreshold}/${p.rsiSellThreshold} · ADX ${p.adxThreshold ?? "aus"}`;
+function paramsLabel(p, t) {
+  return t("tools.shared.paramsLabel", { smaFast: p.smaFast, smaSlow: p.smaSlow, rsiBuy: p.rsiBuyThreshold, rsiSell: p.rsiSellThreshold, adx: p.adxThreshold ?? t("tools.shared.adxOff") });
 }
 
 function perCoinLabel(perCoin) {
@@ -36,6 +24,19 @@ function perCoinLabel(perCoin) {
 }
 
 export default function Optimize({ user, access }) {
+  const { t } = useLanguage();
+  const PERIODS = [
+    { key: 365, label: t("tools.shared.p365") },
+    { key: 730, label: t("tools.shared.p730") },
+    { key: 1460, label: t("tools.shared.p1460") },
+    { key: 2920, label: t("tools.shared.p2920") },
+  ];
+  const COSTS = [
+    { key: 0, label: t("tools.shared.cost0") },
+    { key: 0.15, label: t("tools.shared.cost15") },
+    { key: 0.3, label: t("tools.shared.cost30") },
+  ];
+
   const [mode, setMode] = useState("single");
   const [coinId, setCoinId] = useState("bitcoin");
   const [days, setDays] = useState(730);
@@ -64,18 +65,18 @@ export default function Optimize({ user, access }) {
   return (
     <div className="container">
       <AppHeader
-        title="Parameter-Optimierung"
-        subtitle="SMA/RSI/ADX-Raster mit Out-of-Sample-Check gegen Overfitting"
+        title={t("tools.optimize.title")}
+        subtitle={t("tools.optimize.subtitle")}
         active="optimize"
         user={user}
         access={access}
       />
 
       <div className="toolbar">
-        <span className="note-label" style={{ fontSize: 12.5 }}>Modus</span>
+        <span className="note-label" style={{ fontSize: 12.5 }}>{t("tools.shared.mode")}</span>
         <div className="tabs">
-          <button className={mode === "single" ? "active" : ""} onClick={() => setMode("single")} style={{ padding: "5px 10px", fontSize: 12 }}>1 Coin</button>
-          <button className={mode === "multi" ? "active" : ""} onClick={() => setMode("multi")} style={{ padding: "5px 10px", fontSize: 12 }}>Alle {COINS.length} Coins</button>
+          <button className={mode === "single" ? "active" : ""} onClick={() => setMode("single")} style={{ padding: "5px 10px", fontSize: 12 }}>{t("tools.shared.oneCoin")}</button>
+          <button className={mode === "multi" ? "active" : ""} onClick={() => setMode("multi")} style={{ padding: "5px 10px", fontSize: 12 }}>{t("tools.shared.allCoins", { count: COINS.length })}</button>
         </div>
       </div>
 
@@ -99,7 +100,7 @@ export default function Optimize({ user, access }) {
       </div>
 
       <div className="toolbar">
-        <span className="note-label" style={{ fontSize: 12.5 }}>Handelskosten</span>
+        <span className="note-label" style={{ fontSize: 12.5 }}>{t("tools.shared.costsLabel")}</span>
         <div className="tabs">
           {COSTS.map((c) => (
             <button key={c.key} className={costPct === c.key ? "active" : ""} onClick={() => setCostPct(c.key)} style={{ padding: "5px 10px", fontSize: 12 }}>
@@ -111,40 +112,38 @@ export default function Optimize({ user, access }) {
 
       <div className="toast-banner" style={{ marginBottom: "1rem" }}>
         <span className="msg">
-          🔬 {mode === "multi"
-            ? `Testet 80 Kombinationen über alle ${COINS.length} Coins gleichzeitig und rankt nach durchschnittlichem Sharpe – eine Kombination, die nur bei einem Coin gut aussieht, fällt im Schnitt durch. Dauert länger (~30-60s).`
-            : "Testet automatisch 80 Kombinationen (5 SMA-Paare × 4 RSI-Schwellen × 4 ADX-Filter) auf den ersten 70% des Zeitraums (Training), prüft die Top 5 nach Sharpe Ratio dann auf den letzten 30% (Test) nach. Kann ~10-30s dauern."}
+          {mode === "multi" ? t("tools.optimize.bannerMulti", { count: COINS.length }) : t("tools.optimize.bannerSingle")}
         </span>
       </div>
 
       <button className="icon-btn primary" onClick={runOptimize} disabled={loading} style={{ marginBottom: "1.5rem" }}>
-        {loading ? "Optimiere… (kann etwas dauern)" : "🔬 Optimierung starten"}
+        {loading ? t("tools.optimize.optimizing") : t("tools.optimize.start")}
       </button>
 
-      {error && <div className="error-box">Fehler: {error}</div>}
+      {error && <div className="error-box">{t("tools.shared.errorPrefix")}{error}</div>}
 
       {result && mode === "single" && (
         <>
           <div className="card" style={{ marginBottom: "1.5rem" }}>
-            <p className="card-label">Trainings-/Test-Split</p>
+            <p className="card-label">{t("tools.optimize.trainTestSplit")}</p>
             <p className="card-value" style={{ fontSize: 16 }}>
-              {result.trainDays} Tage Training · {result.testDays} Tage Test (ab {result.splitDate}) · {result.combinationsTestedCount} Kombinationen getestet
+              {t("tools.optimize.trainTestSplitValue", { trainDays: result.trainDays, testDays: result.testDays, splitDate: result.splitDate, count: result.combinationsTestedCount })}
             </p>
           </div>
 
           <div className="card">
-            <p className="section-title">Top 5 nach Trainings-Sharpe (mit Out-of-Sample-Vergleich)</p>
+            <p className="section-title">{t("tools.optimize.top5Single")}</p>
             <div className="table-wrap">
               <table className="table">
                 <thead>
                   <tr>
-                    <th>#</th>
-                    <th>Parameter</th>
-                    <th>Train Rendite</th>
-                    <th>Train Sharpe</th>
-                    <th>Test Rendite</th>
-                    <th>Test Sharpe</th>
-                    <th>Test Trades</th>
+                    <th>{t("tools.shared.hashParam")}</th>
+                    <th>{t("tools.shared.parameter")}</th>
+                    <th>{t("tools.shared.trainReturn")}</th>
+                    <th>{t("tools.shared.trainSharpe")}</th>
+                    <th>{t("tools.shared.testReturn")}</th>
+                    <th>{t("tools.shared.testSharpe")}</th>
+                    <th>{t("tools.shared.testTrades")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -153,13 +152,13 @@ export default function Optimize({ user, access }) {
                     return (
                       <tr key={i}>
                         <td>{i + 1}</td>
-                        <td style={{ whiteSpace: "nowrap" }}>{paramsLabel(r.params)}</td>
+                        <td style={{ whiteSpace: "nowrap" }}>{paramsLabel(r.params, t)}</td>
                         <td><span className={`badge ${r.train.totalReturnPct >= 0 ? "badge-green" : "badge-red"}`}>{fmtPct(r.train.totalReturnPct)}</span></td>
                         <td>{fmtRatio(r.train.sharpe)}</td>
                         <td><span className={`badge ${r.test?.totalReturnPct >= 0 ? "badge-green" : "badge-red"}`}>{fmtPct(r.test?.totalReturnPct)}</span></td>
                         <td>
                           {fmtRatio(r.test?.sharpe)}
-                          {!robust && <span className="badge badge-amber" style={{ marginLeft: 6, fontSize: 10 }}>schwach im Test</span>}
+                          {!robust && <span className="badge badge-amber" style={{ marginLeft: 6, fontSize: 10 }}>{t("tools.shared.weakInTest")}</span>}
                         </td>
                         <td>{r.test?.tradeCount ?? "n/a"}</td>
                       </tr>
@@ -168,9 +167,7 @@ export default function Optimize({ user, access }) {
                 </tbody>
               </table>
             </div>
-            <p className="note" style={{ marginTop: 12 }}>
-              "Schwach im Test" heißt: die Kombination war im Training gut, hat sich auf ungesehenen Daten aber nicht bestätigt – typisches Overfitting-Warnsignal. Nur Kombinationen, die im Training <strong>und</strong> im Test solide abschneiden, würde ich als robust genug für den echten Backtest mit mehr Optionen (Stop-Loss/Short/Hebel) ansehen.
-            </p>
+            <p className="note" style={{ marginTop: 12 }}>{t("tools.optimize.noteSingle")}</p>
           </div>
         </>
       )}
@@ -178,26 +175,26 @@ export default function Optimize({ user, access }) {
       {result && mode === "multi" && (
         <>
           <div className="card" style={{ marginBottom: "1.5rem" }}>
-            <p className="card-label">Trainings-/Test-Split · Coins</p>
+            <p className="card-label">{t("tools.optimize.trainTestSplitMultiLabel")}</p>
             <p className="card-value" style={{ fontSize: 16 }}>
-              {result.trainDays} Tage Training · {result.testDays} Tage Test · {result.combinationsTestedCount} Kombinationen × {result.coins.length} Coins ({result.coins.join(", ")})
+              {t("tools.optimize.trainTestSplitMultiValue", { trainDays: result.trainDays, testDays: result.testDays, count: result.combinationsTestedCount, coinCount: result.coins.length, coins: result.coins.join(", ") })}
             </p>
           </div>
 
           <div className="card">
-            <p className="section-title">Top 5 nach durchschnittlichem Trainings-Sharpe (über alle Coins)</p>
+            <p className="section-title">{t("tools.optimize.top5Multi")}</p>
             <div className="table-wrap">
               <table className="table">
                 <thead>
                   <tr>
-                    <th>#</th>
-                    <th>Parameter</th>
-                    <th>Train Ø-Rendite</th>
-                    <th>Train Ø-Sharpe</th>
-                    <th>Train Konsistenz</th>
-                    <th>Test Ø-Rendite</th>
-                    <th>Test Ø-Sharpe</th>
-                    <th>Test Konsistenz</th>
+                    <th>{t("tools.shared.hashParam")}</th>
+                    <th>{t("tools.shared.parameter")}</th>
+                    <th>{t("tools.shared.trainAvgReturn")}</th>
+                    <th>{t("tools.shared.trainAvgSharpe")}</th>
+                    <th>{t("tools.shared.trainConsistency")}</th>
+                    <th>{t("tools.shared.testAvgReturn")}</th>
+                    <th>{t("tools.shared.testAvgSharpe")}</th>
+                    <th>{t("tools.shared.testConsistency")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -206,16 +203,16 @@ export default function Optimize({ user, access }) {
                     return (
                       <tr key={i}>
                         <td>{i + 1}</td>
-                        <td style={{ whiteSpace: "nowrap" }}>{paramsLabel(r.params)}</td>
+                        <td style={{ whiteSpace: "nowrap" }}>{paramsLabel(r.params, t)}</td>
                         <td><span className={`badge ${r.train.avgReturnPct >= 0 ? "badge-green" : "badge-red"}`}>{fmtPct(r.train.avgReturnPct)}</span></td>
                         <td>{fmtRatio(r.train.avgSharpe)}</td>
-                        <td>{r.train.positiveCoinCount}/{r.train.totalCoinCount} positiv</td>
+                        <td>{t("tools.shared.positiveOf", { positive: r.train.positiveCoinCount, total: r.train.totalCoinCount })}</td>
                         <td><span className={`badge ${r.test?.avgReturnPct >= 0 ? "badge-green" : "badge-red"}`}>{fmtPct(r.test?.avgReturnPct)}</span></td>
                         <td>
                           {fmtRatio(r.test?.avgSharpe)}
-                          {!robust && <span className="badge badge-amber" style={{ marginLeft: 6, fontSize: 10 }}>schwach im Test</span>}
+                          {!robust && <span className="badge badge-amber" style={{ marginLeft: 6, fontSize: 10 }}>{t("tools.shared.weakInTest")}</span>}
                         </td>
-                        <td>{r.test ? `${r.test.positiveCoinCount}/${r.test.totalCoinCount} positiv` : "n/a"}</td>
+                        <td>{r.test ? t("tools.shared.positiveOf", { positive: r.test.positiveCoinCount, total: r.test.totalCoinCount }) : "n/a"}</td>
                       </tr>
                     );
                   })}
@@ -225,21 +222,16 @@ export default function Optimize({ user, access }) {
             <div style={{ marginTop: 16 }}>
               {result.top.map((r, i) => (
                 <p key={i} className="note" style={{ marginTop: 6 }}>
-                  <span className="note-label">#{i + 1} Test je Coin:</span> {r.test ? perCoinLabel(r.test.perCoin) : "n/a"}
+                  <span className="note-label">#{i + 1} {t("tools.optimize.testPerCoin")}</span> {r.test ? perCoinLabel(r.test.perCoin) : "n/a"}
                 </p>
               ))}
             </div>
-            <p className="note" style={{ marginTop: 12 }}>
-              "Konsistenz" zählt, bei wie vielen der {COINS.length} Coins die Kombination eine positive Rendite lieferte. Eine Kombination mit hohem Ø-Sharpe aber niedriger Konsistenz wird meist nur von einem einzelnen Ausreißer-Coin getragen – weniger überzeugend als eine, die über mehrere Coins hinweg konsistent funktioniert.
-            </p>
+            <p className="note" style={{ marginTop: 12 }}>{t("tools.optimize.noteMulti", { count: COINS.length })}</p>
           </div>
         </>
       )}
 
-      <div className="disclaimer">
-        Rastersuche über SMA-Perioden, RSI-Schwellen und ADX-Trendfilter mit Trainings-/Test-Split zur Overfitting-Kontrolle. Handelskosten (Fee + Slippage) fließen standardmäßig mit 0,15% je Seite ein, auch beim Buy&amp;Hold-Vergleich.
-        Auch robuste Ergebnisse sind keine Garantie für zukünftige Performance – Marktbedingungen ändern sich. Keine Anlageberatung.
-      </div>
+      <div className="disclaimer">{t("tools.optimize.disclaimer")}</div>
     </div>
   );
 }

@@ -2,38 +2,12 @@ import { useState } from "react";
 import AppHeader from "../components/AppHeader";
 import { requireActiveAccess } from "../lib/auth/requireActiveAccess";
 import { COINS } from "../lib/marketData";
+import { useLanguage } from "../lib/i18n";
 
 const COIN_SYMBOLS = COINS.map((c) => c.symbol).join(", ");
 const PER_COIN_CASH = Math.round(10000 / COINS.length);
 
 export const getServerSideProps = requireActiveAccess;
-
-const PERIODS = [
-  { key: 365, label: "1 Jahr" },
-  { key: 730, label: "2 Jahre" },
-  { key: 1460, label: "4 Jahre" },
-  { key: 2920, label: "8 Jahre" },
-];
-
-const STOP_LOSSES = [
-  { key: null, label: "Kein Stop" },
-  { key: 10, label: "-10%" },
-  { key: 15, label: "-15%" },
-  { key: 20, label: "-20%" },
-];
-
-const LEVERAGES = [
-  { key: 1, label: "1x (kein Hebel)" },
-  { key: 2, label: "2x" },
-  { key: 3, label: "3x" },
-  { key: 5, label: "5x" },
-];
-
-const COSTS = [
-  { key: 0, label: "0% (unrealistisch)" },
-  { key: 0.15, label: "0,15% (Standard)" },
-  { key: 0.3, label: "0,3% (konservativ)" },
-];
 
 function fmtUSD(n) {
   return n.toLocaleString("de-DE", { maximumFractionDigits: n < 10 ? 3 : 0 });
@@ -48,7 +22,7 @@ function fmtRatio(n) {
   return n == null ? "n/a" : n.toFixed(2);
 }
 
-function EquityChart({ equityCurve }) {
+function EquityChart({ equityCurve, t }) {
   if (!equityCurve || equityCurve.length < 2) return null;
   const w = 700,
     h = 220,
@@ -69,8 +43,8 @@ function EquityChart({ equityCurve }) {
   return (
     <div>
       <div className="chart-legend">
-        <span className="legend-item"><span className="dot dot-accent" />Portfolio</span>
-        <span className="legend-item"><span className="dot dot-muted" />Buy &amp; Hold (alle {COINS.length}, gleichgewichtet)</span>
+        <span className="legend-item"><span className="dot dot-accent" />{t("tools.portfolio.legendPortfolio")}</span>
+        <span className="legend-item"><span className="dot dot-muted" />{t("tools.portfolio.legendBuyHold", { count: COINS.length })}</span>
       </div>
       <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h}>
         <polyline points={toPoints("buyHoldEquity")} fill="none" stroke="var(--text-faint)" strokeWidth="2" />
@@ -81,6 +55,31 @@ function EquityChart({ equityCurve }) {
 }
 
 export default function Portfolio({ user, access }) {
+  const { t } = useLanguage();
+  const PERIODS = [
+    { key: 365, label: t("tools.shared.p365") },
+    { key: 730, label: t("tools.shared.p730") },
+    { key: 1460, label: t("tools.shared.p1460") },
+    { key: 2920, label: t("tools.shared.p2920") },
+  ];
+  const STOP_LOSSES = [
+    { key: null, label: t("tools.shared.stopLossNone") },
+    { key: 10, label: "-10%" },
+    { key: 15, label: "-15%" },
+    { key: 20, label: "-20%" },
+  ];
+  const LEVERAGES = [
+    { key: 1, label: t("tools.shared.leverageNone") },
+    { key: 2, label: "2x" },
+    { key: 3, label: "3x" },
+    { key: 5, label: "5x" },
+  ];
+  const COSTS = [
+    { key: 0, label: t("tools.shared.cost0") },
+    { key: 0.15, label: t("tools.shared.cost15") },
+    { key: 0.3, label: t("tools.shared.cost30") },
+  ];
+
   const [days, setDays] = useState(730);
   const [stopLoss, setStopLoss] = useState(null);
   const [allowShort, setAllowShort] = useState(false);
@@ -123,15 +122,15 @@ export default function Portfolio({ user, access }) {
   return (
     <div className="container">
       <AppHeader
-        title="Portfolio-Backtest"
-        subtitle={`Echte Kapitalaufteilung über alle ${COINS.length} Coins gleichzeitig`}
+        title={t("tools.portfolio.title")}
+        subtitle={t("tools.portfolio.subtitle", { count: COINS.length })}
         active="portfolio"
         user={user}
         access={access}
       />
 
       <div className="toolbar">
-        <span className="note-label" style={{ fontSize: 12.5 }}>Zeitraum</span>
+        <span className="note-label" style={{ fontSize: 12.5 }}>{t("tools.shared.period")}</span>
         <div className="timeframe-group">
           {PERIODS.map((p) => (
             <button key={p.key} className={days === p.key ? "active" : ""} onClick={() => setDays(p.key)} style={{ padding: "5px 10px", fontSize: 12 }}>
@@ -142,7 +141,7 @@ export default function Portfolio({ user, access }) {
       </div>
 
       <div className="toolbar">
-        <span className="note-label" style={{ fontSize: 12.5 }}>Stop-Loss</span>
+        <span className="note-label" style={{ fontSize: 12.5 }}>{t("tools.shared.stopLossLabel")}</span>
         <div className="tabs">
           {STOP_LOSSES.map((s) => (
             <button key={s.label} className={stopLoss === s.key ? "active" : ""} onClick={() => setStopLoss(s.key)} style={{ padding: "5px 10px", fontSize: 12 }}>
@@ -153,15 +152,15 @@ export default function Portfolio({ user, access }) {
       </div>
 
       <div className="toolbar">
-        <span className="note-label" style={{ fontSize: 12.5 }}>Richtung</span>
+        <span className="note-label" style={{ fontSize: 12.5 }}>{t("tools.shared.direction")}</span>
         <div className="tabs">
-          <button className={!allowShort ? "active" : ""} onClick={() => setAllowShort(false)} style={{ padding: "5px 10px", fontSize: 12 }}>Nur Long</button>
-          <button className={allowShort ? "active" : ""} onClick={() => setAllowShort(true)} style={{ padding: "5px 10px", fontSize: 12 }}>Long + Short</button>
+          <button className={!allowShort ? "active" : ""} onClick={() => setAllowShort(false)} style={{ padding: "5px 10px", fontSize: 12 }}>{t("tools.shared.longOnly")}</button>
+          <button className={allowShort ? "active" : ""} onClick={() => setAllowShort(true)} style={{ padding: "5px 10px", fontSize: 12 }}>{t("tools.shared.longShort")}</button>
         </div>
       </div>
 
       <div className="toolbar">
-        <span className="note-label" style={{ fontSize: 12.5 }}>Hebel</span>
+        <span className="note-label" style={{ fontSize: 12.5 }}>{t("tools.shared.leverage")}</span>
         <div className="tabs">
           {LEVERAGES.map((l) => (
             <button key={l.key} className={leverage === l.key ? "active" : ""} onClick={() => setLeverage(l.key)} style={{ padding: "5px 10px", fontSize: 12 }}>
@@ -172,7 +171,7 @@ export default function Portfolio({ user, access }) {
       </div>
 
       <div className="toolbar">
-        <span className="note-label" style={{ fontSize: 12.5 }}>Handelskosten</span>
+        <span className="note-label" style={{ fontSize: 12.5 }}>{t("tools.shared.costsLabel")}</span>
         <div className="tabs">
           {COSTS.map((c) => (
             <button key={c.key} className={costPct === c.key ? "active" : ""} onClick={() => setCostPct(c.key)} style={{ padding: "5px 10px", fontSize: 12 }}>
@@ -184,80 +183,80 @@ export default function Portfolio({ user, access }) {
 
       <div className="toast-banner" style={{ marginBottom: "1rem" }}>
         <span className="msg">
-          💼 Verteilt $10.000 gleichmäßig auf {COIN_SYMBOLS} (${PER_COIN_CASH.toLocaleString("de-DE")} je Coin) und lässt jeden mit der Dashboard-Signal-Strategie unabhängig handeln – kein Rebalancing zwischen den Coins. Zeigt, ob die Streuung über mehrere Coins den Drawdown/Sharpe im Vergleich zu den Einzelcoins verbessert.
+          {t("tools.portfolio.banner", { symbols: COIN_SYMBOLS, perCoin: PER_COIN_CASH.toLocaleString("de-DE") })}
         </span>
       </div>
 
       <button className="icon-btn primary" onClick={runPortfolio} disabled={loading} style={{ marginBottom: "1.5rem" }}>
-        {loading ? "Simuliere…" : "▶ Portfolio-Backtest starten"}
+        {loading ? t("tools.shared.simulating") : t("tools.portfolio.start")}
       </button>
 
-      {error && <div className="error-box">Fehler: {error}</div>}
+      {error && <div className="error-box">{t("tools.shared.errorPrefix")}{error}</div>}
 
       {result && (
         <>
           <div className="grid grid-3" style={{ marginBottom: "1rem" }}>
             <div className="card">
-              <p className="card-label">Portfolio-Rendite</p>
+              <p className="card-label">{t("tools.portfolio.portfolioReturn")}</p>
               <p className="card-value" style={{ color: result.totalReturnPct >= 0 ? "var(--green-text)" : "var(--red-text)" }}>
                 {fmtPct(result.totalReturnPct)}
               </p>
-              <p className="note">Endkapital: ${fmtUSD(result.finalEquity)} (Start: ${fmtUSD(result.startingCash)})</p>
+              <p className="note">{t("tools.shared.finalCapital", { final: fmtUSD(result.finalEquity), start: fmtUSD(result.startingCash) })}</p>
             </div>
             <div className="card">
-              <p className="card-label">Buy &amp; Hold Rendite</p>
+              <p className="card-label">{t("tools.shared.buyHoldReturn")}</p>
               <p className="card-value" style={{ color: result.buyHoldReturnPct >= 0 ? "var(--green-text)" : "var(--red-text)" }}>
                 {fmtPct(result.buyHoldReturnPct)}
               </p>
-              <p className="note">Alle {COINS.length} Coins gleichgewichtet kaufen &amp; halten</p>
+              <p className="note">{t("tools.portfolio.buyHoldNoteAll", { count: COINS.length })}</p>
             </div>
             <div className="card">
-              <p className="card-label">Portfolio Max Drawdown</p>
+              <p className="card-label">{t("tools.portfolio.portfolioMaxDrawdown")}</p>
               <p className="card-value">{result.maxDrawdown.toFixed(1)}%</p>
-              <p className="note">Ø Einzelcoins: {avgCoinMaxDrawdown.toFixed(1)}%{result.maxDrawdown < avgCoinMaxDrawdown ? " · Diversifikation hilft" : ""}</p>
+              <p className="note">{t("tools.portfolio.avgCoinsDrawdown", { pct: avgCoinMaxDrawdown.toFixed(1) })}{result.maxDrawdown < avgCoinMaxDrawdown ? t("tools.portfolio.diversificationHelps") : ""}</p>
             </div>
           </div>
 
           <div className="grid grid-3" style={{ marginBottom: "1.5rem" }}>
             <div className="card">
-              <p className="card-label">Anzahl Trades (gesamt)</p>
+              <p className="card-label">{t("tools.portfolio.tradeCountTotal")}</p>
               <p className="card-value">{result.tradeCount}</p>
               <p className="note">
-                Ø {avgTradesPerCoin.toFixed(1)} je Coin
-                {lowSampleSize && <span className="badge badge-amber" style={{ marginLeft: 6, fontSize: 10 }}>geringe Stichprobe</span>}
+                {t("tools.portfolio.avgPerCoin", { avg: avgTradesPerCoin.toFixed(1) })}
+                {lowSampleSize && <span className="badge badge-amber" style={{ marginLeft: 6, fontSize: 10 }}>{t("tools.shared.lowSample")}</span>}
               </p>
             </div>
             <div className="card">
-              <p className="card-label">Portfolio Sharpe / Sortino</p>
+              <p className="card-label">{t("tools.portfolio.portfolioSharpeSortino")}</p>
               <p className="card-value" style={{ fontSize: 18 }}>{fmtRatio(result.sharpe)} / {fmtRatio(result.sortino)}</p>
-              <p className="note">Ø Einzelcoins Sharpe: {fmtRatio(avgCoinSharpe)}</p>
+              <p className="note">{t("tools.portfolio.avgCoinSharpe", { value: fmtRatio(avgCoinSharpe) })}</p>
             </div>
             <div className="card">
-              <p className="card-label">Zeitraum / Hebel / Kosten</p>
-              <p className="card-value" style={{ fontSize: 16 }}>{result.days}T · {result.stopLossPct ? `-${result.stopLossPct}%` : "kein Stop"} · {result.leverage}x{result.allowShort ? " · Short erlaubt" : ""} · {result.costPct}%</p>
+              <p className="card-label">{t("tools.portfolio.periodLeverageCosts")}</p>
+              <p className="card-value" style={{ fontSize: 16 }}>{result.days}T · {result.stopLossPct ? `-${result.stopLossPct}%` : t("tools.shared.noStopShort")} · {result.leverage}x{result.allowShort ? t("tools.shared.shortAllowed") : ""} · {result.costPct}%</p>
               {result.days < result.requestedDays && (
-                <p className="note">Verkürzt von {result.requestedDays}T, da mind. ein Coin (z.B. TAO) kürzer gelistet ist.</p>
+                <p className="note">{t("tools.portfolio.shortenedNote", { requested: result.requestedDays })}</p>
               )}
             </div>
           </div>
 
           <div className="card" style={{ marginBottom: "1.5rem" }}>
-            <p className="section-title">Portfolio-Equity-Kurve</p>
-            <EquityChart equityCurve={result.equityCurve} />
+            <p className="section-title">{t("tools.portfolio.portfolioEquityCurve")}</p>
+            <EquityChart equityCurve={result.equityCurve} t={t} />
           </div>
 
           <div className="card">
-            <p className="section-title">Pro Coin (je ${fmtUSD(result.perCoin[0]?.allocatedCash)} Startkapital)</p>
+            <p className="section-title">{t("tools.portfolio.perCoinHeading", { cash: fmtUSD(result.perCoin[0]?.allocatedCash) })}</p>
             <div className="table-wrap">
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Coin</th>
-                    <th>Rendite</th>
-                    <th>Max Drawdown</th>
+                    <th>{t("tools.portfolio.thCoin")}</th>
+                    <th>{t("tools.shared.thReturn")}</th>
+                    <th>{t("tools.shared.maxDrawdown")}</th>
                     <th>Sharpe</th>
-                    <th>Sortino</th>
-                    <th>Trades</th>
+                    <th>{t("tools.portfolio.thSortino")}</th>
+                    <th>{t("tools.portfolio.thTrades")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -275,22 +274,19 @@ export default function Portfolio({ user, access }) {
               </table>
             </div>
             <p className="note" style={{ marginTop: 12 }}>
-              Diversifikationseffekt: Der Portfolio-Max-Drawdown ({result.maxDrawdown.toFixed(1)}%) im Vergleich zum Durchschnitt der Einzelcoins ({avgCoinMaxDrawdown.toFixed(1)}%) zeigt, ob unkorrelierte Bewegungen zwischen den Coins die Schwankungen im Vergleich zu einer Einzelcoin-Position abfedern. Da alle {COINS.length} Coins derselben Signal-Logik folgen und Krypto-Assets tendenziell stark korrelieren, ist der Effekt oft kleiner als bei klassischen Multi-Asset-Portfolios (Aktien/Anleihen/Rohstoffe) – aber selten null.
-              {lowSampleSize && (
-                <> Mit Ø {avgTradesPerCoin.toFixed(1)} Trades je Coin in diesem Lauf ist das Ergebnis allerdings eher eine Summe weniger dominanter Einzelwetten als ein statistisch belastbarer Beleg für echte Diversifikation – für ein verlässlicheres Bild einen längeren Zeitraum wählen oder mehrere Zeiträume vergleichen.</>
-              )}
+              {t("tools.portfolio.diversificationNote", { portfolioDd: result.maxDrawdown.toFixed(1), avgDd: avgCoinMaxDrawdown.toFixed(1), count: COINS.length })}
+              {lowSampleSize && t("tools.portfolio.diversificationLowSample", { avg: avgTradesPerCoin.toFixed(1) })}
             </p>
           </div>
         </>
       )}
 
       <div className="disclaimer">
-        Portfolio-Backtest: $10.000 gleichmäßig auf {COIN_SYMBOLS} verteilt, jeder Coin handelt unabhängig nach der Dashboard-Signal-Strategie (SMA + RSI + MACD + Volumen + Makro + Fear &amp; Greed), kein Rebalancing zwischen den Coins über die Zeit. Handelskosten (Fee + Slippage) mit 0,15% je Seite standardmäßig aktiv, auch beim Buy&amp;Hold-Vergleich.
-        Der gemeinsame Betrachtungszeitraum richtet sich nach dem am kürzesten gelisteten Coin.
+        {t("tools.portfolio.disclaimerPre", { symbols: COIN_SYMBOLS })}
         <br /><br />
-        <strong>Zwei Einschränkungen, die die Aussagekraft begrenzen:</strong> Alle {COINS.length} Coins handeln mit denselben Standard-Parametern statt je Coin optimierten Werten (siehe "🔬 Optimierung"), und es ist ein einzelner statischer Lauf ohne Trainings-/Test-Split oder Walk-Forward-Check. Bei kurzen/mittleren Zeiträumen kann jeder Coin nur 1-2 Trades ausführen – dann ist das "Portfolio" im Kern eine Summe weniger dominanter Einzelwetten, keine statistisch robuste Stichprobe.
+        <strong>{t("tools.portfolio.disclaimerLimitsLabel")}</strong>{t("tools.portfolio.disclaimerLimitsBody", { count: COINS.length })}
         <br /><br />
-        Vergangene Wertentwicklung ist keine Garantie für zukünftige Ergebnisse. Keine Anlageberatung.
+        {t("tools.portfolio.disclaimerPost")}
       </div>
     </div>
   );
