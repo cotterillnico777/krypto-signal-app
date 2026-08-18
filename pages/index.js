@@ -20,6 +20,7 @@ import {
   marubozuSignal,
 } from "../lib/signals";
 import { PARAM_TIPS } from "../lib/paramTips";
+import { relevantHeadlines } from "../lib/news";
 import PushSubscribeButton from "../components/PushSubscribeButton";
 import InstallPrompt from "../components/InstallPrompt";
 import OnboardingTour from "../components/OnboardingTour";
@@ -86,6 +87,7 @@ export default function Home({ user, access }) {
   const [fg,setFg]=useState(null);
   const [whale,setWhale]=useState(null);
   const [liquidity,setLiquidity]=useState(null);
+  const [news,setNews]=useState([]);
   const [active,setActive]=useState("bitcoin");
   const [tf,setTf]=useState("1D");
   const [loading,setLoading]=useState(true);
@@ -111,23 +113,25 @@ export default function Home({ user, access }) {
   async function loadData(timeframe) {
     setLoading(true); setError(null); setAiAnalysis({});
     try {
-      const [cRes,mRes,fRes,wRes,lRes]=await Promise.all([
+      const [cRes,mRes,fRes,wRes,lRes,nRes]=await Promise.all([
         fetch(`/api/crypto?tf=${timeframe||tf}`),
         fetch("/api/macro"),
         fetch("/api/feargreed"),
         fetch("/api/whale"),
         fetch("/api/liquidity"),
+        fetch("/api/news"),
       ]);
-      const [cJson,mJson,fJson,wJson,lJson]=await Promise.all([cRes.json(),mRes.json(),fRes.json(),wRes.json(),lRes.json()]);
+      const [cJson,mJson,fJson,wJson,lJson,nJson]=await Promise.all([cRes.json(),mRes.json(),fRes.json(),wRes.json(),lRes.json(),nRes.json()]);
       if(cJson.error) throw new Error(cJson.error);
       if(mJson.error) throw new Error(mJson.error);
-      setCrypto(cJson); setMacroRaw(mJson); setFg(fJson.error?null:fJson); setWhale(wJson.error?null:wJson); setLiquidity(lJson.error?null:lJson);
+      setCrypto(cJson); setMacroRaw(mJson); setFg(fJson.error?null:fJson); setWhale(wJson.error?null:wJson); setLiquidity(lJson.error?null:lJson); setNews(nJson.items||[]);
     } catch(e) { setError(e.message); } finally { setLoading(false); }
   }
 
   async function getAiAnalysis(coin, rsi, macd, smaSig, volSig, macro, price, change24h, whaleSig, bollSig, stochRsiSig, obvSig, candleSig, marubozuSig) {
     setAiLoading(prev => ({ ...prev, [coin.id]: true }));
     try {
+      const headlines = relevantHeadlines(news, coin.name, coin.symbol).map((h) => ({ title: h.title, source: h.source }));
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -145,6 +149,7 @@ export default function Home({ user, access }) {
           candle: candleSig ? candleSig.label : "n/a",
           marubozu: marubozuSig ? marubozuSig.label : "n/a",
           tf,
+          headlines,
         }),
       });
       const data = await res.json();
@@ -222,6 +227,26 @@ export default function Home({ user, access }) {
           <span className="label">{t("dashboard.macroRegimeLabel")}{translateSignalLabel(macro.label,lang)}</span>
           <span className="hint">{t("dashboard.macroRegimeHint")}</span>
         </div>
+
+        {news.length>0 && (
+          <div className="card" style={{marginBottom:"1rem"}}>
+            <p className="section-title">{t("dashboard.newsTitle")}</p>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {news.slice(0,6).map((item,i)=>(
+                <a
+                  key={i}
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,padding:"8px 10px",background:"var(--bg-subtle)",borderRadius:"var(--radius-sm)",textDecoration:"none",color:"var(--text)"}}
+                >
+                  <span style={{fontSize:13.5}}>{item.title}</span>
+                  <span className="note" style={{flexShrink:0,marginLeft:8}}>{item.source}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="ticker-strip">
           {crypto.map((c)=>{

@@ -6,7 +6,16 @@ export default async function handler(req, res) {
   const ctx = await requireActiveAccessApi(req, res);
   if (!ctx) return;
 
-  const { coin, rsi, macd, sma, volume, macro, feargreed, whale, bollinger, stochRsi, obv, candle, marubozu, price, change24h, tf } = req.body;
+  const { coin, rsi, macd, sma, volume, macro, feargreed, whale, bollinger, stochRsi, obv, candle, marubozu, price, change24h, tf, headlines } = req.body;
+
+  // headlines: optional Array von {title, source} -- vom Client aus dem
+  // News-Pool (lib/news.js relevantHeadlines) vorgefiltert auf Schlagzeilen,
+  // die den Coin-Namen erwähnen. Rein zusätzlicher Kontext für die KI, kein
+  // Signal-Input -- ändert nichts an combineSignal()/explainSignal().
+  const newsBlock =
+    Array.isArray(headlines) && headlines.length > 0
+      ? `\nAktuelle Schlagzeilen:\n${headlines.map((h) => `- ${h.title} (${h.source})`).join("\n")}\n`
+      : "";
 
   const prompt = `Du bist ein erfahrener Krypto-Analyst. Analysiere folgende Daten für ${coin} (Timeframe: ${tf}) und gib eine klare, kurze Einschätzung auf Deutsch:
 
@@ -23,8 +32,8 @@ Marubozu (Kerzenkörper macht fast die komplette Spanne aus, kaum Dochte): ${mar
 Fear & Greed Index: ${feargreed}
 Makro-Regime: ${macro}
 Whale-Positionierung (Top-Trader Long/Short auf Binance-Futures, coin-relativ zum 7-Tage-Durchschnitt): ${whale ?? "n/a"}
-
-Antworte in maximal 3-4 Sätzen. Nenne konkret was die Daten bedeuten und ob eher kaufen, halten oder verkaufen sinnvoll wäre. Sei direkt und präzise.`;
+${newsBlock}
+Antworte in maximal 3-4 Sätzen. Nenne konkret was die Daten bedeuten und ob eher kaufen, halten oder verkaufen sinnvoll wäre. Falls Schlagzeilen oben stehen, beziehe kurz mit ein, ob sie zur technischen Einschätzung passen oder ihr widersprechen. Sei direkt und präzise.`;
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
