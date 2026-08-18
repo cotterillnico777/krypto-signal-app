@@ -142,6 +142,14 @@ Rate-limitiert auf 5 Analysen/Tag/Nutzer (Redis, gleiches Muster wie die Journal
 
 ---
 
+## Markt-News auf dem Dashboard
+
+Zeigt die 6 neuesten Schlagzeilen aus drei etablierten, kostenlosen RSS-Feeds (`lib/news.js`): **CoinDesk** und **Cointelegraph** (Krypto), **MarketWatch** (allgemeine Finanzmärkte) – bewusst keine bezahlte News-API, gleiches Kostenbewusstsein wie die übrigen Datenquellen (CoinGecko/FRED/Binance/alternative.me). Da die drei Feeds einfaches RSS 2.0 sind, parst ein schlanker Regex-Parser statt eines XML-Pakets (`extractTag()`/`decodeEntities()` in `lib/news.js`, inkl. numerischer HTML-Entities wie `&#x2019;`). `pages/api/news.js` cached das Ergebnis 20 Minuten in Redis, damit nicht jeder Dashboard-Aufruf jedes Nutzers alle drei Feeds neu abruft.
+
+**Fließt in die KI-Analyse ein:** Beim Klick auf "🤖 KI-Analyse" filtert `relevantHeadlines()` den News-Pool auf Schlagzeilen, die den Namen oder das Symbol des jeweiligen Coins erwähnen (einfacher Substring-Match, keine echte Entity-Erkennung nötig), und übergibt bis zu 3 davon an `pages/api/analyze.js`. Der Prompt bekommt dadurch aktuellen Nachrichtenkontext und wird gebeten, kurz einzuordnen, ob die Schlagzeilen zur technischen Einschätzung passen – rein zusätzlicher Kontext, ändert nichts an `combineSignal()`/`explainSignal()` selbst (die Signal-Logik bleibt weiterhin rein technisch/makro-basiert).
+
+---
+
 ## Trades & R:R-Rechner
 
 Zwei Tools fürs eigene (manuelle) Trading, unabhängig von den Dashboard-Signalen:
