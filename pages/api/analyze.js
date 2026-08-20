@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   const ctx = await requireActiveAccessApi(req, res);
   if (!ctx) return;
 
-  const { coin, rsi, macd, sma, volume, macro, feargreed, whale, bollinger, stochRsi, obv, candle, marubozu, price, change24h, tf, headlines } = req.body;
+  const { coin, rsi, macd, sma, volume, macro, feargreed, whale, bollinger, stochRsi, obv, candle, marubozu, price, change24h, tf, headlines, cycle, institutionalHeadlines } = req.body;
 
   // headlines: optional Array von {title, source} -- vom Client aus dem
   // News-Pool (lib/news.js relevantHeadlines) vorgefiltert auf Schlagzeilen,
@@ -15,6 +15,21 @@ export default async function handler(req, res) {
   const newsBlock =
     Array.isArray(headlines) && headlines.length > 0
       ? `\nAktuelle Schlagzeilen:\n${headlines.map((h) => `- ${h.title} (${h.source})`).join("\n")}\n`
+      : "";
+
+  // cycle: optionales Rohdaten-Objekt aus lib/cycleAnalysis.js (vom Client
+  // via /api/cycle geladen). Enthält nur Zahlen, keine fertigen Sätze (siehe
+  // lib/cycleAnalysis.js-Kommentar) -- der deutsche Satz wird hier gebaut,
+  // da dieser Prompt ausschließlich serverseitig läuft.
+  const cycleBlock = !cycle
+    ? ""
+    : !cycle.hasEnoughHistory
+    ? `\nZyklus-Kontext: Nicht genug Kurshistorie für einen Zyklusvergleich bei diesem Coin.\n`
+    : `\nZyklus-Kontext:\n- Vorheriger Zyklus: ATH $${cycle.previousCycle?.athPrice ?? "n/a"} am ${cycle.previousCycle?.athDate ?? "n/a"}, Tief $${cycle.previousCycle?.bottomPrice ?? "n/a"} nach ${cycle.previousCycle?.daysAthToBottom ?? "n/a"} Tagen.\n- Aktueller Zyklus: ATH $${cycle.currentCycle.athPrice} am ${cycle.currentCycle.athDate}, aktuell Tag ${cycle.currentCycle.daysSinceAth} seit diesem ATH, Drawdown ${cycle.currentCycle.drawdownFromAthPct?.toFixed(0)}% vom ATH.\n${cycle.cycleTimeComparison ? `- Zeitvergleich: Im vorherigen Zyklus dauerte es ${cycle.cycleTimeComparison.daysAthToBottomPreviousCycle} Tage vom ATH bis zum Tief, aktuell sind seit dem ATH ${cycle.cycleTimeComparison.daysSinceCurrentAth} Tage vergangen (${cycle.cycleTimeComparison.pctOfPreviousDuration ?? "n/a"}% dieser vorherigen Dauer).\n` : ""}- Bodenbildung: ${cycle.bottomFormation?.score == null ? "nicht anwendbar (kein signifikanter Drawdown)" : `${cycle.bottomFormation.score}/${cycle.bottomFormation.maxScore} Anzeichen`}\n- Trendregime (wöchentlich): ${cycle.trendRegime?.label ?? "n/a"}\n`;
+
+  const institutionalBlock =
+    Array.isArray(institutionalHeadlines) && institutionalHeadlines.length > 0
+      ? `\nInstitutionelle/regulatorische Schlagzeilen:\n${institutionalHeadlines.map((h) => `- ${h.title} (${h.source})`).join("\n")}\n`
       : "";
 
   const prompt = `Du bist ein erfahrener Krypto-Analyst. Analysiere folgende Daten für ${coin} (Timeframe: ${tf}) und gib eine klare, kurze Einschätzung auf Deutsch:
@@ -32,8 +47,8 @@ Marubozu (Kerzenkörper macht fast die komplette Spanne aus, kaum Dochte): ${mar
 Fear & Greed Index: ${feargreed}
 Makro-Regime: ${macro}
 Whale-Positionierung (Top-Trader Long/Short auf Binance-Futures, coin-relativ zum 7-Tage-Durchschnitt): ${whale ?? "n/a"}
-${newsBlock}
-Antworte in maximal 3-4 Sätzen. Nenne konkret was die Daten bedeuten und ob eher kaufen, halten oder verkaufen sinnvoll wäre. Falls Schlagzeilen oben stehen, beziehe kurz mit ein, ob sie zur technischen Einschätzung passen oder ihr widersprechen. Sei direkt und präzise.`;
+${newsBlock}${cycleBlock}${institutionalBlock}
+Antworte in maximal 3-4 Sätzen. Nenne konkret was die Daten bedeuten und ob eher kaufen, halten oder verkaufen sinnvoll wäre. Falls Schlagzeilen oben stehen, beziehe kurz mit ein, ob sie zur technischen Einschätzung passen oder ihr widersprechen. Falls ein Zyklus-Kontext oben steht, ordne kurz ein, ob der aktuelle Zeitpunkt im Zyklus (Tage seit ATH, Bodenbildung, Trendregime) zur technischen Einschätzung passt -- nutze ihn aber NICHT als eigenständiges Kauf-/Verkaufssignal, sondern nur als zeitlichen Kontext. Sei direkt und präzise.`;
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {

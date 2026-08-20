@@ -2,6 +2,7 @@ import { useState } from "react";
 import AppHeader from "../components/AppHeader";
 import { requireActiveAccess } from "../lib/auth/requireActiveAccess";
 import { useLanguage } from "../lib/i18n";
+import { COINS } from "../lib/marketData";
 
 export const getServerSideProps = requireActiveAccess;
 
@@ -57,6 +58,7 @@ export default function ChartAnalysis({ user, access }) {
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [mode, setMode] = useState("swing");
+  const [coinId, setCoinId] = useState("bitcoin");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
@@ -92,7 +94,7 @@ export default function ChartAnalysis({ user, access }) {
       const res = await fetch("/api/chart-analysis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64: base64, mediaType, mode }),
+        body: JSON.stringify({ imageBase64: base64, mediaType, mode, coin: coinId || null }),
       });
       // Manche Fehler (z.B. Vercels eigenes "Payload zu groß") kommen als
       // Klartext statt JSON zurück -- res.json() würde daran mit einer
@@ -138,6 +140,16 @@ export default function ChartAnalysis({ user, access }) {
         )}
 
         <div className="field" style={{ marginBottom: "1rem" }}>
+          {t("chartAnalysis.coinLabel")}
+          <select className="input" value={coinId} onChange={(e) => setCoinId(e.target.value)}>
+            {COINS.map((c) => (
+              <option key={c.id} value={c.id}>{c.name} ({c.symbol})</option>
+            ))}
+            <option value="">{t("chartAnalysis.coinNone")}</option>
+          </select>
+        </div>
+
+        <div className="field" style={{ marginBottom: "1rem" }}>
           {t("chartAnalysis.horizon")}
           <div className="tabs">
             <button type="button" className={mode === "daytrade" ? "active" : ""} onClick={() => setMode("daytrade")}>{t("chartAnalysis.dayTrade")}</button>
@@ -155,7 +167,7 @@ export default function ChartAnalysis({ user, access }) {
       </div>
 
       <div className="disclaimer">
-        {t("chartAnalysis.disclaimer")}
+        {coinId ? t("chartAnalysis.disclaimerWithData") : t("chartAnalysis.disclaimer")}
       </div>
     </div>
   );
