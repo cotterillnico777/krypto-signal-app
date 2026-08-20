@@ -1,6 +1,6 @@
 {
-  "name": "Krypto Signal Dashboard",
-  "short_name": "Krypto Signal",
+  "name": "Finlyra",
+  "short_name": "Finlyra",
   "description": "Live-Krypto-Signale kombiniert mit Makrodaten, Fear & Greed Index und KI-Analyse.",
   "start_url": "/",
   "scope": "/",

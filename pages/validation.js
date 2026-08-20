@@ -30,7 +30,7 @@ export default function Validation() {
     <div className="container">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: "0.75rem" }}>
         <div className="brand" style={{ marginBottom: 0 }}>
-          <div className="brand-mark">₿</div>
+          <div className="brand-mark">F</div>
           <div>
             <h1>{t("validation.h1")}</h1>
             <p className="subtitle">{t("validation.subtitle")}</p>

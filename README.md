@@ -1,4 +1,4 @@
-# Krypto Signal Dashboard
+# Finlyra
 
 Live-Krypto-Signale (BTC, ETH, SOL, XRP, TAO, DOGE) kombiniert mit echten Makrodaten (M2-Geldmenge, US-Leitzins), Fear & Greed Index und KI-Analyse. Als installierbare PWA mit Push-Benachrichtigungen bei Kaufsignalen.
 

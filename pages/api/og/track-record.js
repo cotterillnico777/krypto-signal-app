@@ -66,7 +66,7 @@ export default async function handler() {
             🪙
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ fontSize: 30, fontWeight: 700, color: "#f5f5f7" }}>Krypto Signal Dashboard</div>
+            <div style={{ fontSize: 30, fontWeight: 700, color: "#f5f5f7" }}>Finlyra</div>
             <div style={{ fontSize: 22, color: "#9aa0ab" }}>Live-Track-Record</div>
           </div>
         </div>
