@@ -1,19 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "../lib/supabase/client";
-import { useLanguage } from "../lib/i18n";
+import { useLanguage, translateAuthError } from "../lib/i18n";
 import LanguageToggle from "../components/LanguageToggle";
 
 export default function Login() {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const redirect = typeof router.query.redirect === "string" ? router.query.redirect : "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [magicSent, setMagicSent] = useState(false);
+
+  // pages/api/auth/callback.js hängt bei einem ungültigen/abgelaufenen
+  // Magic-Link/OAuth-Code ?authError=link_invalid an den Redirect zurück
+  // zu /login -- sonst würde der Nutzer kommentarlos zurück auf /login
+  // landen, ohne zu wissen warum ("localhost refused to connect"-artige
+  // Verwirrung, nur eben als stille Endlosschleife statt Fehlerseite).
+  useEffect(() => {
+    if (router.query.authError) setError(translateAuthError(String(router.query.authError), lang));
+  }, [router.query.authError, lang]);
 
   function callbackUrl() {
     const origin = window.location.origin;
@@ -30,7 +39,7 @@ export default function Login() {
       if (error) throw error;
       router.push(redirect);
     } catch (err) {
-      setError(err.message || t("login.errorGeneric"));
+      setError(translateAuthError(err.message, lang));
     } finally {
       setBusy(false);
     }
@@ -49,7 +58,7 @@ export default function Login() {
       if (error) throw error;
       setMagicSent(true);
     } catch (err) {
-      setError(err.message || t("login.errorMagicFailed"));
+      setError(translateAuthError(err.message, lang));
     } finally {
       setBusy(false);
     }
@@ -63,7 +72,7 @@ export default function Login() {
       const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: callbackUrl() } });
       if (error) throw error;
     } catch (err) {
-      setError(err.message || t("login.errorGoogleFailed"));
+      setError(translateAuthError(err.message, lang));
       setBusy(false);
     }
   }

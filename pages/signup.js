@@ -2,12 +2,12 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "../lib/supabase/client";
-import { useLanguage } from "../lib/i18n";
+import { useLanguage, translateAuthError } from "../lib/i18n";
 import LanguageToggle from "../components/LanguageToggle";
 
 export default function Signup() {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const refCode = typeof router.query.ref === "string" ? router.query.ref : null;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,7 +37,7 @@ export default function Signup() {
       if (error) throw error;
       setDone(true);
     } catch (err) {
-      setError(err.message || t("signup.errorGeneric"));
+      setError(translateAuthError(err.message, lang));
     } finally {
       setBusy(false);
     }
