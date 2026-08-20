@@ -140,13 +140,31 @@ Route `/chart-analysis`: Nutzer laden ein beliebiges Chart-Bild hoch (nicht auf 
 
 Rate-limitiert auf 5 Analysen/Tag/Nutzer (Redis, gleiches Muster wie die Journal-KI-Analyse) – Vision-Aufrufe verbrauchen durch die Bilddaten deutlich mehr Tokens als reine Text-Prompts. Bilder bis 20MB werden akzeptiert, aber **vor dem Upload clientseitig per Canvas auf max. 1568px Kante verkleinert und als JPEG neu kodiert** (`pages/chart-analysis.js`) – Vercel Serverless Functions haben ein hartes, nicht konfigurierbares Body-Limit von ca. 4,5MB, ein unveränderter Screenshot (v.a. von Retina-Displays) würde das leicht reißen und mit einem kryptischen `FUNCTION_PAYLOAD_TOO_LARGE` scheitern. Validierung zusätzlich auf dem Server (`pages/api/chart-analysis.js`, `MAX_BASE64_LENGTH`) als Auffangnetz gegen direkte API-Aufrufe.
 
+**Optional mit echten Marktdaten angereichert:** eine Coin-Auswahl (Standard: Bitcoin, oder "Kein Coin / anderer Vermögenswert") lässt den Server aktuellen Preis/RSI/MACD/SMA (`computeCoreSignalSnapshot()` in `lib/signals.js`) sowie den Zyklus-Kontext (siehe nächster Abschnitt) in den Prompt einfließen, bevor das Bild analysiert wird – Claude wird explizit gebeten, das Bild gegen diese echten Zahlen abzugleichen (z.B. Hinweis auf einen veralteten Screenshot oder ein anderes Zeitfenster). Ohne Coin-Auswahl bleibt es bei der ursprünglichen reinen Bild-Analyse.
+
 ---
 
 ## Markt-News auf dem Dashboard
 
-Zeigt die 6 neuesten Schlagzeilen aus drei etablierten, kostenlosen RSS-Feeds (`lib/news.js`): **CoinDesk** und **Cointelegraph** (Krypto), **MarketWatch** (allgemeine Finanzmärkte) – bewusst keine bezahlte News-API, gleiches Kostenbewusstsein wie die übrigen Datenquellen (CoinGecko/FRED/Binance/alternative.me). Da die drei Feeds einfaches RSS 2.0 sind, parst ein schlanker Regex-Parser statt eines XML-Pakets (`extractTag()`/`decodeEntities()` in `lib/news.js`, inkl. numerischer HTML-Entities wie `&#x2019;`). `pages/api/news.js` cached das Ergebnis 20 Minuten in Redis, damit nicht jeder Dashboard-Aufruf jedes Nutzers alle drei Feeds neu abruft.
+Zeigt die neuesten Schlagzeilen aus fünf kostenlosen RSS-Feeds (`lib/news.js`): **CoinDesk**, **Cointelegraph** und **The Block** (Krypto, inkl. Börsen-/institutionelle Flows), **MarketWatch** (allgemeine Finanzmärkte), sowie **SEC-Pressemitteilungen** (institutionelle/regulatorische Entscheidungen wie ETF-Urteile) – bewusst keine bezahlte News-API, gleiches Kostenbewusstsein wie die übrigen Datenquellen (CoinGecko/FRED/Binance/alternative.me). Die SEC-Pressemitteilungsliste ist überwiegend branchenfremd (Fraud-Fälle, Enforcement), deshalb wird sie per Titel-Keyword-Filter (`INSTITUTIONAL_KEYWORDS`) auf Krypto-Relevanz eingegrenzt. Da alle Feeds einfaches RSS 2.0 sind, parst ein schlanker Regex-Parser statt eines XML-Pakets (`extractTag()`/`decodeEntities()` in `lib/news.js`, inkl. numerischer HTML-Entities wie `&#x2019;`). `pages/api/news.js` cached das Ergebnis 20 Minuten in Redis.
 
-**Fließt in die KI-Analyse ein:** Beim Klick auf "🤖 KI-Analyse" filtert `relevantHeadlines()` den News-Pool auf Schlagzeilen, die den Namen oder das Symbol des jeweiligen Coins erwähnen (einfacher Substring-Match, keine echte Entity-Erkennung nötig), und übergibt bis zu 3 davon an `pages/api/analyze.js`. Der Prompt bekommt dadurch aktuellen Nachrichtenkontext und wird gebeten, kurz einzuordnen, ob die Schlagzeilen zur technischen Einschätzung passen – rein zusätzlicher Kontext, ändert nichts an `combineSignal()`/`explainSignal()` selbst (die Signal-Logik bleibt weiterhin rein technisch/makro-basiert).
+Institutionelle Schlagzeilen sind deutlich seltener als die allgemeinen Markt-Feeds – würden sie einfach mit in den datumssortierten Gesamt-Pool gemischt, verdrängen die hochfrequenten Markt-Feeds sie fast immer aus dem angezeigten Limit. `fetchNews()` kappt Markt- und institutionelle Items deshalb getrennt, bevor beide wieder nach Datum zusammensortiert werden.
+
+**Fließt in die KI-Analyse ein:** Beim Klick auf "🤖 KI-Analyse" filtert `relevantHeadlines()` den News-Pool auf Schlagzeilen, die den Namen oder das Symbol des jeweiligen Coins erwähnen (einfacher Substring-Match), und übergibt bis zu 3 davon an `pages/api/analyze.js`. Zusätzlich liefert `institutionalHeadlines()` bis zu 3 institutionelle/regulatorische Schlagzeilen – anders als bei `relevantHeadlines()` **ohne** Coin-Filter, da ETF-/Regulatorik-Entscheidungen i.d.R. marktweit relevant sind. Der Prompt wird gebeten, kurz einzuordnen, ob die Schlagzeilen zur technischen Einschätzung passen – rein zusätzlicher Kontext, ändert nichts an `combineSignal()`/`explainSignal()` selbst.
+
+---
+
+## Zyklus-Analyse (Bodenbildung, Trendwechsel, letztes Zyklus-ATH)
+
+Neue Karte "🔄 Zyklus-Analyse" auf dem Dashboard (pro aktivem Coin) plus zusätzlicher Kontext in der KI-Analyse und der Chart-Bild-Analyse – rein informativ, fließt **nicht** in `combineSignal()`s Kauf/Verkauf-Entscheidung ein (gleiche "erst anzeigen, erst nach Walk-Forward-Validierung wiren"-Regel wie bei Bollinger/StochRSI/OBV, siehe `/validation`).
+
+`lib/cycleAnalysis.js` nutzt die volle verfügbare Kurshistorie (`fetchHistoricalSeries`, bis zu ~8,2 Jahre bei BTC/ETH) und erkennt:
+- **Abgeschlossene Zyklen**: ein ATH gilt erst als "Zyklus-ATH", wenn der Kurs danach um ≥50% fällt, bevor ein neues ATH erreicht wird (unterscheidet einen echten Zyklus-Top/Bottom von einem gewöhnlichen Pullback im laufenden Bullrun). Live gegen echte BTC-Historie verifiziert: der jüngste abgeschlossene Zyklus vor Implementierung war ATH $67.526 am 08.11.2021 → Tief $15.781 am 21.11.2022 (378 Tage).
+- **Zeitvergleich ("wo stehen wir im Vergleich zum letzten Zyklus"):** Tage seit dem aktuellen Zyklus-ATH vs. wie lange es im vorherigen Zyklus vom ATH bis zum Tief gedauert hat.
+- **Bodenbildung** (Score 0-3, nur ab ≥20% Drawdown vom aktuellen Zyklus-ATH aussagekräftig): RSI-Bullish-Divergenz, Basisbildung nahe der 50-Tage-Tiefzone (Donchian), MACD-Histogramm-Umkehr – alles auf bereits vorhandenen Indikator-Bausteinen aus `lib/signals.js` aufgebaut.
+- **Trendregime** (übergeordnet, wöchentlich resampled statt täglich): reine Wiederverwendung von `computeSuperTrendSeries`/`superTrendSignalAt` auf Wochenkerzen, um einen großräumigen Regimewechsel von täglichem Rauschen zu trennen.
+
+Neue Route `/api/cycle?coin=<id>` (6h Redis-Cache, kein Auth-Gate – reine Marktdaten wie `/api/macro`/`/api/news`). Rechnet für Coins mit zu kurzer Historie sauber auf "nicht genug Kurshistorie" herunter statt zu crashen.
 
 ---
 

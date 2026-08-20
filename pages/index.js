@@ -20,7 +20,7 @@ import {
   marubozuSignal,
 } from "../lib/signals";
 import { PARAM_TIPS } from "../lib/paramTips";
-import { relevantHeadlines } from "../lib/news";
+import { relevantHeadlines, institutionalHeadlines } from "../lib/news";
 import PushSubscribeButton from "../components/PushSubscribeButton";
 import InstallPrompt from "../components/InstallPrompt";
 import OnboardingTour from "../components/OnboardingTour";
@@ -88,6 +88,8 @@ export default function Home({ user, access }) {
   const [whale,setWhale]=useState(null);
   const [liquidity,setLiquidity]=useState(null);
   const [news,setNews]=useState([]);
+  const [cycle,setCycle]=useState(null);
+  const [cycleLoading,setCycleLoading]=useState(false);
   const [active,setActive]=useState("bitcoin");
   const [tf,setTf]=useState("1D");
   const [loading,setLoading]=useState(true);
@@ -132,6 +134,12 @@ export default function Home({ user, access }) {
     setAiLoading(prev => ({ ...prev, [coin.id]: true }));
     try {
       const headlines = relevantHeadlines(news, coin.name, coin.symbol).map((h) => ({ title: h.title, source: h.source }));
+      const institutional = institutionalHeadlines(news).map((h) => ({ title: h.title, source: h.source }));
+      // Eigener Fetch statt state `cycle`: das würde nur für den gerade
+      // aktiven Coin stimmen, "🤖 KI-Analyse" gibt es aber pro Coin-Karte --
+      // dank 6h-Redis-Cache in /api/cycle ist das i.d.R. ein günstiger
+      // Cache-Hit, kein neuer Binance-Fetch.
+      const coinCycle = await fetch(`/api/cycle?coin=${coin.id}`).then(r=>r.json()).catch(()=>null);
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -150,6 +158,8 @@ export default function Home({ user, access }) {
           marubozu: marubozuSig ? marubozuSig.label : "n/a",
           tf,
           headlines,
+          cycle: coinCycle && !coinCycle.error ? coinCycle : null,
+          institutionalHeadlines: institutional,
         }),
       });
       const data = await res.json();
@@ -163,6 +173,22 @@ export default function Home({ user, access }) {
 
   useEffect(()=>{loadData("1D");},[]);
   function switchTf(newTf) { setTf(newTf); loadData(newTf); }
+
+  // Eigener Fetch statt Teil des initialen Promise.all in loadData(): die
+  // Zyklus-Analyse wird nur für den gerade aktiven Coin gebraucht (Karte
+  // unten neben der Sparkline) -- sonst würde jeder Seitenaufruf 6 Coins
+  // mitladen, obwohl immer nur einer sichtbar ist. /api/cycle ist ohnehin
+  // 6h-Redis-gecacht, ein Coin-Wechsel kostet daher meist nur einen
+  // schnellen Cache-Hit.
+  useEffect(()=>{
+    if(!active) return;
+    setCycleLoading(true);
+    fetch(`/api/cycle?coin=${active}`)
+      .then(r=>r.json())
+      .then(d=>setCycle(d.error?null:d))
+      .catch(()=>setCycle(null))
+      .finally(()=>setCycleLoading(false));
+  },[active]);
 
   const macro=macroRaw?computeMacroRegime(macroRaw.m2,macroRaw.fedfunds,macroRaw.dxy,macroRaw.yield10y,macroRaw.vix,macroRaw.sp500,macroRaw.nasdaq):null;
   const activeCoin=crypto?.find((c)=>c.id===active);
@@ -359,6 +385,49 @@ export default function Home({ user, access }) {
             );
           })}
         </div>
+
+        {activeCoin&&(
+          <div className="card" style={{marginBottom:"1rem"}}>
+            <p className="section-title">{t("dashboard.cycleTitle",{name:activeCoin.name})}</p>
+            {cycleLoading&&<p className="note">{t("dashboard.cycleLoading")}</p>}
+            {!cycleLoading&&cycle&&!cycle.hasEnoughHistory&&<p className="note">{t("dashboard.cycleNotEnoughHistory")}</p>}
+            {!cycleLoading&&cycle&&cycle.hasEnoughHistory&&(
+              <>
+                <p className="note">
+                  <span className="note-label">{t("dashboard.cyclePreviousAth")}</span>
+                  {cycle.previousCycle?`$${fmtUSD(cycle.previousCycle.athPrice)} (${cycle.previousCycle.athDate})`:t("dashboard.cycleNoPrevious")}
+                </p>
+                {cycle.previousCycle&&(
+                  <p className="note">
+                    <span className="note-label">{t("dashboard.cyclePreviousBottom")}</span>
+                    {`$${fmtUSD(cycle.previousCycle.bottomPrice)} (${t("dashboard.cycleDaysUnit",{n:cycle.previousCycle.daysAthToBottom})})`}
+                  </p>
+                )}
+                <p className="note">
+                  <span className="note-label">{t("dashboard.cycleCurrentAth")}</span>
+                  {`$${fmtUSD(cycle.currentCycle.athPrice)} (${cycle.currentCycle.athDate}), ${t("dashboard.cycleDayN",{n:cycle.currentCycle.daysSinceAth})}`}
+                </p>
+                {cycle.cycleTimeComparison&&(
+                  <p className="note" style={{fontStyle:"italic"}}>
+                    {t("dashboard.cycleTimeComparisonText",{
+                      daysSince:cycle.cycleTimeComparison.daysSinceCurrentAth,
+                      daysPrev:cycle.cycleTimeComparison.daysAthToBottomPreviousCycle,
+                      pct:cycle.cycleTimeComparison.pctOfPreviousDuration ?? "n/a",
+                    })}
+                  </p>
+                )}
+                <p className="note">
+                  <span className="note-label">{t("dashboard.cycleBottomFormation")}</span>
+                  {cycle.bottomFormation?.score==null?t("dashboard.cycleBottomNotApplicable"):t(`dashboard.cycleBottomScore${cycle.bottomFormation.score}`)}
+                </p>
+                <p className="note">
+                  <span className="note-label">{t("dashboard.cycleTrendRegime")}</span>
+                  {translateSignalLabel(cycle.trendRegime?.label,lang)}
+                </p>
+              </>
+            )}
+          </div>
+        )}
 
         {activeCoin&&(
           <div className="card">

@@ -1,5 +1,8 @@
 import { requireActiveAccessApi } from "../../lib/auth/requireActiveAccessApi";
 import { getRedis } from "../../lib/redis";
+import { COINS, fetchCryptoData } from "../../lib/marketData";
+import { computeCoreSignalSnapshot } from "../../lib/signals";
+import { getCycleAnalysisCached } from "../../lib/cycleAnalysis";
 
 // Vercel Serverless Functions haben ein hartes, nicht konfigurierbares
 // Body-Limit von ca. 4,5MB -- unabhängig von jeder Next.js-Konfiguration.
@@ -27,7 +30,7 @@ export default async function handler(req, res) {
   const ctx = await requireActiveAccessApi(req, res);
   if (!ctx) return;
 
-  const { imageBase64, mediaType, mode } = req.body || {};
+  const { imageBase64, mediaType, mode, coin: coinId } = req.body || {};
 
   if (!imageBase64 || typeof imageBase64 !== "string") {
     return res.status(400).json({ error: "Kein Chart-Bild übermittelt." });
@@ -39,6 +42,36 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Bild nach Verkleinerung immer noch zu groß -- bitte ein anderes Bild versuchen." });
   }
   const modeInstruction = MODE_INSTRUCTIONS[mode] || MODE_INSTRUCTIONS.swing;
+
+  // Optionale echte Marktdaten (Preis/RSI/MACD/SMA + Zyklus-Kontext) für den
+  // gewählten Coin -- damit die Bild-Analyse an echten Zahlen abgeglichen
+  // werden kann statt rein aus den Pixeln zu raten. Ein Fehler hier darf die
+  // reine Bild-Analyse nicht blockieren (gleiches Prinzip wie fetchFeed() in
+  // lib/news.js), deshalb try/catch mit stillem Fallback auf "kein Block".
+  let realDataBlock = "";
+  const coin = coinId ? COINS.find((c) => c.id === coinId) : null;
+  if (coin) {
+    try {
+      const [cryptoAll, cycle] = await Promise.all([fetchCryptoData("1D"), getCycleAnalysisCached(coin.id)]);
+      const c = cryptoAll.find((x) => x.id === coin.id);
+      const snap = c ? computeCoreSignalSnapshot(c) : null;
+      if (snap) {
+        const cycleLine = cycle && cycle.hasEnoughHistory
+          ? `- Zyklus: Tag ${cycle.currentCycle.daysSinceAth} seit dem letzten ATH ($${cycle.currentCycle.athPrice}), Drawdown ${cycle.currentCycle.drawdownFromAthPct?.toFixed(0)}% vom ATH.`
+          : `- Zyklus: nicht genug Kurshistorie für einen Zyklusvergleich.`;
+        realDataBlock = `\nEchte Marktdaten für ${coin.name} (${coin.symbol}) zum Zeitpunkt dieser Analyse:
+- Aktueller Preis: $${snap.price} (${snap.change24h > 0 ? "+" : ""}${snap.change24h.toFixed(1)}% 24h)
+- RSI: ${snap.rsi != null ? snap.rsi.toFixed(0) : "n/a"}
+- MACD: ${snap.macdLabel}
+- SMA-Signal: ${snap.smaLabel}
+${cycleLine}
+
+Vergleiche das Chart-Bild explizit mit diesen echten Daten: Wirkt der im Bild gezeigte Kurs, Zeitraum oder Trend stimmig zu diesen Zahlen, oder gibt es Hinweise auf einen veralteten Screenshot, ein anderes Zeitfenster oder einen anderen Vermögenswert? Erwähne das kurz.\n`;
+      }
+    } catch {
+      realDataBlock = "";
+    }
+  }
 
   // Rate-Limit: Vision-Aufrufe verbrauchen deutlich mehr Tokens (Bild-Daten)
   // als die reinen Text-Prompts der bestehenden KI-Analyse-Buttons -- gleiches
@@ -62,12 +95,12 @@ export default async function handler(req, res) {
   const prompt = `Du bist ein erfahrener technischer Chart-Analyst. Dir wird ein Kurschart als Bild gezeigt. Beschreibe kurz, was du siehst (Trend, Unterstützung/Widerstand, erkennbare Muster wie Doppel-Top, Dreieck, Flagge, Momentum), und leite daraus priorisierte Szenarien ab.
 
 ${modeInstruction}
-
+${realDataBlock}
 Wichtige Regeln für deine Antwort:
-- Sprich NIEMALS in Prozent-Wahrscheinlichkeiten oder erfundenen Zahlen (keine "70%", keine "Wahrscheinlichkeit: X"). Nutze stattdessen sprachliche Abstufungen wie "deutlich wahrscheinlicher", "möglich, aber weniger wahrscheinlich" oder "nur relevant, falls X bricht".
+- Sprich NIEMALS in erfundenen Prozent-Wahrscheinlichkeiten für Kursziele (keine "70% Wahrscheinlichkeit"). Nutze stattdessen sprachliche Abstufungen wie "deutlich wahrscheinlicher", "möglich, aber weniger wahrscheinlich" oder "nur relevant, falls X bricht". Die oben genannten echten Marktdaten (falls vorhanden) darfst du direkt zitieren, das sind keine erfundenen Zahlen.
 - Nenne mindestens ein Hauptszenario und ein Alternativszenario, jeweils mit der Bedingung/dem Kurslevel, das es auslösen würde.
 - Antworte auf Deutsch, maximal 6-8 Sätze, direkt und konkret, keine Allgemeinplätze.
-- Schließe mit einem kurzen Satz, dass eine Bild-Analyse Grenzen hat (keine Kursdaten, kein Ersatz für eigene Prüfung, keine Anlageberatung).`;
+- Schließe mit einem kurzen Satz zu den Grenzen der Analyse: ${realDataBlock ? "auch mit echten Marktdaten ersetzt eine Bild-Analyse keine eigene Prüfung und ist keine Anlageberatung" : "keine Kursdaten, kein Ersatz für eigene Prüfung, keine Anlageberatung"}.`;
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
