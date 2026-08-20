@@ -1,0 +1,11 @@
+-- Speichert die Zielauswahl aus dem Onboarding-Schritt 0 ("Was möchtest du
+-- mit Finlyra erreichen?", components/OnboardingTour.js). Nullable, freier
+-- Text statt Enum -- gleiche Konvention wie referral_code/stripe_customer_id
+-- in 0001_init.sql/0003_referrals.sql. Rein additiv, keine bestehenden
+-- Spalten/Daten betroffen.
+--
+-- WICHTIG: diese Migration wurde NICHT automatisch gegen die produktive
+-- Datenbank ausgeführt -- das braucht explizite Freigabe von
+-- [[user-nico-cotterill]] (z.B. per Supabase SQL Editor oder `supabase db
+-- push`), siehe Projekt-Bericht.
+alter table public.profiles add column if not exists onboarding_goal text;

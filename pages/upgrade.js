@@ -1,5 +1,6 @@
 import LogoutButton from "../components/LogoutButton";
 import { useLanguage } from "../lib/i18n";
+import Logo from "../components/Logo";
 import LanguageToggle from "../components/LanguageToggle";
 
 // Ziel von requireActiveAccess, wenn Trial abgelaufen ist und kein aktives
@@ -14,10 +15,10 @@ export default function Upgrade() {
       <div className="auth-card card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: "1.5rem" }}>
           <div className="brand" style={{ marginBottom: 0 }}>
-            <div className="brand-mark">F</div>
+            <Logo size={40} />
             <div>
               <h1>{t("upgrade.title")}</h1>
-              <p className="subtitle">{t("common.appName")}</p>
+              <p className="subtitle">{t("common.tagline")}</p>
             </div>
           </div>
           <LanguageToggle />

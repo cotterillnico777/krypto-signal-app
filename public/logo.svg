@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="62%">
+      <stop offset="0%" stop-color="#262b36"/>
+      <stop offset="100%" stop-color="#1b1e26"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="800" fill="url(#bg)"/>
+  <circle cx="400" cy="400" r="288" fill="none" stroke="#3a3f4c" stroke-width="1.5"/>
+  <g transform="translate(220,220)">
+    <text x="180" y="255" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="248" font-style="italic" fill="#d4af6a">F</text>
+    <polyline points="70,232 118,208 150,222 196,150 236,178 292,110" fill="none" stroke="#d4af6a" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="292" cy="110" r="9" fill="#d4af6a"/>
+  </g>
+</svg>

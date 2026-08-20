@@ -1,0 +1,33 @@
+import Link from "next/link";
+import { useLanguage } from "../lib/i18n";
+import Logo from "../components/Logo";
+import LanguageToggle from "../components/LanguageToggle";
+
+// Platzhalter-Seite -- noch kein ausformulierter Risikohinweis vorhanden
+// (die kurze "Keine Anlageberatung"-Formulierung existiert bereits an
+// vielen Stellen in der App, siehe dashboard.disclaimer etc. -- diese Seite
+// ist für einen ausführlicheren, rechtlich geprüften Text gedacht).
+// Bewusst KEINE erfundenen Inhalte, siehe README/Projekt-Bericht: braucht
+// echte Angaben von [[user-nico-cotterill]].
+export default function Risikohinweis() {
+  const { t } = useLanguage();
+  return (
+    <div className="container">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: "0.75rem" }}>
+        <div className="brand" style={{ marginBottom: 0 }}>
+          <Logo size={40} />
+          <div>
+            <h1>{t("legal.riskTitle")}</h1>
+          </div>
+        </div>
+        <LanguageToggle />
+      </div>
+      <div className="card">
+        <p>{t("legal.placeholderBody")}</p>
+      </div>
+      <p style={{ marginTop: "1rem", fontSize: 13 }}>
+        <Link href="/">{t("legal.backHome")}</Link>
+      </p>
+    </div>
+  );
+}
