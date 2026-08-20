@@ -82,7 +82,7 @@ export default function Login() {
       <div className="auth-card card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: "1.5rem" }}>
           <div className="brand" style={{ marginBottom: 0 }}>
-            <div className="brand-mark">₿</div>
+            <div className="brand-mark">F</div>
             <div>
               <h1>{t("login.title")}</h1>
               <p className="subtitle">{t("common.appName")}</p>

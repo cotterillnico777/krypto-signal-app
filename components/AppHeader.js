@@ -123,7 +123,7 @@ export default function AppHeader({ title, subtitle, active, user, access, child
       )}
       <header className="app-header">
         <div className="brand">
-          <div className="brand-mark">₿</div>
+          <div className="brand-mark">F</div>
           <div>
             <h1>{title}</h1>
             <p className="subtitle">{subtitle}</p>
