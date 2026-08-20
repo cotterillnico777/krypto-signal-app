@@ -1,6 +1,9 @@
+import { useEffect } from "react";
+import { useRouter } from "next/router";
 import Link from "next/link";
 import { GLOSSARY } from "../lib/glossary";
 import { useLanguage } from "../lib/i18n";
+import Logo from "../components/Logo";
 import LanguageToggle from "../components/LanguageToggle";
 
 // Bewusst KEIN getServerSideProps = requireActiveAccess -- öffentliche
@@ -10,12 +13,24 @@ import LanguageToggle from "../components/LanguageToggle";
 // erlauben, ohne die Erklärungen dort aufzublähen.
 export default function Glossar() {
   const { t, lang } = useLanguage();
+  const router = useRouter();
+
+  // Deep-Linking von anderen Seiten aus (z.B. /glossar#rsi von der
+  // Validierungsseite) -- Next.js scrollt bei Hash-Navigation innerhalb der
+  // gleichen Seite nicht zuverlässig selbst (kein volles Reload), deshalb
+  // hier manuell nach dem ersten Render.
+  useEffect(() => {
+    if (!router.asPath.includes("#")) return;
+    const id = router.asPath.split("#")[1];
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [router.asPath]);
 
   return (
     <div className="container">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: "0.75rem" }}>
         <div className="brand" style={{ marginBottom: 0 }}>
-          <div className="brand-mark">F</div>
+          <Logo size={40} />
           <div>
             <h1>{t("glossar.h1")}</h1>
             <p className="subtitle">{t("glossar.subtitle")}</p>
@@ -36,7 +51,7 @@ export default function Glossar() {
         <div key={group.category.de} style={{ marginBottom: "1.75rem" }}>
           <p className="section-title" style={{ fontSize: 15, marginBottom: 10 }}>{group.category[lang]}</p>
           {group.terms.map((term) => (
-            <div className="card" key={term.term.de} style={{ marginBottom: "0.75rem" }}>
+            <div className="card" id={term.id} key={term.id} style={{ marginBottom: "0.75rem", scrollMarginTop: 16 }}>
               <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>{term.term[lang]}</p>
               <p style={{ fontSize: 13.5, color: "var(--text-muted)", lineHeight: 1.6, margin: 0 }}>{term.explanation[lang]}</p>
             </div>

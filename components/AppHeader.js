@@ -1,3 +1,4 @@
+import Logo from "./Logo";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
@@ -123,7 +124,7 @@ export default function AppHeader({ title, subtitle, active, user, access, child
       )}
       <header className="app-header">
         <div className="brand">
-          <div className="brand-mark">F</div>
+          <Logo size={40} />
           <div>
             <h1>{title}</h1>
             <p className="subtitle">{subtitle}</p>

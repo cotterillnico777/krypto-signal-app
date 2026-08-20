@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "../lib/supabase/client";
 import { useLanguage, translateAuthError } from "../lib/i18n";
+import Logo from "../components/Logo";
 import LanguageToggle from "../components/LanguageToggle";
 
 export default function Signup() {
@@ -11,14 +12,19 @@ export default function Signup() {
   const refCode = typeof router.query.ref === "string" ? router.query.ref : null;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [done, setDone] = useState(false);
 
   async function handleSignup(e) {
     e.preventDefault();
-    setBusy(true);
     setError(null);
+    if (password.length < 6) {
+      setError(t("signup.passwordTooShort"));
+      return;
+    }
+    setBusy(true);
     try {
       const supabase = getSupabaseBrowserClient();
       const origin = window.location.origin;
@@ -48,14 +54,15 @@ export default function Signup() {
       <div className="auth-card card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: "1.5rem" }}>
           <div className="brand" style={{ marginBottom: 0 }}>
-            <div className="brand-mark">F</div>
+            <Logo size={40} />
             <div>
               <h1>{t("signup.title")}</h1>
-              <p className="subtitle">{t("common.trialFree")}</p>
+              <p className="subtitle">{t("common.tagline")}</p>
             </div>
           </div>
           <LanguageToggle />
         </div>
+        <p className="note" style={{ marginBottom: "1rem" }}>{t("common.positioningNote")}</p>
 
         {refCode && (
           <div className="note" style={{ background: "var(--bg-subtle)", borderRadius: 6, padding: "8px 10px", marginBottom: "1rem" }}>
@@ -86,7 +93,21 @@ export default function Signup() {
             </label>
             <label>
               {t("login.passwordLabel")}
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} autoComplete="new-password" />
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                  style={{ flex: 1 }}
+                />
+                <button type="button" className="icon-btn" onClick={() => setShowPassword((v) => !v)} style={{ padding: "9px 12px", fontSize: 12 }}>
+                  {showPassword ? t("common.hidePassword") : t("common.showPassword")}
+                </button>
+              </div>
+              <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 400 }}>{t("signup.passwordRequirement")}</span>
             </label>
             {error && <div className="error-box">{error}</div>}
             <button className="icon-btn primary" type="submit" disabled={busy}>
@@ -94,6 +115,9 @@ export default function Signup() {
             </button>
           </form>
         )}
+
+        <p className="note" style={{ marginTop: "1rem" }}>{t("common.trialFreeNoCard")}</p>
+        <p className="note" style={{ marginTop: 6 }}>{t("signup.afterTrial")}</p>
 
         <p style={{ marginTop: "1.5rem", fontSize: 13 }}>
           {t("signup.alreadyRegistered")}
@@ -104,6 +128,16 @@ export default function Signup() {
         </p>
         <p style={{ marginTop: "0.5rem", fontSize: 13 }}>
           <Link href="/validation">{t("common.validationLink")}</Link>
+        </p>
+        <p style={{ marginTop: "1rem", fontSize: 12, color: "var(--text-muted)" }}>
+          {t("signup.legalIntro")}{" "}
+          <Link href="/datenschutz">{t("common.privacyLink")}</Link>
+          {" · "}
+          <Link href="/impressum">{t("common.imprintLink")}</Link>
+          {" · "}
+          <Link href="/agb">{t("common.termsLink")}</Link>
+          {" · "}
+          <Link href="/risikohinweis">{t("common.riskLink")}</Link>
         </p>
       </div>
     </div>

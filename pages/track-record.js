@@ -2,6 +2,7 @@ import Link from "next/link";
 import Head from "next/head";
 import { getRedis } from "../lib/redis";
 import { useLanguage } from "../lib/i18n";
+import Logo from "../components/Logo";
 import LanguageToggle from "../components/LanguageToggle";
 
 const SITE_URL = "https://krypto-signal-app.vercel.app";
@@ -54,7 +55,7 @@ export default function TrackRecord({ snapshot }) {
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: "0.75rem" }}>
         <div className="brand" style={{ marginBottom: 0 }}>
-          <div className="brand-mark">F</div>
+          <Logo size={40} />
           <div>
             <h1>{t("trackrecord.h1")}</h1>
             <p className="subtitle">{t("trackrecord.subtitle")}</p>
@@ -80,7 +81,8 @@ export default function TrackRecord({ snapshot }) {
             </p>
           </div>
 
-          <p className="section-title" style={{ marginBottom: 10 }}>{t("trackrecord.portfolioSectionTitle")}</p>
+          <p className="section-title" style={{ marginBottom: 4 }}>{t("trackrecord.portfolioSectionTitle")}</p>
+          <p className="note" style={{ marginBottom: 10 }}>{t("trackrecord.pastPerformanceNote")}</p>
           <div className="grid grid-3" style={{ marginBottom: "1.5rem" }}>
             <div className="card">
               <p className="card-label">{t("trackrecord.portfolioReturn")}</p>
@@ -99,7 +101,11 @@ export default function TrackRecord({ snapshot }) {
             </div>
           </div>
 
-          <p className="section-title" style={{ marginBottom: 10 }}>{t("trackrecord.walkForwardTitle")}</p>
+          <p className="section-title" style={{ marginBottom: 4 }}>{t("trackrecord.walkForwardTitle")}</p>
+          <p className="note" style={{ marginBottom: 10 }}>
+            {t("trackrecord.oosExplainerPre")}
+            <Link href="/glossar#out-of-sample">{t("trackrecord.oosExplainerLink")}</Link>
+          </p>
           <div className="grid grid-3" style={{ marginBottom: "1.5rem" }}>
             <div className="card">
               <p className="card-label">{t("trackrecord.avgOosReturn")}</p>

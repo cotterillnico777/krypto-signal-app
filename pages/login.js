@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "../lib/supabase/client";
 import { useLanguage, translateAuthError } from "../lib/i18n";
+import Logo from "../components/Logo";
 import LanguageToggle from "../components/LanguageToggle";
 
 export default function Login() {
@@ -11,6 +12,7 @@ export default function Login() {
   const redirect = typeof router.query.redirect === "string" ? router.query.redirect : "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [magicSent, setMagicSent] = useState(false);
@@ -82,14 +84,15 @@ export default function Login() {
       <div className="auth-card card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: "1.5rem" }}>
           <div className="brand" style={{ marginBottom: 0 }}>
-            <div className="brand-mark">F</div>
+            <Logo size={40} />
             <div>
               <h1>{t("login.title")}</h1>
-              <p className="subtitle">{t("common.appName")}</p>
+              <p className="subtitle">{t("common.tagline")}</p>
             </div>
           </div>
           <LanguageToggle />
         </div>
+        <p className="note" style={{ marginBottom: "1rem" }}>{t("common.positioningNote")}</p>
 
         {magicSent ? (
           <p>{t("login.magicSent", { email })}</p>
@@ -102,7 +105,19 @@ export default function Login() {
               </label>
               <label>
                 {t("login.passwordLabel")}
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                    style={{ flex: 1 }}
+                  />
+                  <button type="button" className="icon-btn" onClick={() => setShowPassword((v) => !v)} style={{ padding: "9px 12px", fontSize: 12 }}>
+                    {showPassword ? t("common.hidePassword") : t("common.showPassword")}
+                  </button>
+                </div>
               </label>
               {error && <div className="error-box">{error}</div>}
               <button className="icon-btn primary" type="submit" disabled={busy}>
@@ -131,6 +146,16 @@ export default function Login() {
         </p>
         <p style={{ marginTop: "0.5rem", fontSize: 13 }}>
           <Link href="/glossar">{t("common.glossaryLink")}</Link>
+        </p>
+        <p style={{ marginTop: "1rem", fontSize: 12, color: "var(--text-muted)" }}>
+          {t("signup.legalIntro")}{" "}
+          <Link href="/datenschutz">{t("common.privacyLink")}</Link>
+          {" · "}
+          <Link href="/impressum">{t("common.imprintLink")}</Link>
+          {" · "}
+          <Link href="/agb">{t("common.termsLink")}</Link>
+          {" · "}
+          <Link href="/risikohinweis">{t("common.riskLink")}</Link>
         </p>
       </div>
     </div>
