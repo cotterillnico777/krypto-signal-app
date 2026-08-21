@@ -33,6 +33,16 @@ export default async function handler(req, res) {
     if (error) throw error;
     res.status(200).json({ ok: true });
   } catch (err) {
+    // Postgres 42703 = "column does not exist" -- erwartbar, solange
+    // supabase/migrations/0006_onboarding_goal.sql noch nicht produktiv
+    // ausgeführt ist. Eigener Status statt generischem 500, damit das in
+    // Logs/Monitoring nicht wie ein echter Bug aussieht -- der Client
+    // (OnboardingTour.js) hat die Auswahl bereits lokal gespeichert und
+    // swallowed diesen Fehler ohnehin, funktional ändert sich nichts.
+    const missingColumn = err.code === "42703" || /column .* does not exist/i.test(err.message || "");
+    if (missingColumn) {
+      return res.status(503).json({ error: "onboarding_goal-Spalte noch nicht verfügbar.", code: "column_missing" });
+    }
     res.status(500).json({ error: err.message || "Konnte nicht gespeichert werden." });
   }
 }

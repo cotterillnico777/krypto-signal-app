@@ -15,12 +15,18 @@ export default async function handler(req, res) {
     if (redis) {
       const cached = await redis.get(CACHE_KEY);
       if (cached) {
-        res.status(200).json({ items: cached });
+        // fetchedAt kommt aus dem Cache-Wert selbst -- zeigt den echten
+        // ursprünglichen Abruf-Zeitpunkt, nicht den Zeitpunkt dieses
+        // Cache-Treffers (fürs "Datenstand"-UI im Dashboard).
+        res.setHeader("X-Fetched-At", cached.fetchedAt || new Date().toISOString());
+        res.status(200).json({ items: cached.items });
         return;
       }
     }
     const items = await fetchNews();
-    if (redis) await redis.set(CACHE_KEY, items, { ex: CACHE_TTL_SECONDS });
+    const fetchedAt = new Date().toISOString();
+    if (redis) await redis.set(CACHE_KEY, { items, fetchedAt }, { ex: CACHE_TTL_SECONDS });
+    res.setHeader("X-Fetched-At", fetchedAt);
     res.status(200).json({ items });
   } catch (err) {
     res.status(500).json({ error: err.message || "Unbekannter Fehler beim Laden der News." });

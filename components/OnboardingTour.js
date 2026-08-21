@@ -33,11 +33,14 @@ export default function OnboardingTour() {
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
 
-  // Speichert nur bestmöglich (fire-and-forget) -- braucht die noch nicht
-  // ausgeführte Migration supabase/migrations/0006_onboarding_goal.sql.
-  // Blockiert das Onboarding nicht, falls die Spalte noch fehlt oder der
-  // Request fehlschlägt (siehe pages/api/profile/goal.js-Kommentar).
+  // Lokal ist der garantierte Pfad -- funktioniert unabhängig davon, ob
+  // supabase/migrations/0006_onboarding_goal.sql schon produktiv ausgeführt
+  // wurde. Der Server-Sync darunter ist rein optional/best-effort (die
+  // Spalte fehlt aktuell noch); sobald sie existiert, synct ein künftiger
+  // Login/Refresh die Auswahl automatisch nach, ohne dass hier etwas
+  // geändert werden muss.
   function selectGoal(value) {
+    if (typeof window !== "undefined") localStorage.setItem("onboardingGoal", value);
     fetch("/api/profile/goal", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

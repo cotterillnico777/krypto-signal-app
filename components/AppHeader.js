@@ -16,6 +16,7 @@ import { useLanguage } from "../lib/i18n";
 // Strings, damit der Sprachumschalter greift.
 const NAV_GROUPS = [
   { key: "dashboard", href: "/", icon: "🏠", labelKey: "nav.dashboard" },
+  { key: "learn", href: "/learn", icon: "🎓", labelKey: "nav.learn" },
   {
     key: "analyse",
     icon: "📊",

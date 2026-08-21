@@ -19,7 +19,8 @@ export default function Datenschutz() {
         </div>
         <LanguageToggle />
       </div>
-      <div className="card">
+      <div className="card" style={{ borderColor: "var(--amber-text)" }}>
+        <span className="badge badge-amber" style={{ marginBottom: 10, display: "inline-block" }}>{t("legal.placeholderBadge")}</span>
         <p>{t("legal.placeholderBody")}</p>
       </div>
       <p style={{ marginTop: "1rem", fontSize: 13 }}>
