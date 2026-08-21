@@ -27,7 +27,7 @@ import OnboardingTour from "../components/OnboardingTour";
 import ReferralCard from "../components/ReferralCard";
 import AppHeader from "../components/AppHeader";
 import { requireActiveAccess } from "../lib/auth/requireActiveAccess";
-import { useLanguage, translateSignalLabel } from "../lib/i18n";
+import { useLanguage, translateSignalLabel, signalPositioningLabel } from "../lib/i18n";
 
 export const getServerSideProps = requireActiveAccess;
 
@@ -94,6 +94,8 @@ export default function Home({ user, access }) {
   const [tf,setTf]=useState("1D");
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState(null);
+  const [dataStatus,setDataStatus]=useState({});
+  const [refreshStatus,setRefreshStatus]=useState("idle");
   const [aiAnalysis,setAiAnalysis]=useState({});
   const [aiLoading,setAiLoading]=useState({});
   const [detailsOpen,setDetailsOpen]=useState({});
@@ -113,7 +115,7 @@ export default function Home({ user, access }) {
   }
 
   async function loadData(timeframe) {
-    setLoading(true); setError(null); setAiAnalysis({});
+    setLoading(true); setError(null); setAiAnalysis({}); setRefreshStatus("loading");
     try {
       const [cRes,mRes,fRes,wRes,lRes,nRes]=await Promise.all([
         fetch(`/api/crypto?tf=${timeframe||tf}`),
@@ -127,7 +129,37 @@ export default function Home({ user, access }) {
       if(cJson.error) throw new Error(cJson.error);
       if(mJson.error) throw new Error(mJson.error);
       setCrypto(cJson); setMacroRaw(mJson); setFg(fJson.error?null:fJson); setWhale(wJson.error?null:wJson); setLiquidity(lJson.error?null:lJson); setNews(nJson.items||[]);
-    } catch(e) { setError(e.message); } finally { setLoading(false); }
+      // Zeitstempel kommen aus dem X-Fetched-At-Header statt dem JSON-Body --
+      // ändert an keiner bestehenden Antwortform etwas (siehe pages/api/*.js),
+      // rein additiv fürs "Datenstand"-UI unten.
+      const nextStatus = {
+        crypto: { fetchedAt: cRes.headers.get("X-Fetched-At"), ok: !cJson.error },
+        macro: { fetchedAt: mRes.headers.get("X-Fetched-At"), ok: !mJson.error },
+        fg: { fetchedAt: fRes.headers.get("X-Fetched-At"), ok: !fJson.error },
+        whale: { fetchedAt: wRes.headers.get("X-Fetched-At"), ok: !wJson.error },
+        liquidity: { fetchedAt: lRes.headers.get("X-Fetched-At"), ok: !lJson.error },
+        news: { fetchedAt: nRes.headers.get("X-Fetched-At"), ok: !nJson.error },
+      };
+      setDataStatus(nextStatus);
+      setRefreshStatus(Object.values(nextStatus).some((s)=>!s.ok)?"partial":"success");
+    } catch(e) { setError(e.message); setRefreshStatus("error"); } finally { setLoading(false); }
+  }
+
+  // Erfolgs-Status blendet sich nach kurzer Zeit selbst aus -- Fehler/
+  // Teilausfall bleiben sichtbar, bis der nächste Aktualisieren-Klick etwas
+  // Neues ergibt (der Nutzer soll das nicht verpassen).
+  useEffect(()=>{
+    if(refreshStatus!=="success") return;
+    const timer=setTimeout(()=>setRefreshStatus("idle"),4000);
+    return ()=>clearTimeout(timer);
+  },[refreshStatus]);
+
+  function fmtRelativeTime(iso) {
+    if(!iso) return null;
+    const mins=Math.round((Date.now()-new Date(iso).getTime())/60000);
+    if(mins<1) return t("dashboard.justNow");
+    if(mins<60) return t("dashboard.minutesAgo",{n:mins});
+    return t("dashboard.hoursAgo",{n:Math.round(mins/60)});
   }
 
   async function getAiAnalysis(coin, rsi, macd, smaSig, volSig, macro, price, change24h, whaleSig, bollSig, stochRsiSig, obvSig, candleSig, marubozuSig) {
@@ -205,6 +237,9 @@ export default function Home({ user, access }) {
       >
         <PushSubscribeButton />
         <button className="icon-btn" onClick={()=>loadData(tf)} title={t("dashboard.refresh")}>↻ {t("dashboard.refresh")}</button>
+        {refreshStatus==="loading"&&<span className="note">{t("dashboard.refreshing")}</span>}
+        {refreshStatus==="success"&&<span className="note">{t("dashboard.refreshSuccess")}</span>}
+        {refreshStatus==="partial"&&<span className="note" style={{color:"var(--amber-text)"}}>{t("dashboard.refreshPartial")}</span>}
         <button
           className={`icon-btn${beginnerMode?" primary":""}`}
           onClick={toggleBeginnerMode}
@@ -213,6 +248,23 @@ export default function Home({ user, access }) {
           {t("dashboard.beginnerMode")}{beginnerMode?t("dashboard.beginnerModeOn"):""}
         </button>
       </AppHeader>
+
+      {!loading&&crypto&&(
+        <div className="note" style={{display:"flex",flexWrap:"wrap",gap:"6px 14px",marginBottom:"1rem",fontSize:12}}>
+          <span style={{fontWeight:600}}>{t("dashboard.dataStatusTitle")}</span>
+          {[
+            ["crypto","sourceCrypto"],["macro","sourceMacro"],["fg","sourceSentiment"],
+            ["whale","sourceWhale"],["liquidity","sourceLiquidity"],["news","sourceNews"],
+          ].map(([key,labelKey])=>{
+            const s=dataStatus[key];
+            return (
+              <span key={key}>
+                {s&&!s.ok?"⚠️ ":""}{t(`dashboard.${labelKey}`)}: {s&&!s.ok?t("dashboard.sourceUnavailable"):(s?.fetchedAt?fmtRelativeTime(s.fetchedAt):"…")}
+              </span>
+            );
+          })}
+        </div>
+      )}
 
       <OnboardingTour />
       <InstallPrompt />
@@ -267,7 +319,13 @@ export default function Home({ user, access }) {
                   style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,padding:"8px 10px",background:"var(--bg-subtle)",borderRadius:"var(--radius-sm)",textDecoration:"none",color:"var(--text)"}}
                 >
                   <span style={{fontSize:13.5}}>{item.title}</span>
-                  <span className="note" style={{flexShrink:0,marginLeft:8}}>{item.source}</span>
+                  <span className="note" style={{flexShrink:0,marginLeft:8,alignItems:"flex-end",flexDirection:"column",display:"flex",gap:2}}>
+                    <span>{item.source}</span>
+                    <span style={{fontSize:10.5,opacity:0.75}}>
+                      {fmtRelativeTime(item.publishedAt)}
+                      {item.topic?` · ${t(`dashboard.topic_${item.topic}`)}`:""}
+                    </span>
+                  </span>
                 </a>
               ))}
             </div>
@@ -320,16 +378,16 @@ export default function Home({ user, access }) {
                   <span className={`change-pill ${isUp?"up":"down"}`}>{isUp?"+":""}{c.change24h.toFixed(1)}%</span>
                 </div>
                 <p className="card-value">${fmtUSD(c.price)}</p>
-                <span className={`badge ${combined.cls}`} style={{marginBottom:4,fontSize:13}}>{translateSignalLabel(combined.label,lang)}</span>
+                <span className={`badge ${combined.cls}`} style={{marginBottom:4,fontSize:13}}>{signalPositioningLabel(combined.label,lang)}</span>
                 <p className="note" style={{marginTop:0,marginBottom:8,fontStyle:"italic"}}>{why}</p>
                 {tip&&(
                   <p
                     className="note"
                     style={{background:"var(--bg-subtle)",borderRadius:6,padding:"6px 8px",marginTop:0,marginBottom:8}}
-                    title={t("dashboard.tipTooltip",{evidence:tip.evidence[lang]})}
                   >
                     <span className="note-label">{t("dashboard.tipBadge")}</span>
                     <span className={`badge ${tip.isDefault?"badge-gray":"badge-green"}`} style={{fontSize:11,padding:"1px 6px"}}>{tip.label[lang]}</span>
+                    <span style={{display:"block",marginTop:4,fontSize:11.5,lineHeight:1.4}}>{t("dashboard.tipTooltip",{evidence:tip.evidence[lang]})}</span>
                   </p>
                 )}
                 {(() => {

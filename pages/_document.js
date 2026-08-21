@@ -14,7 +14,7 @@ export default function Document() {
         <meta name="apple-mobile-web-app-title" content="Finlyra" />
         <link rel="icon" href="/icons/favicon-64.png" type="image/png" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
-        <meta name="description" content="Live-Krypto-Signale kombiniert mit Makrodaten, Fear & Greed Index und KI-Analyse." />
+        <meta name="description" content="Märkte verstehen -- mit Daten, Kontext und transparenten Analysen. Inklusive Krypto-Signalen, Makrodaten und Fear & Greed Index." />
       </Head>
       <body>
         <Main />

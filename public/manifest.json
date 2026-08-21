@@ -1,7 +1,7 @@
 {
   "name": "Finlyra",
   "short_name": "Finlyra",
-  "description": "Live-Krypto-Signale kombiniert mit Makrodaten, Fear & Greed Index und KI-Analyse.",
+  "description": "Märkte verstehen -- mit Daten, Kontext und transparenten Analysen. Inklusive Krypto-Signalen, Makrodaten und Fear & Greed Index.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
